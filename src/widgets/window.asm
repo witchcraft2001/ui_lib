@@ -5,22 +5,68 @@
 ; Out: none
 ; Clobbers: AF, BC, DE, HL
 ui_draw_window:
+        call    ui_draw_window_shadow
         ld      e, (ix + UI_WINDOW_X)
         ld      d, (ix + UI_WINDOW_Y)
         ld      l, (ix + UI_WINDOW_W)
         ld      h, (ix + UI_WINDOW_H)
         ld      a, " "
-        ld      b, UI_COLOR_WINDOW
+        push    af
+        ld      a, (ui_theme_window)
+        ld      b, a
+        pop     af
         call    ui_fill_rect
         call    ui_draw_window_frame
         call    ui_draw_window_title
         ret
 
+ui_draw_window_shadow:
+        ld      a, (ix + UI_WINDOW_X)
+        add     a, (ix + UI_WINDOW_W)
+        cp      UI_SCREEN_COLS
+        jr      nc, .bottom
+        ld      e, a
+        ld      a, (ix + UI_WINDOW_Y)
+        inc     a
+        cp      UI_SCREEN_ROWS
+        jr      nc, .bottom
+        ld      d, a
+        ld      h, (ix + UI_WINDOW_H)
+        ld      l, 2
+        ld      a, " "
+        push    af
+        ld      a, (ui_theme_shadow)
+        ld      b, a
+        pop     af
+        call    ui_fill_rect
+.bottom:
+        ld      a, (ix + UI_WINDOW_Y)
+        add     a, (ix + UI_WINDOW_H)
+        cp      UI_SCREEN_ROWS
+        ret     nc
+        ld      d, a
+        ld      a, (ix + UI_WINDOW_X)
+        inc     a
+        inc     a
+        cp      UI_SCREEN_COLS
+        ret     nc
+        ld      e, a
+        ld      h, 1
+        ld      l, (ix + UI_WINDOW_W)
+        ld      a, " "
+        push    af
+        ld      a, (ui_theme_shadow)
+        ld      b, a
+        pop     af
+        call    ui_fill_rect
+        ret
+
 ui_draw_window_frame:
         ld      d, (ix + UI_WINDOW_Y)
         ld      e, (ix + UI_WINDOW_X)
+        ld      a, (ui_theme_window)
+        ld      b, a
         ld      a, 0C9h
-        ld      b, UI_COLOR_WINDOW
         push    de
         call    ui_put_cell
         pop     de
@@ -30,8 +76,9 @@ ui_draw_window_frame:
         ld      c, a
 .top:
         inc     e
+        ld      a, (ui_theme_window)
+        ld      b, a
         ld      a, 0CDh
-        ld      b, UI_COLOR_WINDOW
         push    bc
         push    de
         call    ui_put_cell
@@ -41,8 +88,9 @@ ui_draw_window_frame:
         jr      nz, .top
 
         inc     e
+        ld      a, (ui_theme_window)
+        ld      b, a
         ld      a, 0BBh
-        ld      b, UI_COLOR_WINDOW
         push    de
         call    ui_put_cell
         pop     de
@@ -53,8 +101,9 @@ ui_draw_window_frame:
 .sides:
         inc     d
         ld      e, (ix + UI_WINDOW_X)
+        ld      a, (ui_theme_window)
+        ld      b, a
         ld      a, 0BAh
-        ld      b, UI_COLOR_WINDOW
         push    bc
         push    de
         call    ui_put_cell
@@ -65,8 +114,9 @@ ui_draw_window_frame:
         dec     a
         add     a, e
         ld      e, a
+        ld      a, (ui_theme_window)
+        ld      b, a
         ld      a, 0BAh
-        ld      b, UI_COLOR_WINDOW
         push    bc
         push    de
         call    ui_put_cell
@@ -77,8 +127,9 @@ ui_draw_window_frame:
 
         inc     d
         ld      e, (ix + UI_WINDOW_X)
+        ld      a, (ui_theme_window)
+        ld      b, a
         ld      a, 0C8h
-        ld      b, UI_COLOR_WINDOW
         push    de
         call    ui_put_cell
         pop     de
@@ -88,8 +139,9 @@ ui_draw_window_frame:
         ld      c, a
 .bottom:
         inc     e
+        ld      a, (ui_theme_window)
+        ld      b, a
         ld      a, 0CDh
-        ld      b, UI_COLOR_WINDOW
         push    bc
         push    de
         call    ui_put_cell
@@ -99,8 +151,9 @@ ui_draw_window_frame:
         jr      nz, .bottom
 
         inc     e
+        ld      a, (ui_theme_window)
+        ld      b, a
         ld      a, 0BCh
-        ld      b, UI_COLOR_WINDOW
         call    ui_put_cell
         ret
 
@@ -114,6 +167,6 @@ ui_draw_window_title:
         ld      e, (ix + UI_WINDOW_X)
         inc     e
         inc     e
-        ld      a, UI_COLOR_WINDOW_TITLE
+        ld      a, (ui_theme_window_title)
         call    ui_print_z
         ret

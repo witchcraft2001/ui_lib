@@ -38,12 +38,13 @@
   - Реализовать `ui_init`, `ui_shutdown`, `ui_poll_event`, `ui_dispatch`, `ui_set_theme`, `ui_set_context_hint`.
   - Описать register contract, memory contract, compile-time options и модель подключения inline/page-call.
   - Сделать адаптеры DSS/BIOS: keyboard, mouse, window copy/restore, page allocation.
-  - Статус: начаты `ui_init`, `ui_shutdown`, `ui_poll_event`, DSS keyboard polling и BIOS mouse polling; полная документация contract еще не готова.
+  - Статус: начаты `ui_init`, `ui_shutdown`, `ui_poll_event`, DSS keyboard polling, BIOS mouse polling и runtime theme API `ui_set_theme`; полная документация contract еще не готова.
 
 - [ ] Этап 3. Отрисовка и тема Borland Pascal 7
   - Реализовать draw primitives: char/attr write, fill rect, frame, shadow, invert range, hotkey highlight.
   - Добавить стандартную палитру BP7-style и возможность пользовательской палитры.
   - Добавить separator: горизонтальная линия для меню и диалогов.
+  - Статус: реализованы базовые char/attr write, fill rect, window frame, window/button shadow, hotkey highlight и настраиваемая global theme; separator и invert range еще не готовы.
 
 - [ ] Этап 4. Focus, events и подсказки
   - Реализовать Tab/Shift+Tab, arrows, Enter, Esc, F10, Alt/hotkeys, mouse click/release.

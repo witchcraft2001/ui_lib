@@ -21,6 +21,8 @@ ui_mouse_available:
 ; Out: CF=0 on success, CF=1 on allocation error
 ; Clobbers: AF, BC
 ui_init:
+        call    ui_apply_default_theme
+
         IF UI_SET_TEXT_MODE
         ld      a, 03h             ; text mode 80x32
         ld      b, 0               ; video page 0

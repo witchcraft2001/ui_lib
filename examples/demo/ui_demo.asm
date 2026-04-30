@@ -23,6 +23,7 @@ exe_header:
 
 code_start:
         include "include/ui.inc"
+        include "src/core/theme.asm"
         include "src/core/init.asm"
         include "src/core/events.asm"
         include "src/draw/text.asm"
@@ -34,9 +35,14 @@ code_start:
 demo_main:
         call    ui_init
         jr      c, demo_no_memory
+        ld      hl, demo_theme
+        call    ui_set_theme
 
         ld      a, " "
-        ld      b, UI_COLOR_DESKTOP
+        push    af
+        ld      a, (ui_theme_desktop)
+        ld      b, a
+        pop     af
         call    ui_clear_screen
 
         ld      ix, demo_dialog
@@ -46,7 +52,7 @@ demo_main:
         ld      ix, demo_window
         call    ui_draw_window
         ld      hl, demo_body_text
-        ld      a, UI_COLOR_WINDOW
+        ld      a, (ui_theme_window)
         ld      d, 10
         ld      e, 20
         call    ui_print_z
@@ -59,13 +65,13 @@ demo_main:
 .ok:
         ld      hl, demo_ok_text
 .show_result:
-        ld      a, UI_COLOR_WINDOW_TITLE
+        ld      a, (ui_theme_window_title)
         ld      d, 12
         ld      e, 29
         call    ui_print_z
 
         ld      hl, demo_hint
-        ld      a, UI_COLOR_HINT
+        ld      a, (ui_theme_hint)
         ld      d, 31
         ld      e, 1
         call    ui_print_z
@@ -81,10 +87,13 @@ demo_exit:
 
 demo_no_memory:
         ld      a, " "
-        ld      b, UI_COLOR_DESKTOP
+        push    af
+        ld      a, (ui_theme_desktop)
+        ld      b, a
+        pop     af
         call    ui_clear_screen
         ld      hl, demo_no_memory_text
-        ld      a, UI_COLOR_WINDOW_TITLE
+        ld      a, (ui_theme_window_title)
         ld      d, 12
         ld      e, 18
         call    ui_print_z
@@ -126,6 +135,8 @@ demo_cancel_text:
         db      "Cancel", 0
 demo_no_memory_text:
         db      "UI init failed: no DSS memory", 0
+demo_theme:
+        db      17h, 1Fh, 1Eh, 1Ch, 70h, 4Fh, 18h, 08h, 1Eh, 10h
 demo_last_command:
         db      0
 

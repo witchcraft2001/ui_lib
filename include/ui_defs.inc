@@ -12,7 +12,20 @@ UI_COLOR_BUTTON         equ     70h
 UI_COLOR_BUTTON_FOCUS   equ     4Fh
 UI_COLOR_DISABLED       equ     18h
 UI_COLOR_SHADOW         equ     08h
+UI_COLOR_BUTTON_SHADOW  equ     10h
 UI_COLOR_HINT           equ     1Eh
+
+UI_THEME_DESKTOP        equ     0
+UI_THEME_WINDOW         equ     1
+UI_THEME_WINDOW_TITLE   equ     2
+UI_THEME_HOTKEY         equ     3
+UI_THEME_BUTTON         equ     4
+UI_THEME_BUTTON_FOCUS   equ     5
+UI_THEME_DISABLED       equ     6
+UI_THEME_SHADOW         equ     7
+UI_THEME_HINT           equ     8
+UI_THEME_BUTTON_SHADOW  equ     9
+UI_THEME_SIZE           equ     10
 
 UI_FLAG_DISABLED        equ     80h
 UI_FLAG_FOCUSED         equ     40h

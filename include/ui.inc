@@ -1,6 +1,7 @@
 ; Public include for applications using selected UI modules.
 ;
 ; Applications choose implementation modules explicitly, for example:
+;   include "src/core/theme.asm"
 ;   include "src/core/init.asm"
 ;   include "src/draw/text.asm"
 ;   include "src/widgets/window.asm"
@@ -44,3 +45,15 @@ UI_BUTTON_SIZE          equ     7
 
 UI_DIALOG_WINDOW        equ     0
 UI_DIALOG_BUTTONS       equ     2
+
+; Theme table for ui_set_theme:
+;   +0 desktop
+;   +1 window
+;   +2 window title
+;   +3 hotkey
+;   +4 button
+;   +5 focused button
+;   +6 disabled
+;   +7 window shadow
+;   +8 hint/status line
+;   +9 button shadow

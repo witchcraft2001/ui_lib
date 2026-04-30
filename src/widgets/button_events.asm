@@ -1,29 +1,5 @@
 ; Button event helpers.
 
-; ui_button_visible_width
-; In:  HL=button label ASCIIZ with optional '&'
-; Out: B=visible width
-; Clobbers: AF, HL
-ui_button_visible_width:
-        ld      b, 0
-.loop:
-        ld      a, (hl)
-        or      a
-        ret     z
-        cp      "&"
-        jr      z, .skip_marker
-        inc     b
-        inc     hl
-        jr      .loop
-.skip_marker:
-        inc     hl
-        ld      a, (hl)
-        or      a
-        ret     z
-        inc     b
-        inc     hl
-        jr      .loop
-
 ; ui_button_hit_test
 ; In:  IX=parent window, IY=button, A=mouse x, B=mouse y
 ; Out: CF=0 if hit, CF=1 if not hit

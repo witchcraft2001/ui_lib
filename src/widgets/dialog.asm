@@ -85,6 +85,7 @@ ui_dialog_key_buttons:
         add     hl, de
         jr      .loop
 .hit:
+        call    ui_dialog_press_button_key
         ld      de, UI_BUTTON_COMMAND
         add     hl, de
         ld      a, (hl)
@@ -122,6 +123,13 @@ ui_dialog_mouse_buttons:
         add     hl, de
         jr      .loop
 .hit:
+        push    hl
+        push    ix
+        push    hl
+        pop     iy
+        call    ui_button_press_mouse_feedback
+        pop     ix
+        pop     hl
         ld      de, UI_BUTTON_COMMAND
         add     hl, de
         ld      a, (hl)
@@ -132,4 +140,20 @@ ui_dialog_mouse_buttons:
 .miss:
         pop     ix
         scf
+        ret
+
+ui_dialog_press_button_key:
+        push    ix
+        push    hl
+        ld      e, (ix + UI_DIALOG_WINDOW)
+        ld      d, (ix + UI_DIALOG_WINDOW + 1)
+        push    de
+        pop     ix
+        pop     hl
+        push    hl
+        push    hl
+        pop     iy
+        call    ui_button_press_key_feedback
+        pop     hl
+        pop     ix
         ret
