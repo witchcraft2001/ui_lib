@@ -28,7 +28,7 @@
   - Изучены UI-related модули в `TASM`, `fformat`, `fm`, DSS/BIOS/manual.
   - Зафиксированы источники для адаптации и ключевые требования к API, UX, памяти и сборке.
 
-- [ ] Этап 1. Каркас репозитория и сборки
+- [x] Этап 1. Каркас репозитория и сборки
   - Создать `src/`, `include/`, `examples/`, `docs/ru/`, `docs/en/`, `tools/` или `run/`.
   - Добавить `sjasmplus` build scripts, listing output, demo build и disk image script по образцу `/Users/dmitry/dev/zx/sprinter/kode/run`.
   - Подготовить минимальный demo EXE и образ диска.

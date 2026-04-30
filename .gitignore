@@ -1,0 +1,8 @@
+build/
+*.lst
+*.LST
+*.map
+*.exp
+*.bin
+*.img
+*.IMG
