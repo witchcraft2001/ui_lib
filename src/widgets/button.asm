@@ -43,6 +43,15 @@ ui_draw_button:
         ld      a, (ui_theme_disabled)
 .have_color:
         ld      (ui_button_attr), a
+        ld      a, (iy + UI_BUTTON_FLAGS)
+        bit     6, a
+        jr      nz, .focused_hotkey
+        ld      a, (ui_theme_button_hotkey)
+        jr      .have_hotkey_color
+.focused_hotkey:
+        ld      a, (ui_theme_button_focus_hotkey)
+.have_hotkey_color:
+        ld      (ui_button_hotkey_attr), a
         call    ui_clear_button_area
         ld      a, (iy + UI_BUTTON_FLAGS)
         bit     5, a
@@ -76,7 +85,7 @@ ui_draw_button:
         push    hl
         push    de
         ld      (ui_button_char), a
-        ld      a, (ui_theme_hotkey)
+        ld      a, (ui_button_hotkey_attr)
         ld      b, a
         ld      a, (ui_button_char)
         call    ui_put_cell
@@ -104,6 +113,8 @@ ui_button_attr:
 ui_button_char:
         db      0
 ui_button_width:
+        db      0
+ui_button_hotkey_attr:
         db      0
 
 ui_clear_button_area:
@@ -188,6 +199,7 @@ ui_draw_button_shadow:
 ui_button_press_key_feedback:
         set     5, (iy + UI_BUTTON_FLAGS)
         call    ui_draw_button
+        call    ui_button_press_delay
         call    ui_wait_key_release
         res     5, (iy + UI_BUTTON_FLAGS)
         call    ui_draw_button
@@ -200,6 +212,7 @@ ui_button_press_key_feedback:
 ui_button_press_mouse_feedback:
         set     5, (iy + UI_BUTTON_FLAGS)
         call    ui_draw_button
+        call    ui_button_press_delay
         call    ui_wait_mouse_release
         res     5, (iy + UI_BUTTON_FLAGS)
         call    ui_draw_button
@@ -210,6 +223,8 @@ ui_wait_mouse_release:
         or      a
         ret     z
 .loop:
+        ld      c, BIOS_MOUSE_REFRESH
+        rst     30h
         ld      c, BIOS_MOUSE_READ
         rst     30h
         ret     c
@@ -237,4 +252,11 @@ ui_wait_key_release:
         ld      b, 20
         halt
         jr      .loop
+        ret
+
+ui_button_press_delay:
+        ld      b, 3
+.loop:
+        halt
+        djnz    .loop
         ret

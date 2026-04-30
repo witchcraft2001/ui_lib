@@ -192,7 +192,8 @@ demo_cancel_text:
 demo_no_memory_text:
         db      "UI init failed: no DSS memory", 0
 demo_theme:
-        db      17h, 1Fh, 1Eh, 1Ch, 70h, 4Fh, 18h, 08h, 1Eh, 10h
+        db      17h, 70h, 7Fh, 7Eh, 20h, 2Fh
+        db      78h, 08h, 1Eh, 70h, 2Eh, 2Eh
 demo_last_command:
         db      0
 

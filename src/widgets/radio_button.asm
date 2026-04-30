@@ -53,7 +53,7 @@ ui_radio_attr:
         ld      a, (ui_theme_window)
         ret
 .focused:
-        ld      a, (ui_theme_button_focus)
+        ld      a, (ui_theme_window_title)
         ret
 .disabled:
         ld      a, (ui_theme_disabled)

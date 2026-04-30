@@ -118,3 +118,5 @@ UI_RADIO_SIZE           equ     6
 ;   +7 window shadow
 ;   +8 hint/status line
 ;   +9 button shadow
+;   +10 button hotkey
+;   +11 focused button hotkey

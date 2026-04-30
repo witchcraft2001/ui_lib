@@ -12,6 +12,8 @@ ui_dialog_target_index:
         db      0
 ui_dialog_handled:
         db      0
+ui_dialog_last_focus_index:
+        db      0FFh
 
 ; ui_dialog_run
 ; In:  IX=dialog descriptor
@@ -24,6 +26,8 @@ ui_dialog_run:
         ld      (ui_dialog_focus_count), a
         or      a
         jr      z, .loop
+        ld      a, 0FFh
+        ld      (ui_dialog_last_focus_index), a
         xor     a
         ld      (ui_dialog_focus_index), a
         call    ui_dialog_set_focus
@@ -350,19 +354,42 @@ ui_dialog_clear_buttons:
         jr      .loop
 
 ui_dialog_set_focus:
+        ld      a, (ui_dialog_last_focus_index)
+        ld      b, a
+        ld      a, (ui_dialog_focus_index)
+        cp      b
+        ret     z
+        push    af
         call    ui_dialog_clear_focus
+        ld      a, (ui_dialog_last_focus_index)
+        cp      0FFh
+        jr      z, .skip_old_draw
+        call    ui_dialog_draw_focus_index
+.skip_old_draw:
+        pop     af
+        push    af
         ld      a, (ui_dialog_focus_index)
         ld      (ui_dialog_target_index), a
         call    ui_dialog_set_focus_check
-        jr      nc, .draw
+        jr      nc, .draw_new
         call    ui_dialog_set_focus_radio
-        jr      nc, .draw
+        jr      nc, .draw_new
         call    ui_dialog_set_focus_button
-.draw:
-        call    ui_dialog_draw_checks
-        call    ui_dialog_draw_radios
-        call    ui_dialog_draw_buttons
+.draw_new:
+        pop     af
+        ld      (ui_dialog_last_focus_index), a
+        call    ui_dialog_draw_focus_index
         ret
+
+ui_dialog_draw_focus_index:
+        cp      0FFh
+        ret     z
+        ld      (ui_dialog_target_index), a
+        call    ui_dialog_draw_focus_check
+        ret     nc
+        call    ui_dialog_draw_focus_radio
+        ret     nc
+        jp      ui_dialog_draw_focus_button
 
 ui_dialog_focus_match:
         ld      a, (ui_dialog_target_index)
@@ -474,6 +501,111 @@ ui_dialog_set_focus_button:
         ld      de, UI_BUTTON_FLAGS
         add     hl, de
         set     6, (hl)
+        pop     hl
+        or      a
+        ret
+
+ui_dialog_draw_focus_check:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_CHECKS)
+        ld      h, (ix + UI_DIALOG_CHECKS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
+        call    ui_dialog_parent_to_ix
+.loop:
+        ld      a, (hl)
+        cp      UI_CHECKS_END
+        scf
+        ret     z
+        push    hl
+        ld      de, UI_CHECK_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        call    ui_dialog_focus_match
+        jr      nc, .hit
+.next:
+        ld      de, UI_CHECK_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        push    hl
+        push    hl
+        pop     iy
+        call    ui_draw_checkbox
+        pop     hl
+        or      a
+        ret
+
+ui_dialog_draw_focus_radio:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_RADIOS)
+        ld      h, (ix + UI_DIALOG_RADIOS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
+        call    ui_dialog_parent_to_ix
+.loop:
+        ld      a, (hl)
+        cp      UI_RADIOS_END
+        scf
+        ret     z
+        push    hl
+        ld      de, UI_RADIO_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        call    ui_dialog_focus_match
+        jr      nc, .hit
+.next:
+        ld      de, UI_RADIO_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        push    hl
+        push    hl
+        pop     iy
+        call    ui_draw_radio_button
+        pop     hl
+        or      a
+        ret
+
+ui_dialog_draw_focus_button:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_BUTTONS)
+        ld      h, (ix + UI_DIALOG_BUTTONS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
+        call    ui_dialog_parent_to_ix
+.loop:
+        ld      a, (hl)
+        cp      UI_BUTTONS_END
+        scf
+        ret     z
+        push    hl
+        ld      de, UI_BUTTON_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        call    ui_dialog_focus_match
+        jr      nc, .hit
+.next:
+        ld      de, UI_BUTTON_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        push    hl
+        push    hl
+        pop     iy
+        call    ui_draw_button
         pop     hl
         or      a
         ret

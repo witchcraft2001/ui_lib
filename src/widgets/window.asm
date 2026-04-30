@@ -64,7 +64,7 @@ ui_draw_window_shadow:
 ui_draw_window_frame:
         ld      d, (ix + UI_WINDOW_Y)
         ld      e, (ix + UI_WINDOW_X)
-        ld      a, (ui_theme_window)
+        ld      a, (ui_theme_window_title)
         ld      b, a
         ld      a, 0C9h
         push    de
@@ -76,7 +76,7 @@ ui_draw_window_frame:
         ld      c, a
 .top:
         inc     e
-        ld      a, (ui_theme_window)
+        ld      a, (ui_theme_window_title)
         ld      b, a
         ld      a, 0CDh
         push    bc
@@ -88,7 +88,7 @@ ui_draw_window_frame:
         jr      nz, .top
 
         inc     e
-        ld      a, (ui_theme_window)
+        ld      a, (ui_theme_window_title)
         ld      b, a
         ld      a, 0BBh
         push    de
@@ -101,7 +101,7 @@ ui_draw_window_frame:
 .sides:
         inc     d
         ld      e, (ix + UI_WINDOW_X)
-        ld      a, (ui_theme_window)
+        ld      a, (ui_theme_window_title)
         ld      b, a
         ld      a, 0BAh
         push    bc
@@ -114,7 +114,7 @@ ui_draw_window_frame:
         dec     a
         add     a, e
         ld      e, a
-        ld      a, (ui_theme_window)
+        ld      a, (ui_theme_window_title)
         ld      b, a
         ld      a, 0BAh
         push    bc
@@ -127,7 +127,7 @@ ui_draw_window_frame:
 
         inc     d
         ld      e, (ix + UI_WINDOW_X)
-        ld      a, (ui_theme_window)
+        ld      a, (ui_theme_window_title)
         ld      b, a
         ld      a, 0C8h
         push    de
@@ -139,7 +139,7 @@ ui_draw_window_frame:
         ld      c, a
 .bottom:
         inc     e
-        ld      a, (ui_theme_window)
+        ld      a, (ui_theme_window_title)
         ld      b, a
         ld      a, 0CDh
         push    bc
@@ -151,7 +151,7 @@ ui_draw_window_frame:
         jr      nz, .bottom
 
         inc     e
-        ld      a, (ui_theme_window)
+        ld      a, (ui_theme_window_title)
         ld      b, a
         ld      a, 0BCh
         call    ui_put_cell

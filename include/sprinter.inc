@@ -20,3 +20,4 @@ DSS_WINCOPY     equ     Dss.WinCopy
 DSS_WINREST     equ     Dss.WinRest
 
 BIOS_MOUSE_READ equ     03h
+BIOS_MOUSE_REFRESH equ  83h

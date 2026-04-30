@@ -136,6 +136,6 @@ ui_draw_group_title:
         inc     a
         inc     a
         ld      e, a
-        ld      a, (ui_theme_window_title)
+        ld      a, (ui_theme_window)
         call    ui_print_z
         ret
