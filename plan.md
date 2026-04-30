@@ -11,6 +11,7 @@
 - `fformat`: взять компактную dialog/event модель, таблицы объектов, обработку `Button`, `InputLine`, `Radio`, `CheckBox`, `ListBox`, фокус через перестановку/маркировку объекта и save/restore области окна.
 - `fm`: взять более развитые и читаемые реализации `HMENU`, `UMENU`, `DIALOG`, `BUTTON`, `INLINE`, `LISTBOX`, палитры, тени, разделители, обработку мыши и hotkey-метку `&`.
 - `TASM`: взять UX-паттерны menu bar, status line с контекстными подсказками, диалоговые описатели, клавиатурную навигацию и mouse driver для текстового режима.
+- `texteditor`: использовать как дополнительный простой reference для псевдографического UI, окон, меню и печати через `Dss.WrChar`, `Dss.Clear`, `Bios.Lp_Print_Ln`; важный вывод: исполняемый код demo лучше размещать ниже `#8000`, как `#4180`, чтобы не конфликтовать с переключаемым окном памяти `#8000-#BFFF`.
 - `sprinter_ai_doc/manual`: использовать как основной источник документации и include-файлов с константами DSS/BIOS; зафиксировать `GETMEM #3D`, `FREEMEM #3E`, `SETWIN #38/#39/#3A/#3B`, `WINCOPY #59`, `WINREST #5A`, `SCANKEY #31`, mouse API через `RST #30`, экранный формат `char, attr`.
 - `sprinter_dss`/`sprinter_bios`: использовать как вторичный источник для сверки с оригинальными реализациями, портами, EXE/memory model и ограничениями DSS.
 
@@ -37,6 +38,7 @@
   - Реализовать `ui_init`, `ui_shutdown`, `ui_poll_event`, `ui_dispatch`, `ui_set_theme`, `ui_set_context_hint`.
   - Описать register contract, memory contract, compile-time options и модель подключения inline/page-call.
   - Сделать адаптеры DSS/BIOS: keyboard, mouse, window copy/restore, page allocation.
+  - Статус: начаты `ui_init`, `ui_shutdown`, `ui_poll_event`, DSS keyboard polling и BIOS mouse polling; полная документация contract еще не готова.
 
 - [ ] Этап 3. Отрисовка и тема Borland Pascal 7
   - Реализовать draw primitives: char/attr write, fill rect, frame, shadow, invert range, hotkey highlight.

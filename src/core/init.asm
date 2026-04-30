@@ -4,10 +4,16 @@
 UI_USE_DSS_WINDOW_BUFFER equ 0
         ENDIF
 
+        IFNDEF UI_SET_TEXT_MODE
+UI_SET_TEXT_MODE equ 1
+        ENDIF
+
 ui_context:
 ui_window_block_id:
         db      0
 ui_flags:
+        db      0
+ui_mouse_available:
         db      0
 
 ; ui_init
@@ -15,6 +21,23 @@ ui_flags:
 ; Out: CF=0 on success, CF=1 on allocation error
 ; Clobbers: AF, BC
 ui_init:
+        IF UI_SET_TEXT_MODE
+        ld      a, 03h             ; text mode 80x32
+        ld      b, 0               ; video page 0
+        ld      c, DSS_SETVMOD
+        rst     10h
+        ENDIF
+
+        xor     a
+        ld      (ui_mouse_available), a
+        ld      c, 00h             ; initialize mouse if present
+        rst     30h
+        jr      c, .mouse_done
+        ld      a, 1
+        ld      (ui_mouse_available), a
+        ld      c, 01h             ; show mouse cursor if available
+        rst     30h
+.mouse_done:
         IF UI_USE_DSS_WINDOW_BUFFER
         ld      b, 1
         ld      c, DSS_GETMEM
@@ -30,6 +53,12 @@ ui_init:
 ; Out: none
 ; Clobbers: AF, C
 ui_shutdown:
+        ld      a, (ui_mouse_available)
+        or      a
+        jr      z, .mouse_done
+        ld      c, 02h             ; hide mouse cursor if available
+        rst     30h
+.mouse_done:
         IF UI_USE_DSS_WINDOW_BUFFER
         ld      a, (ui_window_block_id)
         or      a

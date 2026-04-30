@@ -28,3 +28,9 @@ UI_EVENT_KEY            equ     02h
 UI_EVENT_COMBO_KEY      equ     03h
 UI_EVENT_COMMAND        equ     04h
 UI_EVENT_MESSAGE        equ     05h
+
+UI_KEY_ENTER           equ     0Dh
+UI_KEY_ESCAPE          equ     1Bh
+UI_KEY_TAB             equ     09h
+
+UI_BUTTONS_END         equ     0FFh

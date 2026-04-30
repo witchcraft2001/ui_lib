@@ -49,8 +49,10 @@ ui_draw_button:
 .normal:
         push    hl
         push    de
+        ld      (ui_button_char), a
         ld      a, (ui_button_attr)
         ld      b, a
+        ld      a, (ui_button_char)
         call    ui_put_cell
         pop     de
         pop     hl
@@ -59,4 +61,6 @@ ui_draw_button:
         jr      .loop
 
 ui_button_attr:
+        db      0
+ui_button_char:
         db      0

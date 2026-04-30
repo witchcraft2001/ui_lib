@@ -3,21 +3,49 @@
 ; ui_clear_screen
 ; In:  A=fill char, B=attribute
 ; Out: none
-; Clobbers: C, DE, HL
+; Clobbers: AF, BC, DE, HL
 ui_clear_screen:
-        ld      de, 0000h
-        ld      hl, UI_SCREEN_ROWS * 256 + UI_SCREEN_COLS
-        ld      c, DSS_CLEAR
-        rst     10h
+        ld      (ui_fill_char), a
+        ld      a, b
+        ld      (ui_fill_attr), a
+        ld      d, 0
+        ld      e, 0
+        ld      a, UI_SCREEN_ROWS
+        ld      (ui_clear_rows), a
+.row:
+        push    de
+        ld      c, Bios.Lp_Set_Place
+        rst     08h
+        ld      a, (ui_fill_attr)
+        ld      e, a
+        ld      a, (ui_fill_char)
+        ld      b, UI_SCREEN_COLS
+        ld      c, Bios.Lp_Print_All
+        rst     08h
+        pop     de
+        inc     d
+        ld      a, (ui_clear_rows)
+        dec     a
+        ld      (ui_clear_rows), a
+        jr      nz, .row
         ret
 
 ; ui_put_cell
 ; In:  A=char, B=attribute, D=row, E=column
 ; Out: none
-; Clobbers: C
+; Clobbers: AF, BC, HL
 ui_put_cell:
-        ld      c, DSS_WRCHAR
-        rst     10h
+        ld      (ui_put_char), a
+        ld      a, b
+        ld      (ui_put_attr), a
+        ld      c, Bios.Lp_Set_Place
+        rst     08h
+        ld      a, (ui_put_attr)
+        ld      e, a
+        ld      a, (ui_put_char)
+        ld      b, 1
+        ld      c, Bios.Lp_Print_All
+        rst     08h
         ret
 
 ; ui_print_z
@@ -32,8 +60,10 @@ ui_print_z:
         ret     z
         push    hl
         push    de
+        ld      (ui_print_char), a
         ld      a, (ui_print_attr)
         ld      b, a
+        ld      a, (ui_print_char)
         call    ui_put_cell
         pop     de
         pop     hl
@@ -42,6 +72,8 @@ ui_print_z:
         jr      .loop
 
 ui_print_attr:
+        db      0
+ui_print_char:
         db      0
 
 ; ui_fill_rect
@@ -54,37 +86,34 @@ ui_fill_rect:
         ld      (ui_fill_attr), a
         ld      a, e
         ld      (ui_fill_x), a
+        ld      a, l
+        ld      (ui_fill_w), a
+        or      a
+        ret     z
         ld      a, h
+        ld      (ui_fill_h), a
         or      a
         ret     z
 .row:
-        push    hl
         push    de
-        ld      a, l
-        or      a
-        jr      z, .row_done
-        ld      c, a
-.col:
+        ld      c, Bios.Lp_Set_Place
+        rst     08h
+        ld      a, (ui_fill_attr)
+        ld      e, a
         ld      a, (ui_fill_char)
         push    af
-        ld      a, (ui_fill_attr)
+        ld      a, (ui_fill_w)
         ld      b, a
         pop     af
-        push    bc
-        push    de
-        call    ui_put_cell
+        ld      c, Bios.Lp_Print_All
+        rst     08h
         pop     de
-        pop     bc
-        inc     e
-        dec     c
-        jr      nz, .col
-.row_done:
-        pop     de
-        pop     hl
         inc     d
         ld      a, (ui_fill_x)
         ld      e, a
-        dec     h
+        ld      a, (ui_fill_h)
+        dec     a
+        ld      (ui_fill_h), a
         jr      nz, .row
         ret
 
@@ -93,4 +122,14 @@ ui_fill_char:
 ui_fill_attr:
         db      0
 ui_fill_x:
+        db      0
+ui_fill_w:
+        db      0
+ui_fill_h:
+        db      0
+ui_clear_rows:
+        db      0
+ui_put_char:
+        db      0
+ui_put_attr:
         db      0

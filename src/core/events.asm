@@ -1,0 +1,91 @@
+; Event polling for keyboard and mouse.
+
+ui_event_type:
+        db      UI_EVENT_NONE
+ui_event_key:
+        db      0
+ui_event_mouse_x:
+        db      0
+ui_event_mouse_y:
+        db      0
+ui_event_command:
+        db      UI_CMD_NONE
+ui_mouse_prev_buttons:
+        db      0
+
+; ui_poll_event
+; Blocks until a keyboard or left-mouse-click event is available.
+; Out:
+;   ui_event_type = UI_EVENT_KEY or UI_EVENT_MOUSE
+;   ui_event_key or ui_event_mouse_x/ui_event_mouse_y filled
+; Clobbers: AF, BC, DE, HL
+ui_poll_event:
+.again:
+        call    ui_poll_mouse
+        ld      a, (ui_event_type)
+        or      a
+        ret     nz
+
+        ld      c, DSS_SCANKEY
+        rst     10h
+        jr      nz, .key
+        halt
+        jr      .again
+.key:
+        ld      (ui_event_key), a
+        ld      a, UI_EVENT_KEY
+        ld      (ui_event_type), a
+        ret
+
+; ui_poll_mouse
+; Creates one event on left button transition from released to pressed.
+; Clobbers: AF, BC, DE, HL
+ui_poll_mouse:
+        xor     a
+        ld      (ui_event_type), a
+
+        ld      a, (ui_mouse_available)
+        or      a
+        ret     z
+
+        ld      c, BIOS_MOUSE_READ
+        rst     30h
+        ret     c
+        and     01h
+        jr      z, .released
+
+        ld      b, a
+        ld      a, (ui_mouse_prev_buttons)
+        and     01h
+        ret     nz
+        ld      a, b
+        ld      (ui_mouse_prev_buttons), a
+
+        ; Convert pixel X in HL to text column.
+        srl     h
+        rr      l
+        srl     h
+        rr      l
+        srl     h
+        rr      l
+        ld      a, l
+        ld      (ui_event_mouse_x), a
+
+        ; Convert pixel Y in DE to text row.
+        srl     d
+        rr      e
+        srl     d
+        rr      e
+        srl     d
+        rr      e
+        ld      a, e
+        ld      (ui_event_mouse_y), a
+
+        ld      a, UI_EVENT_MOUSE
+        ld      (ui_event_type), a
+        ret
+
+.released:
+        xor     a
+        ld      (ui_mouse_prev_buttons), a
+        ret

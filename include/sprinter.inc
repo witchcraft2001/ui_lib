@@ -7,6 +7,7 @@
 
 DSS_WAITKEY     equ     Dss.WaitKey
 DSS_SCANKEY     equ     Dss.ScanKey
+DSS_SETVMOD     equ     Dss.SetVMod
 DSS_GETMEM      equ     Dss.GetMem
 DSS_FREEMEM     equ     Dss.FreeMem
 DSS_SETWIN3     equ     Dss.SetWin3

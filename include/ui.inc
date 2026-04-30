@@ -36,3 +36,11 @@ UI_BUTTON_FLAGS         equ     2
 UI_BUTTON_COMMAND       equ     3
 UI_BUTTON_HOTKEY        equ     4
 UI_BUTTON_LABEL         equ     5
+UI_BUTTON_SIZE          equ     7
+
+; Dialog descriptor:
+;   +0 word window descriptor
+;   +2 word buttons table
+
+UI_DIALOG_WINDOW        equ     0
+UI_DIALOG_BUTTONS       equ     2
