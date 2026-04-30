@@ -30,6 +30,7 @@ UI_THEME_SIZE           equ     10
 UI_FLAG_DISABLED        equ     80h
 UI_FLAG_FOCUSED         equ     40h
 UI_FLAG_PRESSED         equ     20h
+UI_FLAG_CHECKED         equ     01h
 
 UI_CMD_NONE             equ     00h
 UI_CMD_OK               equ     01h
@@ -45,5 +46,10 @@ UI_EVENT_MESSAGE        equ     05h
 UI_KEY_ENTER           equ     0Dh
 UI_KEY_ESCAPE          equ     1Bh
 UI_KEY_TAB             equ     09h
+UI_KEY_SPACE           equ     20h
 
 UI_BUTTONS_END         equ     0FFh
+UI_CHECKS_END          equ     0FFh
+UI_RADIOS_END          equ     0FFh
+UI_GROUPS_END          equ     0FFh
+UI_SEPARATORS_END      equ     0FFh

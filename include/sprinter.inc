@@ -4,6 +4,7 @@
 
         include "include/platform/dss_equ.inc"
         include "include/platform/bios_equ.inc"
+        include "include/platform/ports.inc"
 
 DSS_WAITKEY     equ     Dss.WaitKey
 DSS_SCANKEY     equ     Dss.ScanKey

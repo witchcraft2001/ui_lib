@@ -4,6 +4,8 @@ ui_event_type:
         db      UI_EVENT_NONE
 ui_event_key:
         db      0
+ui_event_mods:
+        db      0
 ui_event_mouse_x:
         db      0
 ui_event_mouse_y:
@@ -33,6 +35,8 @@ ui_poll_event:
         jr      .again
 .key:
         ld      (ui_event_key), a
+        ld      a, b
+        ld      (ui_event_mods), a
         ld      a, UI_EVENT_KEY
         ld      (ui_event_type), a
         ret

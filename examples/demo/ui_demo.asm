@@ -29,12 +29,16 @@ code_start:
         include "src/draw/text.asm"
         include "src/widgets/window.asm"
         include "src/widgets/button.asm"
+        include "src/widgets/group_box.asm"
+        include "src/widgets/separator.asm"
+        include "src/widgets/checkbox.asm"
+        include "src/widgets/radio_button.asm"
         include "src/widgets/button_events.asm"
         include "src/widgets/dialog.asm"
 
 demo_main:
         call    ui_init
-        jr      c, demo_no_memory
+        jp      c, demo_no_memory
         ld      hl, demo_theme
         call    ui_set_theme
 
@@ -48,6 +52,13 @@ demo_main:
         ld      ix, demo_dialog
         call    ui_dialog_run
         ld      (demo_last_command), a
+
+        ld      a, " "
+        push    af
+        ld      a, (ui_theme_desktop)
+        ld      b, a
+        pop     af
+        call    ui_clear_screen
 
         ld      ix, demo_window
         call    ui_draw_window
@@ -102,25 +113,70 @@ demo_no_memory:
         jr      demo_exit
 
 demo_window:
-        db      15, 6, 50, 15
+        db      15, 4, 50, 20
         dw      demo_title
 
 demo_buttons:
 demo_button_ok:
-        db      13, 11, UI_FLAG_FOCUSED, UI_CMD_OK, "o"
+        db      13, 15, UI_FLAG_FOCUSED, UI_CMD_OK, "o"
         dw      demo_ok_label
 
 demo_button_cancel:
-        db      28, 11, 0, UI_CMD_CANCEL, "c"
+        db      28, 15, 0, UI_CMD_CANCEL, "c"
         dw      demo_cancel_label
         db      UI_BUTTONS_END
 
 demo_dialog:
         dw      demo_window
         dw      demo_buttons
+        dw      demo_checks
+        dw      demo_radios
+        dw      demo_groups
+        dw      demo_separators
+
+demo_groups:
+demo_group_input:
+        db      3, 3, 21, 5
+        dw      demo_input_title
+
+demo_group_options:
+        db      26, 3, 20, 5
+        dw      demo_options_title
+        db      UI_GROUPS_END
+
+demo_separators:
+demo_separator:
+        db      3, 9, 44
+        db      UI_SEPARATORS_END
+
+demo_checks:
+demo_check_password:
+        db      5, 5, UI_FLAG_CHECKED, "p"
+        dw      demo_check_password_label
+        db      UI_CHECKS_END
+
+demo_radios:
+demo_radio_fast:
+        db      28, 5, UI_FLAG_CHECKED, "f"
+        dw      demo_radio_fast_label
+
+demo_radio_safe:
+        db      28, 6, 0, "s"
+        dw      demo_radio_safe_label
+        db      UI_RADIOS_END
 
 demo_title:
         db      " Sprinter UI Demo ", 0
+demo_input_title:
+        db      " Input ", 0
+demo_options_title:
+        db      " Options ", 0
+demo_check_password_label:
+        db      "&Password mask", 0
+demo_radio_fast_label:
+        db      "&Fast mode", 0
+demo_radio_safe_label:
+        db      "&Safe mode", 0
 demo_body_text:
         db      "Dialog command:", 0
 demo_ok_label:

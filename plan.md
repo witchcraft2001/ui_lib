@@ -44,16 +44,18 @@
   - Реализовать draw primitives: char/attr write, fill rect, frame, shadow, invert range, hotkey highlight.
   - Добавить стандартную палитру BP7-style и возможность пользовательской палитры.
   - Добавить separator: горизонтальная линия для меню и диалогов.
-  - Статус: реализованы базовые char/attr write, fill rect, window frame, window/button shadow, hotkey highlight и настраиваемая global theme; separator и invert range еще не готовы.
+  - Статус: реализованы базовые char/attr write, fill rect, window frame, window/button shadow, hotkey highlight, `GroupBox`, `Separator` и настраиваемая global theme; invert range еще не готов.
 
 - [ ] Этап 4. Focus, events и подсказки
   - Реализовать Tab/Shift+Tab, arrows, Enter, Esc, F10, Alt/hotkeys, mouse click/release.
   - Добавить disabled/hidden/focused/pressed states.
   - Реализовать status hint line в нижней строке, опционально отключаемую.
+  - Статус: реализована базовая dialog-навигация `Tab`, `Shift+Tab`/`Alt+Tab`, `Space`, `Enter`, `Esc`, hotkeys и mouse click для `Button`, `CheckBox`, `RadioButton`; arrows, F10 и полноценная hint-system еще не готовы.
 
 - [ ] Этап 5. Базовые виджеты
   - Реализовать `Button`, `TextField` с password mask, `CheckBox`, `RadioButton`, `GroupBox`.
   - Для каждого виджета сделать draw/event module, descriptor format, command output и demo case.
+  - Статус: реализованы `Button`, draw-only `GroupBox`, dialog-integrated `CheckBox` и `RadioButton`; `TextField` еще не готов.
 
 - [ ] Этап 6. Menu и item selector
   - Реализовать menu bar с dropdown-окнами, hotkeys, mouse support, separators и optional hints.
