@@ -35,6 +35,8 @@ ui_default_theme:
         db      UI_COLOR_BUTTON_SHADOW
         db      UI_COLOR_BUTTON_HOTKEY
         db      UI_COLOR_BUTTON_FOCUS_HOTKEY
+        db      UI_COLOR_TEXT_FIELD
+        db      UI_COLOR_TEXT_FIELD_FOCUS
 
 ui_theme:
 ui_theme_desktop:
@@ -61,3 +63,7 @@ ui_theme_button_hotkey:
         db      UI_COLOR_BUTTON_HOTKEY
 ui_theme_button_focus_hotkey:
         db      UI_COLOR_BUTTON_FOCUS_HOTKEY
+ui_theme_text_field:
+        db      UI_COLOR_TEXT_FIELD
+ui_theme_text_field_focus:
+        db      UI_COLOR_TEXT_FIELD_FOCUS

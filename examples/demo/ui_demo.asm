@@ -29,6 +29,7 @@ code_start:
         include "src/draw/text.asm"
         include "src/widgets/window.asm"
         include "src/widgets/button.asm"
+        include "src/widgets/text_field.asm"
         include "src/widgets/group_box.asm"
         include "src/widgets/separator.asm"
         include "src/widgets/checkbox.asm"
@@ -205,6 +206,7 @@ demo_dialog:
         dw      demo_radios
         dw      demo_groups
         dw      demo_separators
+        dw      demo_text_fields
 
 demo_groups:
 demo_group_input:
@@ -226,6 +228,13 @@ demo_check_password:
         db      5, 5, UI_FLAG_CHECKED, "p"
         dw      demo_check_password_label
         db      UI_CHECKS_END
+
+demo_text_fields:
+demo_text_name:
+        db      5, 6, 12, 0, "n"
+        dw      demo_text_name_buffer
+        db      12, 4
+        db      UI_TEXT_FIELDS_END
 
 demo_radios:
 demo_radio_fast:
@@ -270,9 +279,13 @@ demo_diag_label_cmd:
 demo_theme:
         db      17h, 70h, 7Fh, 7Eh, 20h, 2Fh
         db      78h, 08h, 1Eh, 70h, 2Eh, 2Eh
+        db      07h, 0Fh
 demo_last_command:
         db      0
 demo_diag_buf:
         ds      24, 0
+demo_text_name_buffer:
+        db      "demo", 0
+        ds      9, 0
 
 demo_end:

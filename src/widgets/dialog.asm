@@ -51,6 +51,9 @@ ui_dialog_run:
         jr      z, .tab
         cp      UI_KEY_ENTER
         jr      z, .activate
+        call    ui_dialog_text_key
+        jr      c, .loop
+        ld      a, (ui_event_key)
         cp      UI_KEY_SPACE
         jr      z, .activate
         call    ui_dialog_hotkey
@@ -85,6 +88,7 @@ ui_dialog_draw_all:
         call    ui_draw_window
         call    ui_dialog_draw_groups
         call    ui_dialog_draw_separators
+        call    ui_dialog_draw_text_fields
         call    ui_dialog_draw_checks
         call    ui_dialog_draw_radios
         call    ui_dialog_draw_buttons
@@ -141,6 +145,29 @@ ui_dialog_draw_separators:
         pop     ix
         pop     hl
         ld      de, UI_SEPARATOR_SIZE
+        add     hl, de
+        jr      .loop
+
+ui_dialog_draw_text_fields:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_TEXT_FIELDS)
+        ld      h, (ix + UI_DIALOG_TEXT_FIELDS + 1)
+        ld      a, h
+        or      l
+        ret     z
+        call    ui_dialog_parent_to_ix
+.loop:
+        ld      a, (hl)
+        cp      UI_TEXT_FIELDS_END
+        ret     z
+        push    hl
+        push    ix
+        push    hl
+        pop     iy
+        call    ui_draw_text_field
+        pop     ix
+        pop     hl
+        ld      de, UI_TEXT_SIZE
         add     hl, de
         jr      .loop
 
@@ -215,11 +242,35 @@ ui_dialog_draw_buttons:
 
 ui_dialog_count_focus:
         ld      b, 0
+        call    ui_dialog_count_text_fields
         call    ui_dialog_count_checks
         call    ui_dialog_count_radios
         call    ui_dialog_count_buttons
         ld      a, b
         ret
+
+ui_dialog_count_text_fields:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_TEXT_FIELDS)
+        ld      h, (ix + UI_DIALOG_TEXT_FIELDS + 1)
+        ld      a, h
+        or      l
+        ret     z
+.loop:
+        ld      a, (hl)
+        cp      UI_TEXT_FIELDS_END
+        ret     z
+        push    hl
+        ld      de, UI_TEXT_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        inc     b
+.next:
+        ld      de, UI_TEXT_SIZE
+        add     hl, de
+        jr      .loop
 
 ui_dialog_count_checks:
         ld      ix, (ui_dialog_active)
@@ -291,10 +342,31 @@ ui_dialog_count_buttons:
         jr      .loop
 
 ui_dialog_clear_focus:
+        call    ui_dialog_clear_text_fields
         call    ui_dialog_clear_checks
         call    ui_dialog_clear_radios
         call    ui_dialog_clear_buttons
         ret
+
+ui_dialog_clear_text_fields:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_TEXT_FIELDS)
+        ld      h, (ix + UI_DIALOG_TEXT_FIELDS + 1)
+        ld      a, h
+        or      l
+        ret     z
+.loop:
+        ld      a, (hl)
+        cp      UI_TEXT_FIELDS_END
+        ret     z
+        push    hl
+        ld      de, UI_TEXT_FLAGS
+        add     hl, de
+        res     6, (hl)
+        pop     hl
+        ld      de, UI_TEXT_SIZE
+        add     hl, de
+        jr      .loop
 
 ui_dialog_clear_checks:
         ld      ix, (ui_dialog_active)
@@ -374,6 +446,8 @@ ui_dialog_set_focus:
         push    af
         ld      a, (ui_dialog_focus_index)
         ld      (ui_dialog_target_index), a
+        call    ui_dialog_set_focus_text_field
+        jr      nc, .draw_new
         call    ui_dialog_set_focus_check
         jr      nc, .draw_new
         call    ui_dialog_set_focus_radio
@@ -402,6 +476,8 @@ ui_dialog_change_focus_to_current:
         call    ui_dialog_draw_focus_index
         ld      a, (ui_dialog_focus_index)
         ld      (ui_dialog_target_index), a
+        call    ui_dialog_set_focus_text_field
+        jr      nc, .draw_new
         call    ui_dialog_set_focus_check
         jr      nc, .draw_new
         call    ui_dialog_set_focus_radio
@@ -417,6 +493,8 @@ ui_dialog_draw_focus_index:
         cp      0FFh
         ret     z
         ld      (ui_dialog_target_index), a
+        call    ui_dialog_draw_focus_text_field
+        ret     nc
         call    ui_dialog_draw_focus_check
         ret     nc
         call    ui_dialog_draw_focus_radio
@@ -432,6 +510,40 @@ ui_dialog_focus_match:
         scf
         ret
 .hit:
+        or      a
+        ret
+
+ui_dialog_set_focus_text_field:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_TEXT_FIELDS)
+        ld      h, (ix + UI_DIALOG_TEXT_FIELDS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
+.loop:
+        ld      a, (hl)
+        cp      UI_TEXT_FIELDS_END
+        scf
+        ret     z
+        push    hl
+        ld      de, UI_TEXT_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        call    ui_dialog_focus_match
+        jr      nc, .hit
+.next:
+        ld      de, UI_TEXT_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        push    hl
+        ld      de, UI_TEXT_FLAGS
+        add     hl, de
+        set     6, (hl)
+        pop     hl
         or      a
         ret
 
@@ -533,6 +645,41 @@ ui_dialog_set_focus_button:
         ld      de, UI_BUTTON_FLAGS
         add     hl, de
         set     6, (hl)
+        pop     hl
+        or      a
+        ret
+
+ui_dialog_draw_focus_text_field:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_TEXT_FIELDS)
+        ld      h, (ix + UI_DIALOG_TEXT_FIELDS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
+        call    ui_dialog_parent_to_ix
+.loop:
+        ld      a, (hl)
+        cp      UI_TEXT_FIELDS_END
+        scf
+        ret     z
+        push    hl
+        ld      de, UI_TEXT_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        call    ui_dialog_focus_match
+        jr      nc, .hit
+.next:
+        ld      de, UI_TEXT_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        push    hl
+        push    hl
+        pop     iy
+        call    ui_draw_text_field
         pop     hl
         or      a
         ret
@@ -671,11 +818,77 @@ ui_dialog_tab:
         ld      (ui_dialog_focus_index), a
         jp      ui_dialog_set_focus
 
+ui_dialog_text_key:
+        ld      a, (ui_event_key)
+        cp      08h
+        jr      z, .editable
+        cp      7Fh
+        jr      z, .editable
+        cp      20h
+        jr      c, .not_handled
+        cp      7Fh
+        jr      nc, .not_handled
+.editable:
+        ld      a, (ui_dialog_focus_index)
+        ld      (ui_dialog_target_index), a
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_TEXT_FIELDS)
+        ld      h, (ix + UI_DIALOG_TEXT_FIELDS + 1)
+        ld      a, h
+        or      l
+        jr      z, .not_handled
+.loop:
+        ld      a, (hl)
+        cp      UI_TEXT_FIELDS_END
+        jr      z, .not_handled
+        push    hl
+        ld      de, UI_TEXT_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        call    ui_dialog_focus_match
+        jr      nc, .hit
+.next:
+        ld      de, UI_TEXT_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        push    hl
+        push    hl
+        pop     iy
+        ld      a, (ui_event_key)
+        cp      08h
+        jr      z, .backspace
+        cp      7Fh
+        jr      z, .backspace
+        call    ui_text_field_insert_char
+        jr      .redraw
+.backspace:
+        call    ui_text_field_backspace
+.redraw:
+        call    ui_dialog_parent_to_ix
+        pop     hl
+        push    hl
+        push    hl
+        pop     iy
+        call    ui_draw_text_field
+        pop     hl
+        scf
+        ret
+.not_handled:
+        or      a
+        ret
+
 ui_dialog_activate_focused_key:
         xor     a
         ld      (ui_dialog_handled), a
         ld      a, (ui_dialog_focus_index)
         ld      (ui_dialog_target_index), a
+        call    ui_dialog_activate_text_field
+        ld      a, (ui_dialog_handled)
+        or      a
+        jr      nz, .handled
         call    ui_dialog_activate_check
         ld      a, (ui_dialog_handled)
         or      a
@@ -687,6 +900,37 @@ ui_dialog_activate_focused_key:
         call    ui_dialog_activate_button_key
         ret
 .handled:
+        scf
+        ret
+
+ui_dialog_activate_text_field:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_TEXT_FIELDS)
+        ld      h, (ix + UI_DIALOG_TEXT_FIELDS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
+.loop:
+        ld      a, (hl)
+        cp      UI_TEXT_FIELDS_END
+        scf
+        ret     z
+        push    hl
+        ld      de, UI_TEXT_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        call    ui_dialog_focus_match
+        jr      nc, .hit
+.next:
+        ld      de, UI_TEXT_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        ld      a, 1
+        ld      (ui_dialog_handled), a
         scf
         ret
 
@@ -834,6 +1078,13 @@ ui_dialog_activate_button_key:
 ui_dialog_hotkey:
         xor     a
         ld      (ui_dialog_handled), a
+        call    ui_dialog_hotkey_text_field
+        push    af
+        ld      a, (ui_dialog_handled)
+        or      a
+        jr      nz, .handled
+        pop     af
+        ret     nc
         call    ui_dialog_hotkey_check
         push    af
         ld      a, (ui_dialog_handled)
@@ -870,6 +1121,54 @@ ui_dialog_key_match:
         or      a
         ret
 
+ui_dialog_hotkey_text_field:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_TEXT_FIELDS)
+        ld      h, (ix + UI_DIALOG_TEXT_FIELDS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
+        ld      b, 0
+.loop:
+        ld      a, (hl)
+        cp      UI_TEXT_FIELDS_END
+        scf
+        ret     z
+        push    hl
+        ld      de, UI_TEXT_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        push    hl
+        ld      de, UI_TEXT_HOTKEY
+        add     hl, de
+        ld      a, (hl)
+        or      a
+        jr      z, .empty_key
+        ld      a, (ui_event_key)
+        call    ui_dialog_key_match
+        jr      .tested
+.empty_key:
+        scf
+.tested:
+        pop     hl
+        jr      nc, .hit
+        inc     b
+.next:
+        ld      de, UI_TEXT_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        ld      a, b
+        ld      (ui_dialog_focus_index), a
+        call    ui_dialog_set_focus
+        ld      a, 1
+        ld      (ui_dialog_handled), a
+        scf
+        ret
+
 ui_dialog_hotkey_check:
         ld      ix, (ui_dialog_active)
         ld      l, (ix + UI_DIALOG_CHECKS)
@@ -879,6 +1178,7 @@ ui_dialog_hotkey_check:
         scf
         ret     z
         ld      b, 0
+        call    ui_dialog_count_text_fields
 .loop:
         ld      a, (hl)
         cp      UI_CHECKS_END
@@ -910,6 +1210,7 @@ ui_dialog_hotkey_check:
 
 ui_dialog_hotkey_radio:
         ld      b, 0
+        call    ui_dialog_count_text_fields
         call    ui_dialog_count_checks
         ld      ix, (ui_dialog_active)
         ld      l, (ix + UI_DIALOG_RADIOS)
@@ -949,6 +1250,7 @@ ui_dialog_hotkey_radio:
 
 ui_dialog_hotkey_button:
         ld      b, 0
+        call    ui_dialog_count_text_fields
         call    ui_dialog_count_checks
         call    ui_dialog_count_radios
         ld      ix, (ui_dialog_active)
@@ -992,6 +1294,13 @@ ui_dialog_mouse:
         ld      (ui_dialog_handled), a
         xor     a
         ld      (ui_dialog_current_index), a
+        call    ui_dialog_mouse_text_fields
+        push    af                       ; preserve CF from sub-call
+        ld      a, (ui_dialog_handled)
+        or      a
+        jr      nz, .handled
+        pop     af
+        ret     nc
         call    ui_dialog_mouse_checks
         push    af                       ; preserve CF from sub-call
         ld      a, (ui_dialog_handled)
@@ -1013,7 +1322,53 @@ ui_dialog_mouse:
         scf
         ret
 
+ui_dialog_mouse_text_fields:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_TEXT_FIELDS)
+        ld      h, (ix + UI_DIALOG_TEXT_FIELDS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
+        call    ui_dialog_parent_to_ix
+.loop:
+        ld      a, (hl)
+        cp      UI_TEXT_FIELDS_END
+        scf
+        ret     z
+        push    hl
+        ld      de, UI_TEXT_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .skip
+        push    hl
+        push    ix
+        push    hl
+        pop     iy
+        call    ui_dialog_text_field_hit_test
+        pop     ix
+        pop     hl
+        jr      nc, .hit
+        ld      a, (ui_dialog_current_index)
+        inc     a
+        ld      (ui_dialog_current_index), a
+.skip:
+        ld      de, UI_TEXT_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        call    ui_dialog_change_focus_to_current
+        ld      a, 1
+        ld      (ui_dialog_handled), a
+        scf
+        ret
+
 ui_dialog_mouse_checks:
+        ld      b, 0
+        call    ui_dialog_count_text_fields
+        ld      a, b
+        ld      (ui_dialog_current_index), a
         ld      ix, (ui_dialog_active)
         ld      l, (ix + UI_DIALOG_CHECKS)
         ld      h, (ix + UI_DIALOG_CHECKS + 1)
@@ -1056,6 +1411,7 @@ ui_dialog_mouse_checks:
 
 ui_dialog_mouse_radios:
         ld      b, 0
+        call    ui_dialog_count_text_fields
         call    ui_dialog_count_checks
         ld      a, b
         ld      (ui_dialog_current_index), a
@@ -1101,6 +1457,7 @@ ui_dialog_mouse_radios:
 
 ui_dialog_mouse_buttons:
         ld      b, 0
+        call    ui_dialog_count_text_fields
         call    ui_dialog_count_checks
         call    ui_dialog_count_radios
         ld      a, b
@@ -1195,6 +1552,31 @@ ui_dialog_activate_button_mouse:
         ld      a, (hl)
         ld      (ui_event_command), a
         or      a
+        ret
+
+ui_dialog_text_field_hit_test:
+        ld      a, (ix + UI_WINDOW_Y)
+        add     a, (iy + UI_TEXT_Y)
+        ld      b, a
+        ld      a, (ui_event_mouse_y)
+        cp      b
+        jr      nz, .miss
+        ld      a, (ix + UI_WINDOW_X)
+        add     a, (iy + UI_TEXT_X)
+        ld      d, a
+        ld      a, (ui_event_mouse_x)
+        cp      d
+        jr      c, .miss
+        ld      a, d
+        add     a, (iy + UI_TEXT_W)
+        ld      e, a
+        ld      a, (ui_event_mouse_x)
+        cp      e
+        jr      nc, .miss
+        or      a
+        ret
+.miss:
+        scf
         ret
 
 ui_dialog_checkbox_hit_test:

@@ -24,9 +24,13 @@ my_theme:
         db      08h     ; window shadow
         db      1Eh     ; hint/status line
         db      10h     ; button shadow
+        db      2Eh     ; button hotkey
+        db      2Eh     ; focused button hotkey
+        db      07h     ; text field
+        db      0Fh     ; focused text field
 
         ld      hl, my_theme
         call    ui_set_theme
 ```
 
-Table fields are also available through `UI_THEME_*` offsets and active variables such as `ui_theme_desktop`, `ui_theme_window`, `ui_theme_button`, `ui_theme_button_focus`, and `ui_theme_button_shadow`.
+The table has `UI_THEME_SIZE` bytes. Fields are also available through `UI_THEME_*` offsets and active variables such as `ui_theme_desktop`, `ui_theme_window`, `ui_theme_button`, `ui_theme_button_focus`, `ui_theme_button_shadow`, and `ui_theme_text_field`.

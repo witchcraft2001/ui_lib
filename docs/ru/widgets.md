@@ -51,13 +51,34 @@ check_label:
 
 Формат: `x, y, flags, hotkey, label_ptr`.
 
+## TextField
+
+`TextField` хранит редактируемый текст в ASCIIZ-буфере приложения. Дескриптор и буфер должны быть в RAM. `UI_FLAG_PASSWORD` маскирует отображение символами `*`.
+
+```asm
+text_example:
+        db      5, 6, 12, UI_FLAG_PASSWORD, "n"
+        dw      text_buffer
+        db      12, 0
+text_buffer:
+        db      "demo", 0
+        ds      9, 0
+
+        ld      ix, window_desc
+        ld      iy, text_example
+        call    ui_draw_text_field
+```
+
+Формат: `x, y, width, flags, hotkey, buffer_ptr, max_len, cursor`.
+
 ## Dialog Navigation
 
-`ui_dialog_run` поддерживает фокус для `CheckBox`, `RadioButton` и `Button`. Порядок обхода: checkbox table, radio table, button table.
+`ui_dialog_run` поддерживает фокус для `TextField`, `CheckBox`, `RadioButton` и `Button`. Порядок обхода: text field table, checkbox table, radio table, button table.
 
 - `Tab` переводит фокус вперед.
 - `Shift+Tab` или `Alt+Tab` переводит фокус назад.
-- `Space` и `Enter` активируют текущий элемент.
+- Печатные клавиши редактируют активное текстовое поле. `Backspace` удаляет последний символ.
+- `Space` вводит пробел в активное текстовое поле или активирует другой элемент. `Enter` активирует текущий элемент.
 - Hotkey из descriptor активирует элемент напрямую.
 - Мышь переводит фокус на элемент под курсором и активирует его.
 
@@ -71,6 +92,7 @@ dialog_example:
         dw      radios_table
         dw      groups_table
         dw      separators_table
+        dw      text_fields_table
 ```
 
 Таблицы завершаются байтом `UI_*_END`. Для отсутствующей таблицы можно указать `0`.

@@ -51,13 +51,34 @@ check_label:
 
 Format: `x, y, flags, hotkey, label_ptr`.
 
+## TextField
+
+`TextField` stores editable text in an application-owned ASCIIZ buffer. Keep the descriptor and buffer in RAM. `UI_FLAG_PASSWORD` masks displayed characters with `*`.
+
+```asm
+text_example:
+        db      5, 6, 12, UI_FLAG_PASSWORD, "n"
+        dw      text_buffer
+        db      12, 0
+text_buffer:
+        db      "demo", 0
+        ds      9, 0
+
+        ld      ix, window_desc
+        ld      iy, text_example
+        call    ui_draw_text_field
+```
+
+Format: `x, y, width, flags, hotkey, buffer_ptr, max_len, cursor`.
+
 ## Dialog Navigation
 
-`ui_dialog_run` supports focus for `CheckBox`, `RadioButton`, and `Button`. Traversal order is checkbox table, radio table, then button table.
+`ui_dialog_run` supports focus for `TextField`, `CheckBox`, `RadioButton`, and `Button`. Traversal order is text field table, checkbox table, radio table, then button table.
 
 - `Tab` moves focus forward.
 - `Shift+Tab` or `Alt+Tab` moves focus backward.
-- `Space` and `Enter` activate the focused control.
+- Printable keys edit the focused text field. `Backspace` deletes the last character.
+- `Space` edits a focused text field or activates other focused controls. `Enter` activates the focused control.
 - The descriptor hotkey activates a control directly.
 - Mouse click focuses and activates the control under the pointer.
 
@@ -71,6 +92,7 @@ dialog_example:
         dw      radios_table
         dw      groups_table
         dw      separators_table
+        dw      text_fields_table
 ```
 
 Tables end with `UI_*_END`. Use `0` for an absent table.

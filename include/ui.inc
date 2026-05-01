@@ -46,6 +46,7 @@ UI_BUTTON_SIZE          equ     7
 ;   +6 word radio button table, may be 0
 ;   +8 word group box table, may be 0
 ;   +10 word separator table, may be 0
+;   +12 word text field table, may be 0
 
 UI_DIALOG_WINDOW        equ     0
 UI_DIALOG_BUTTONS       equ     2
@@ -53,7 +54,8 @@ UI_DIALOG_CHECKS        equ     4
 UI_DIALOG_RADIOS        equ     6
 UI_DIALOG_GROUPS        equ     8
 UI_DIALOG_SEPARATORS    equ     10
-UI_DIALOG_SIZE          equ     12
+UI_DIALOG_TEXT_FIELDS   equ     12
+UI_DIALOG_SIZE          equ     14
 
 ; GroupBox descriptor:
 ;   +0 x relative to parent window
@@ -93,6 +95,26 @@ UI_CHECK_HOTKEY         equ     3
 UI_CHECK_LABEL          equ     4
 UI_CHECK_SIZE           equ     6
 
+; TextField descriptor:
+;   +0 x relative to parent window
+;   +1 y relative to parent window
+;   +2 width
+;   +3 flags, bit UI_FLAG_PASSWORD masks displayed text
+;   +4 hot key ASCII, 0 if none
+;   +5 word editable ASCIIZ buffer in RAM
+;   +7 max input length
+;   +8 cursor position, currently maintained at end of text
+
+UI_TEXT_X               equ     0
+UI_TEXT_Y               equ     1
+UI_TEXT_W               equ     2
+UI_TEXT_FLAGS           equ     3
+UI_TEXT_HOTKEY          equ     4
+UI_TEXT_BUFFER          equ     5
+UI_TEXT_MAXLEN          equ     7
+UI_TEXT_CURSOR          equ     8
+UI_TEXT_SIZE            equ     9
+
 ; RadioButton descriptor:
 ;   +0 x relative to parent window
 ;   +1 y relative to parent window
@@ -120,3 +142,5 @@ UI_RADIO_SIZE           equ     6
 ;   +9 button shadow
 ;   +10 button hotkey
 ;   +11 focused button hotkey
+;   +12 text field
+;   +13 focused text field

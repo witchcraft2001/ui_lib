@@ -16,6 +16,8 @@ UI_COLOR_BUTTON_SHADOW  equ     70h
 UI_COLOR_HINT           equ     1Eh
 UI_COLOR_BUTTON_HOTKEY  equ     2Eh
 UI_COLOR_BUTTON_FOCUS_HOTKEY equ 2Eh
+UI_COLOR_TEXT_FIELD     equ     07h
+UI_COLOR_TEXT_FIELD_FOCUS equ   0Fh
 
 UI_THEME_DESKTOP        equ     0
 UI_THEME_WINDOW         equ     1
@@ -29,12 +31,15 @@ UI_THEME_HINT           equ     8
 UI_THEME_BUTTON_SHADOW  equ     9
 UI_THEME_BUTTON_HOTKEY  equ     10
 UI_THEME_BUTTON_FOCUS_HOTKEY equ 11
-UI_THEME_SIZE           equ     12
+UI_THEME_TEXT_FIELD     equ     12
+UI_THEME_TEXT_FIELD_FOCUS equ   13
+UI_THEME_SIZE           equ     14
 
 UI_FLAG_DISABLED        equ     80h
 UI_FLAG_FOCUSED         equ     40h
 UI_FLAG_PRESSED         equ     20h
 UI_FLAG_CHECKED         equ     01h
+UI_FLAG_PASSWORD        equ     02h
 
 UI_CMD_NONE             equ     00h
 UI_CMD_OK               equ     01h
@@ -53,6 +58,7 @@ UI_KEY_TAB             equ     09h
 UI_KEY_SPACE           equ     20h
 
 UI_BUTTONS_END         equ     0FFh
+UI_TEXT_FIELDS_END     equ     0FFh
 UI_CHECKS_END          equ     0FFh
 UI_RADIOS_END          equ     0FFh
 UI_GROUPS_END          equ     0FFh
