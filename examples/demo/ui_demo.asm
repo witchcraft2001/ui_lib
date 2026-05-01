@@ -1,5 +1,7 @@
 ; Minimal UI library demo for Sprinter DSS.
 
+        DEFINE  UI_ENABLE_HINTS 1
+
         output  "build/demo/UI_DEMO.EXE"
 
 DEMO_LOAD_ADDR  equ     4200h
@@ -26,6 +28,7 @@ code_start:
         include "src/core/theme.asm"
         include "src/core/init.asm"
         include "src/core/events.asm"
+        include "src/core/hint.asm"
         include "src/draw/text.asm"
         include "src/widgets/window.asm"
         include "src/widgets/button.asm"
@@ -207,6 +210,15 @@ demo_dialog:
         dw      demo_groups
         dw      demo_separators
         dw      demo_text_fields
+        dw      demo_hints
+
+demo_hints:
+        dw      demo_hint_text_name
+        dw      demo_hint_password
+        dw      demo_hint_fast
+        dw      demo_hint_safe
+        dw      demo_hint_ok
+        dw      demo_hint_cancel
 
 demo_groups:
 demo_group_input:
@@ -266,6 +278,18 @@ demo_cancel_label:
         db      " &Cancel ", 0
 demo_hint:
         db      "Use Enter, O, C, Esc or mouse. Press any key to exit.", 0
+demo_hint_text_name:
+        db      "Name field: type text, use Left/Right/Home/End, Backspace/Delete.", 0
+demo_hint_password:
+        db      "Password mask: Space toggles masking for the input field.", 0
+demo_hint_fast:
+        db      "Fast mode: radio option selected with Space, hotkey or mouse.", 0
+demo_hint_safe:
+        db      "Safe mode: radio option selected with Space, hotkey or mouse.", 0
+demo_hint_ok:
+        db      "OK: Enter, Space, O or mouse confirms the dialog.", 0
+demo_hint_cancel:
+        db      "Cancel: Esc, C or mouse closes the dialog.", 0
 demo_ok_text:
         db      "[ OK ]      cmd=01h", 0
 demo_cancel_text:

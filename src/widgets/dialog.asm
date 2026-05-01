@@ -1,5 +1,9 @@
 ; Modal dialog loop with focus navigation.
 
+        IFNDEF UI_ENABLE_HINTS
+UI_ENABLE_HINTS equ 0
+        ENDIF
+
 ui_dialog_active:
         dw      0
 ui_dialog_focus_index:
@@ -91,6 +95,9 @@ ui_dialog_clear_idle_hook:
         push    af
         ld      hl, 0
         ld      (ui_idle_hook), hl
+        IF UI_ENABLE_HINTS
+        call    ui_clear_context_hint
+        ENDIF
         pop     af
         ret
 
@@ -491,6 +498,9 @@ ui_dialog_set_focus:
         pop     af
         ld      (ui_dialog_last_focus_index), a
         call    ui_dialog_draw_focus_index
+        IF UI_ENABLE_HINTS
+        call    ui_dialog_update_hint
+        ENDIF
         ret
 
 ; ui_dialog_change_focus_to_current
@@ -525,7 +535,33 @@ ui_dialog_change_focus_to_current:
         ld      a, (ui_dialog_focus_index)
         ld      (ui_dialog_last_focus_index), a
         call    ui_dialog_draw_focus_index
+        IF UI_ENABLE_HINTS
+        call    ui_dialog_update_hint
+        ENDIF
         ret
+
+        IF UI_ENABLE_HINTS
+ui_dialog_update_hint:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_HINTS)
+        ld      h, (ix + UI_DIALOG_HINTS + 1)
+        ld      a, h
+        or      l
+        jr      z, .clear
+        ld      a, (ui_dialog_focus_index)
+        add     a, a
+        ld      e, a
+        ld      d, 0
+        add     hl, de
+        ld      e, (hl)
+        inc     hl
+        ld      d, (hl)
+        push    de
+        pop     hl
+        jp      ui_set_context_hint
+.clear:
+        jp      ui_clear_context_hint
+        ENDIF
 
 ui_dialog_draw_focus_index:
         cp      0FFh

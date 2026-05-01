@@ -3,6 +3,7 @@
 
 UI_SCREEN_COLS          equ     80
 UI_SCREEN_ROWS          equ     32
+UI_HINT_LINE_ROW        equ     31
 
 UI_COLOR_DESKTOP        equ     17h     ; blue background, white text
 UI_COLOR_WINDOW         equ     70h     ; gray background, black text

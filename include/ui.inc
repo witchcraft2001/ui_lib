@@ -47,6 +47,7 @@ UI_BUTTON_SIZE          equ     7
 ;   +8 word group box table, may be 0
 ;   +10 word separator table, may be 0
 ;   +12 word text field table, may be 0
+;   +14 word hint table, may be 0 when UI_ENABLE_HINTS is enabled
 
 UI_DIALOG_WINDOW        equ     0
 UI_DIALOG_BUTTONS       equ     2
@@ -55,7 +56,8 @@ UI_DIALOG_RADIOS        equ     6
 UI_DIALOG_GROUPS        equ     8
 UI_DIALOG_SEPARATORS    equ     10
 UI_DIALOG_TEXT_FIELDS   equ     12
-UI_DIALOG_SIZE          equ     14
+UI_DIALOG_HINTS         equ     14
+UI_DIALOG_SIZE          equ     16
 
 ; GroupBox descriptor:
 ;   +0 x relative to parent window

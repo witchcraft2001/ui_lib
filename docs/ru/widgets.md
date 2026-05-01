@@ -81,6 +81,7 @@ text_buffer:
 - `Space` вводит пробел в активное текстовое поле или активирует другой элемент. `Enter` активирует текущий элемент.
 - Hotkey из descriptor активирует элемент напрямую.
 - Мышь переводит фокус на элемент под курсором и активирует его.
+- Если перед сборкой определить `DEFINE UI_ENABLE_HINTS 1` и подключить `src/core/hint.asm`, диалог будет обновлять нижнюю строку подсказки по текущему focus index.
 
 Расширенный dialog descriptor:
 
@@ -93,9 +94,29 @@ dialog_example:
         dw      groups_table
         dw      separators_table
         dw      text_fields_table
+        dw      hints_table          ; optional when UI_ENABLE_HINTS=1
+
+hints_table:
+        dw      text_field_hint
+        dw      checkbox_hint
+        dw      first_radio_hint
+        dw      second_radio_hint
+        dw      ok_button_hint
+        dw      cancel_button_hint
 ```
 
-Таблицы завершаются байтом `UI_*_END`. Для отсутствующей таблицы можно указать `0`.
+Таблицы завершаются байтом `UI_*_END`. Для отсутствующей таблицы можно указать `0`. Таблица подсказок содержит word-указатели в том же порядке, что и обход фокуса.
+
+## Status Hint Line
+
+`ui_set_context_hint` печатает ASCIIZ-строку в нижней строке экрана (`row 31`) цветом `ui_theme_hint`; `ui_clear_context_hint` очищает эту строку. Модуль зависит только от `src/draw/text.asm` и темы.
+
+```asm
+        include "src/core/hint.asm"
+
+        ld      hl, hint_text
+        call    ui_set_context_hint
+```
 
 ## RadioButton
 

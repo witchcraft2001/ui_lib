@@ -50,7 +50,7 @@
   - Реализовать Tab/Shift+Tab, arrows, Enter, Esc, F10, Alt/hotkeys, mouse click/release.
   - Добавить disabled/hidden/focused/pressed states.
   - Реализовать status hint line в нижней строке, опционально отключаемую.
-  - Статус: реализована базовая dialog-навигация `Tab`, `Shift+Tab`/`Alt+Tab`, `Space`, `Enter`, `Esc`, hotkeys и mouse click для `Button`, `CheckBox`, `RadioButton`; arrows, F10 и полноценная hint-system еще не готовы.
+  - Статус: реализована базовая dialog-навигация `Tab`, `Shift+Tab`/`Alt+Tab`, `Space`, `Enter`, `Esc`, hotkeys и mouse click для `Button`, `CheckBox`, `RadioButton`; `Left`/`Right`/`Home`/`End` и `Delete` работают для `TextField`; добавлен optional `UI_ENABLE_HINTS` status hint line с таблицей подсказок по focus index. F10 и menu hints еще не готовы.
 
 - [ ] Этап 5. Базовые виджеты
   - Реализовать `Button`, `TextField` с password mask, `CheckBox`, `RadioButton`, `GroupBox`.

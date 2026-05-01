@@ -81,6 +81,7 @@ Format: `x, y, width, flags, hotkey, buffer_ptr, max_len, cursor`.
 - `Space` edits a focused text field or activates other focused controls. `Enter` activates the focused control.
 - The descriptor hotkey activates a control directly.
 - Mouse click focuses and activates the control under the pointer.
+- If the build defines `DEFINE UI_ENABLE_HINTS 1` and includes `src/core/hint.asm`, the dialog updates the bottom hint line from the current focus index.
 
 Extended dialog descriptor:
 
@@ -93,9 +94,29 @@ dialog_example:
         dw      groups_table
         dw      separators_table
         dw      text_fields_table
+        dw      hints_table          ; optional when UI_ENABLE_HINTS=1
+
+hints_table:
+        dw      text_field_hint
+        dw      checkbox_hint
+        dw      first_radio_hint
+        dw      second_radio_hint
+        dw      ok_button_hint
+        dw      cancel_button_hint
 ```
 
-Tables end with `UI_*_END`. Use `0` for an absent table.
+Tables end with `UI_*_END`. Use `0` for an absent table. The hint table contains word pointers in the same order as focus traversal.
+
+## Status Hint Line
+
+`ui_set_context_hint` prints an ASCIIZ string on the bottom screen row (`row 31`) using `ui_theme_hint`; `ui_clear_context_hint` clears that row. The module depends only on `src/draw/text.asm` and the theme.
+
+```asm
+        include "src/core/hint.asm"
+
+        ld      hl, hint_text
+        call    ui_set_context_hint
+```
 
 ## RadioButton
 
