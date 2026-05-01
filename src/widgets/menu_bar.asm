@@ -210,6 +210,11 @@ ui_draw_menu_dropdown:
         bit     7, (hl)
         call    z, ui_menu_set_hotkey_attr
         call    nz, ui_menu_set_hotkey_disabled
+        push    hl
+        inc     hl
+        ld      a, (hl)
+        call    ui_menu_begin_label
+        pop     hl
         ld      a, (ui_menu_popup_x)
         inc     a
         ld      e, a
@@ -346,6 +351,8 @@ ui_draw_menu_bar_item:
         bit     7, (iy + UI_MENU_ITEM_FLAGS)
         call    z, ui_menu_set_hotkey_attr
         call    nz, ui_menu_set_hotkey_disabled
+        ld      a, (iy + UI_MENU_ITEM_HOTKEY)
+        call    ui_menu_begin_label
         ld      a, (ix + UI_MENU_BAR_Y)
         ld      d, a
         ld      a, (ix + UI_MENU_BAR_X)
@@ -576,6 +583,11 @@ ui_menu_draw_popup_row_by_index:
         bit     7, (hl)
         call    z, ui_menu_set_hotkey_attr
         call    nz, ui_menu_set_hotkey_disabled
+        push    hl
+        inc     hl
+        ld      a, (hl)
+        call    ui_menu_begin_label
+        pop     hl
         ld      a, (ui_menu_popup_x)
         inc     a
         ld      e, a
@@ -824,7 +836,11 @@ ui_menu_popup_hotkey:
         jr      nz, .next
         inc     hl
         ld      a, (ui_event_key)
-        cp      (hl)
+        call    ui_menu_fold_ascii
+        ld      b, a
+        ld      a, (hl)
+        call    ui_menu_fold_ascii
+        cp      b
         dec     hl
         jr      z, .hit
 .next:
@@ -853,7 +869,11 @@ ui_menu_top_hotkey:
         push    hl
         add     hl, de
         ld      a, (ui_event_key)
-        cp      (hl)
+        call    ui_menu_fold_ascii
+        ld      b, a
+        ld      a, (hl)
+        call    ui_menu_fold_ascii
+        cp      b
         pop     hl
         jr      nz, .next
         bit     7, (hl)
@@ -864,9 +884,11 @@ ui_menu_top_hotkey:
         add     hl, de
         jr      .loop
 .hit:
+        ld      a, c
+        ld      (ui_menu_candidate_index), a
         call    ui_menu_close_popup
         call    ui_menu_clear_focus
-        ld      a, c
+        ld      a, (ui_menu_candidate_index)
         ld      (ui_menu_focus_index), a
         call    ui_menu_draw_focus
         jp      ui_menu_open_popup
@@ -996,6 +1018,14 @@ ui_menu_visible_width:
         inc     d
         inc     hl
         jr      .loop
+
+ui_menu_fold_ascii:
+        cp      "A"
+        ret     c
+        cp      "Z" + 1
+        ret     nc
+        add     a, "a" - "A"
+        ret
 
 ui_menu_update_top_hint:
         IF UI_ENABLE_HINTS
@@ -1154,15 +1184,49 @@ ui_menu_print_label:
         ld      b, a
         ld      a, (ui_menu_char)
         call    ui_put_cell
+        ld      a, 1
+        ld      (ui_menu_hotkey_marked), a
         pop     de
         pop     hl
         inc     hl
         inc     e
         jr      ui_menu_print_label
 .normal:
+        ld      c, a
+        ld      a, (ui_menu_hotkey_marked)
+        or      a
+        ld      a, c
+        jr      nz, .normal_put
+        push    af
+        call    ui_menu_fold_ascii
+        ld      b, a
+        ld      a, (ui_menu_hotkey_char)
+        or      a
+        jr      z, .normal_no_auto
+        cp      b
+        jr      z, .normal_hotkey
+.normal_no_auto:
+        pop     af
+.normal_put:
         push    hl
         push    de
         call    ui_menu_put
+        pop     de
+        pop     hl
+        inc     hl
+        inc     e
+        jr      ui_menu_print_label
+.normal_hotkey:
+        pop     af
+        push    hl
+        push    de
+        ld      (ui_menu_char), a
+        ld      a, (ui_menu_hotkey_attr)
+        ld      b, a
+        ld      a, (ui_menu_char)
+        call    ui_put_cell
+        ld      a, 1
+        ld      (ui_menu_hotkey_marked), a
         pop     de
         pop     hl
         inc     hl
@@ -1179,8 +1243,22 @@ ui_menu_put:
 
 ui_menu_set_hotkey_attr:
         ld      a, (ui_menu_attr)
+        ld      (ui_menu_hotkey_base_attr), a
+        ld      a, (ui_theme_menu_bar_focus)
+        ld      b, a
+        ld      a, (ui_menu_hotkey_base_attr)
+        cp      b
+        jr      z, .bar_focus
+        ld      a, (ui_theme_hotkey)
+        jr      .merge
+.bar_focus:
+        ld      a, (ui_theme_button_focus_hotkey)
+.merge:
+        and     0Fh
+        ld      b, a
+        ld      a, (ui_menu_hotkey_base_attr)
         and     0F0h
-        or      0Eh
+        or      b
         ld      (ui_menu_hotkey_attr), a
         ret
 
@@ -1189,9 +1267,22 @@ ui_menu_set_hotkey_disabled:
         ld      (ui_menu_hotkey_attr), a
         ret
 
+ui_menu_begin_label:
+        call    ui_menu_fold_ascii
+        ld      (ui_menu_hotkey_char), a
+        xor     a
+        ld      (ui_menu_hotkey_marked), a
+        ret
+
 ui_menu_attr:
         db      0
 ui_menu_hotkey_attr:
+        db      0
+ui_menu_hotkey_base_attr:
+        db      0
+ui_menu_hotkey_char:
+        db      0
+ui_menu_hotkey_marked:
         db      0
 ui_menu_char:
         db      0

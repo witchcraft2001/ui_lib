@@ -30,8 +30,8 @@ file_popup:
 
 - `x` - колонка пункта относительно начала menu bar.
 - `flags` - `UI_FLAG_DISABLED` запрещает выбор пункта.
-- `hotkey` - ASCII-клавиша быстрого доступа.
-- `label_ptr` - ASCIIZ-строка; `&` подсвечивает горячую букву.
+- `hotkey` - ASCII-клавиша быстрого доступа, сравнивается без учета регистра.
+- `label_ptr` - ASCIIZ-строка; `&` явно задает подсвеченную букву. Если `&` нет, renderer подсветит первый символ, совпадающий с `hotkey`.
 - `popup_ptr` - таблица пунктов dropdown, `0` если popup нет.
 - `popup_width` - ширина dropdown вместе с рамкой.
 - `hint_ptr` - ASCIIZ-подсказка для status line, `0` если не нужна.
@@ -39,9 +39,9 @@ file_popup:
 Структура `Popup item`: `flags, hotkey, command, label_ptr, hint_ptr`.
 
 - `flags` - `UI_FLAG_SEPARATOR` рисует разделитель, `UI_FLAG_DISABLED` делает пункт неактивным.
-- `hotkey` - ASCII-клавиша внутри открытого dropdown.
+- `hotkey` - ASCII-клавиша внутри открытого dropdown, сравнивается без учета регистра.
 - `command` - байт команды, который вернет `ui_menu_bar_run`.
-- `label_ptr` - ASCIIZ-строка с `&` для hotkey.
+- `label_ptr` - ASCIIZ-строка с опциональным `&` для явной позиции hotkey.
 - `hint_ptr` - ASCIIZ-подсказка для status line.
 
 Цвета горизонтального и вертикального фокуса разделены в теме: `UI_THEME_MENU_BAR_FOCUS` и `UI_THEME_MENU_POPUP_FOCUS`. Disabled-пункты меню используют `UI_THEME_MENU_DISABLED`.

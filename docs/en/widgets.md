@@ -30,8 +30,8 @@ file_popup:
 
 - `x` is the item column relative to the menu bar origin.
 - `flags`: `UI_FLAG_DISABLED` prevents selection.
-- `hotkey` is the ASCII shortcut key.
-- `label_ptr` is an ASCIIZ label; `&` marks the highlighted hot character.
+- `hotkey` is the ASCII shortcut key, matched case-insensitively.
+- `label_ptr` is an ASCIIZ label; `&` explicitly marks the highlighted hot character. Without `&`, the renderer highlights the first character matching `hotkey`.
 - `popup_ptr` points to dropdown items, or `0` when no popup is attached.
 - `popup_width` is the dropdown width including the frame.
 - `hint_ptr` points to the status-line hint, or `0`.
@@ -39,9 +39,9 @@ file_popup:
 `Popup item` layout: `flags, hotkey, command, label_ptr, hint_ptr`.
 
 - `flags`: `UI_FLAG_SEPARATOR` draws a separator, `UI_FLAG_DISABLED` disables the row.
-- `hotkey` is the ASCII shortcut while the dropdown is open.
+- `hotkey` is the ASCII shortcut while the dropdown is open, matched case-insensitively.
 - `command` is the byte returned by `ui_menu_bar_run`.
-- `label_ptr` is an ASCIIZ label with optional `&` hotkey marker.
+- `label_ptr` is an ASCIIZ label with an optional `&` marker for the hotkey position.
 - `hint_ptr` points to the status-line hint.
 
 Horizontal and vertical focus colors are separate theme fields: `UI_THEME_MENU_BAR_FOCUS` and `UI_THEME_MENU_POPUP_FOCUS`. Disabled menu rows use `UI_THEME_MENU_DISABLED`.
