@@ -16,8 +16,8 @@ UI_COLOR_BUTTON_SHADOW  equ     70h
 UI_COLOR_HINT           equ     1Eh
 UI_COLOR_BUTTON_HOTKEY  equ     2Eh
 UI_COLOR_BUTTON_FOCUS_HOTKEY equ 2Eh
-UI_COLOR_TEXT_FIELD     equ     07h
-UI_COLOR_TEXT_FIELD_FOCUS equ   0Fh
+UI_COLOR_TEXT_FIELD     equ     17h
+UI_COLOR_TEXT_FIELD_FOCUS equ   1Fh
 
 UI_THEME_DESKTOP        equ     0
 UI_THEME_WINDOW         equ     1
@@ -56,6 +56,13 @@ UI_KEY_ENTER           equ     0Dh
 UI_KEY_ESCAPE          equ     1Bh
 UI_KEY_TAB             equ     09h
 UI_KEY_SPACE           equ     20h
+
+; DSS ScanKey returns Sprinter keyboard position codes in D.
+UI_SCAN_DELETE         equ     4Fh
+UI_SCAN_END            equ     51h
+UI_SCAN_LEFT           equ     54h
+UI_SCAN_RIGHT          equ     56h
+UI_SCAN_HOME           equ     57h
 
 UI_BUTTONS_END         equ     0FFh
 UI_TEXT_FIELDS_END     equ     0FFh

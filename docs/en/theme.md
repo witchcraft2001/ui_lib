@@ -26,8 +26,8 @@ my_theme:
         db      10h     ; button shadow
         db      2Eh     ; button hotkey
         db      2Eh     ; focused button hotkey
-        db      07h     ; text field
-        db      0Fh     ; focused text field
+        db      17h     ; text field, TASM-like blue input
+        db      1Fh     ; focused text field
 
         ld      hl, my_theme
         call    ui_set_theme

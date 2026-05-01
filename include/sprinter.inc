@@ -8,6 +8,7 @@
 
 DSS_WAITKEY     equ     Dss.WaitKey
 DSS_SCANKEY     equ     Dss.ScanKey
+DSS_CTRLKEY     equ     Dss.CtrlKey
 DSS_TESTKEY     equ     Dss.TestKey
 DSS_SETVMOD     equ     Dss.SetVMod
 DSS_GETMEM      equ     Dss.GetMem

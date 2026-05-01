@@ -16,6 +16,8 @@ ui_dialog_last_focus_index:
         db      0FFh
 ui_dialog_old_focus_index:
         db      0FFh
+ui_dialog_blink_counter:
+        db      16
 
 ; ui_dialog_run
 ; In:  IX=dialog descriptor
@@ -23,6 +25,8 @@ ui_dialog_old_focus_index:
 ; Clobbers: AF, BC, DE, HL, IX, IY
 ui_dialog_run:
         ld      (ui_dialog_active), ix
+        ld      hl, ui_dialog_idle
+        ld      (ui_idle_hook), hl
         call    ui_dialog_clear_focus
         call    ui_dialog_draw_all
         call    ui_dialog_count_focus
@@ -59,6 +63,7 @@ ui_dialog_run:
         call    ui_dialog_hotkey
         jr      c, .loop
         ld      a, (ui_event_command)
+        call    ui_dialog_clear_idle_hook
         ret
 .tab:
         call    ui_dialog_tab
@@ -67,16 +72,41 @@ ui_dialog_run:
         call    ui_dialog_activate_focused_key
         jr      c, .loop
         ld      a, (ui_event_command)
+        call    ui_dialog_clear_idle_hook
         ret
 
 .mouse:
         call    ui_dialog_mouse
         jr      c, .loop
         ld      a, (ui_event_command)
+        call    ui_dialog_clear_idle_hook
         ret
 
 .cancel:
         ld      a, UI_CMD_CANCEL
+        call    ui_dialog_clear_idle_hook
+        ret
+
+ui_dialog_clear_idle_hook:
+        push    af
+        ld      hl, 0
+        ld      (ui_idle_hook), hl
+        pop     af
+        ret
+
+ui_dialog_idle:
+        ld      a, (ui_dialog_blink_counter)
+        dec     a
+        ld      (ui_dialog_blink_counter), a
+        ret     nz
+        ld      a, 16
+        ld      (ui_dialog_blink_counter), a
+        ld      a, (ui_text_cursor_visible)
+        xor     1
+        ld      (ui_text_cursor_visible), a
+        ld      a, (ui_dialog_focus_index)
+        ld      (ui_dialog_target_index), a
+        call    ui_dialog_draw_focus_text_field
         ret
 
 ui_dialog_draw_all:
@@ -436,6 +466,10 @@ ui_dialog_set_focus:
         cp      b
         ret     z
         push    af
+        ld      a, 1
+        ld      (ui_text_cursor_visible), a
+        ld      a, 16
+        ld      (ui_dialog_blink_counter), a
         call    ui_dialog_clear_focus
         ld      a, (ui_dialog_last_focus_index)
         cp      0FFh
@@ -471,6 +505,10 @@ ui_dialog_change_focus_to_current:
         ld      (ui_dialog_focus_index), a
         cp      b
         ret     z
+        ld      a, 1
+        ld      (ui_text_cursor_visible), a
+        ld      a, 16
+        ld      (ui_dialog_blink_counter), a
         call    ui_dialog_clear_focus
         ld      a, (ui_dialog_old_focus_index)
         call    ui_dialog_draw_focus_index
@@ -819,15 +857,26 @@ ui_dialog_tab:
         jp      ui_dialog_set_focus
 
 ui_dialog_text_key:
+        ld      a, (ui_event_scan)
+        cp      UI_SCAN_LEFT
+        jr      z, .editable
+        cp      UI_SCAN_RIGHT
+        jr      z, .editable
+        cp      UI_SCAN_HOME
+        jr      z, .editable
+        cp      UI_SCAN_END
+        jr      z, .editable
+        cp      UI_SCAN_DELETE
+        jr      z, .editable
         ld      a, (ui_event_key)
         cp      08h
         jr      z, .editable
         cp      7Fh
         jr      z, .editable
         cp      20h
-        jr      c, .not_handled
+        jp      c, .not_handled
         cp      7Fh
-        jr      nc, .not_handled
+        jp      nc, .not_handled
 .editable:
         ld      a, (ui_dialog_focus_index)
         ld      (ui_dialog_target_index), a
@@ -857,6 +906,17 @@ ui_dialog_text_key:
         push    hl
         push    hl
         pop     iy
+        ld      a, (ui_event_scan)
+        cp      UI_SCAN_LEFT
+        jr      z, .left
+        cp      UI_SCAN_RIGHT
+        jr      z, .right
+        cp      UI_SCAN_HOME
+        jr      z, .home
+        cp      UI_SCAN_END
+        jr      z, .end
+        cp      UI_SCAN_DELETE
+        jr      z, .delete
         ld      a, (ui_event_key)
         cp      08h
         jr      z, .backspace
@@ -864,9 +924,28 @@ ui_dialog_text_key:
         jr      z, .backspace
         call    ui_text_field_insert_char
         jr      .redraw
+.left:
+        call    ui_text_field_cursor_left
+        jr      .redraw
+.right:
+        call    ui_text_field_cursor_right
+        jr      .redraw
+.home:
+        call    ui_text_field_cursor_home
+        jr      .redraw
+.end:
+        call    ui_text_field_cursor_end
+        jr      .redraw
+.delete:
+        call    ui_text_field_delete_at_cursor
+        jr      .redraw
 .backspace:
         call    ui_text_field_backspace
 .redraw:
+        ld      a, 1
+        ld      (ui_text_cursor_visible), a
+        ld      a, 16
+        ld      (ui_dialog_blink_counter), a
         call    ui_dialog_parent_to_ix
         pop     hl
         push    hl

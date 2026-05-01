@@ -53,7 +53,7 @@ Format: `x, y, flags, hotkey, label_ptr`.
 
 ## TextField
 
-`TextField` stores editable text in an application-owned ASCIIZ buffer. Keep the descriptor and buffer in RAM. `UI_FLAG_PASSWORD` masks displayed characters with `*`.
+`TextField` stores editable text in an application-owned ASCIIZ buffer. Keep the descriptor and buffer in RAM. `UI_FLAG_PASSWORD` masks displayed characters with `*`. The focused field blinks the cursor cell while preserving the character under it.
 
 ```asm
 text_example:
@@ -77,7 +77,7 @@ Format: `x, y, width, flags, hotkey, buffer_ptr, max_len, cursor`.
 
 - `Tab` moves focus forward.
 - `Shift+Tab` or `Alt+Tab` moves focus backward.
-- Printable keys edit the focused text field. `Backspace` deletes the last character.
+- Printable keys edit the focused text field. `Backspace` deletes before cursor, `Delete` deletes under cursor, and `Left`/`Right`/`Home`/`End` move the cursor.
 - `Space` edits a focused text field or activates other focused controls. `Enter` activates the focused control.
 - The descriptor hotkey activates a control directly.
 - Mouse click focuses and activates the control under the pointer.

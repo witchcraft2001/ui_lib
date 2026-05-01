@@ -55,7 +55,7 @@
 - [ ] Этап 5. Базовые виджеты
   - Реализовать `Button`, `TextField` с password mask, `CheckBox`, `RadioButton`, `GroupBox`.
   - Для каждого виджета сделать draw/event module, descriptor format, command output и demo case.
-  - Статус: реализованы `Button`, draw-only `GroupBox`, dialog-integrated `CheckBox`, `RadioButton` и базовый `TextField` с RAM-буфером, password-mask flag, hotkey-фокусом, mouse focus и простым вводом/Backspace; полноценный cursor movement/selection еще не готов.
+  - Статус: реализованы `Button`, draw-only `GroupBox`, dialog-integrated `CheckBox`, `RadioButton` и базовый `TextField` с RAM-буфером, password-mask flag, hotkey-фокусом, mouse focus, мигающим курсором, вводом, Backspace/Delete и Left/Right/Home/End; selection/scrolling еще не готовы.
 
 - [ ] Этап 6. Menu и item selector
   - Реализовать menu bar с dropdown-окнами, hotkeys, mouse support, separators и optional hints.

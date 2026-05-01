@@ -4,6 +4,8 @@ ui_event_type:
         db      UI_EVENT_NONE
 ui_event_key:
         db      0
+ui_event_scan:
+        db      0
 ui_event_mods:
         db      0
 ui_event_mouse_x:
@@ -16,6 +18,8 @@ ui_event_command:
         db      UI_CMD_NONE
 ui_mouse_prev_buttons:
         db      0
+ui_idle_hook:
+        dw      0
 
 ; ui_poll_event
 ; Blocks until a keyboard or left-mouse-click event is available.
@@ -30,18 +34,32 @@ ui_poll_event:
         or      a
         ret     nz
 
+        ld      c, DSS_CTRLKEY
+        rst     10h
+        or      a
+        jr      nz, .consume_key
+        halt
+        call    ui_call_idle_hook
+        jr      .again
+.consume_key:
         ld      c, DSS_SCANKEY
         rst     10h
-        jr      nz, .key
-        halt
-        jr      .again
 .key:
         ld      (ui_event_key), a
+        ld      a, d
+        ld      (ui_event_scan), a
         ld      a, b
         ld      (ui_event_mods), a
         ld      a, UI_EVENT_KEY
         ld      (ui_event_type), a
         ret
+
+ui_call_idle_hook:
+        ld      hl, (ui_idle_hook)
+        ld      a, h
+        or      l
+        ret     z
+        jp      (hl)
 
 ; ui_poll_mouse
 ; Creates one event on left button transition from released to pressed.
