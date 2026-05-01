@@ -37,6 +37,9 @@ ui_default_theme:
         db      UI_COLOR_BUTTON_FOCUS_HOTKEY
         db      UI_COLOR_TEXT_FIELD
         db      UI_COLOR_TEXT_FIELD_FOCUS
+        db      UI_COLOR_MENU_BAR_FOCUS
+        db      UI_COLOR_MENU_POPUP_FOCUS
+        db      UI_COLOR_MENU_DISABLED
 
 ui_theme:
 ui_theme_desktop:
@@ -67,3 +70,9 @@ ui_theme_text_field:
         db      UI_COLOR_TEXT_FIELD
 ui_theme_text_field_focus:
         db      UI_COLOR_TEXT_FIELD_FOCUS
+ui_theme_menu_bar_focus:
+        db      UI_COLOR_MENU_BAR_FOCUS
+ui_theme_menu_popup_focus:
+        db      UI_COLOR_MENU_POPUP_FOCUS
+ui_theme_menu_disabled:
+        db      UI_COLOR_MENU_DISABLED

@@ -58,6 +58,7 @@ UI_MENU_BAR_SIZE        equ     5
 ;   +3 word label ASCIIZ, '&' marks hot character
 ;   +5 word popup item table, may be 0
 ;   +7 popup width including frame
+;   +8 word hint ASCIIZ, may be 0
 
 UI_MENU_ITEM_X          equ     0
 UI_MENU_ITEM_FLAGS      equ     1
@@ -65,10 +66,11 @@ UI_MENU_ITEM_HOTKEY     equ     2
 UI_MENU_ITEM_LABEL      equ     3
 UI_MENU_ITEM_POPUP      equ     5
 UI_MENU_ITEM_POPUP_W    equ     7
-UI_MENU_ITEM_SIZE       equ     8
+UI_MENU_ITEM_HINT       equ     8
+UI_MENU_ITEM_SIZE       equ     10
 
 ; Menu popup item descriptor:
-;   +0 flags, bit 2 = separator
+;   +0 flags, bit 7 = disabled, bit 2 = separator
 ;   +1 hot key ASCII
 ;   +2 command
 ;   +3 word label ASCIIZ, '&' marks hot character
@@ -234,3 +236,6 @@ UI_RADIO_SIZE           equ     6
 ;   +11 focused button hotkey
 ;   +12 text field
 ;   +13 focused text field
+;   +14 focused horizontal menu item
+;   +15 focused vertical/dropdown menu item
+;   +16 disabled menu item

@@ -1,5 +1,9 @@
 ; Menu bar and dropdown drawing.
 
+        IFNDEF UI_ENABLE_HINTS
+UI_ENABLE_HINTS equ 0
+        ENDIF
+
 ; ui_menu_bar_run
 ; In:  IX=menu bar descriptor
 ; Out: A=command from selected popup item, or UI_CMD_NONE on Esc/outside click
@@ -18,6 +22,7 @@ ui_menu_bar_run:
         ld      (ui_menu_focus_index), a
         ld      (ui_menu_popup_open), a
         call    ui_menu_draw_focus
+        call    ui_menu_update_top_hint
 .loop:
         call    ui_poll_event
         ld      a, (ui_event_type)
@@ -82,11 +87,16 @@ ui_menu_bar_run:
         call    ui_menu_commit_selected
         jr      c, .loop
 .done:
+        push    af
+        IF UI_ENABLE_HINTS
+        call    ui_clear_context_hint
+        ENDIF
+        pop     af
         ret
 
 .mouse:
         call    ui_menu_mouse
-        jr      c, .loop
+        jp      c, .loop
         ret
 
 .cancel:
@@ -97,6 +107,9 @@ ui_menu_bar_run:
         jp      .loop
 .cancel_menu:
         call    ui_menu_clear_focus
+        IF UI_ENABLE_HINTS
+        call    ui_clear_context_hint
+        ENDIF
         ld      a, UI_CMD_NONE
         ret
 
@@ -178,6 +191,8 @@ ui_draw_menu_dropdown:
         push    hl
         bit     2, (hl)
         jr      nz, .separator
+        bit     7, (hl)
+        jr      nz, .disabled_row
         ld      a, (ui_menu_popup_row)
         ld      b, a
         ld      a, (ui_menu_popup_selected)
@@ -186,10 +201,36 @@ ui_draw_menu_dropdown:
         ld      a, (ui_theme_window)
         jr      .row_attr
 .focused_row:
-        ld      a, (ui_theme_button_focus)
+        ld      a, (ui_theme_menu_popup_focus)
+        jr      .row_attr
+.disabled_row:
+        ld      a, (ui_theme_menu_disabled)
 .row_attr:
         ld      (ui_menu_attr), a
-        call    ui_menu_set_hotkey_attr
+        bit     7, (hl)
+        call    z, ui_menu_set_hotkey_attr
+        call    nz, ui_menu_set_hotkey_disabled
+        ld      a, (ui_menu_popup_x)
+        inc     a
+        ld      e, a
+        ld      a, (ui_menu_popup_y)
+        inc     a
+        ld      b, a
+        ld      a, (ui_menu_popup_row)
+        add     a, b
+        ld      d, a
+        ld      h, 1
+        ld      a, (iy + UI_MENU_ITEM_POPUP_W)
+        sub     2
+        ld      l, a
+        ld      a, " "
+        push    af
+        ld      a, (ui_menu_attr)
+        ld      b, a
+        pop     af
+        call    ui_fill_rect
+        pop     hl
+        push    hl
         ld      de, UI_MENU_POPUP_LABEL
         add     hl, de
         ld      e, (hl)
@@ -240,7 +281,7 @@ ui_draw_menu_dropdown:
         ld      a, (ui_menu_popup_row)
         inc     a
         ld      (ui_menu_popup_row), a
-        jr      .row
+        jp      .row
 
 ; ui_clear_menu_dropdown
 ; In:  IX=menu bar descriptor, IY=menu bar item descriptor
@@ -289,15 +330,22 @@ ui_clear_menu_dropdown_area:
 ; Out: none
 ; Clobbers: AF, BC, DE, HL
 ui_draw_menu_bar_item:
+        bit     7, (iy + UI_MENU_ITEM_FLAGS)
+        jr      nz, .disabled
         or      a
         jr      nz, .focused
         ld      a, (ui_theme_window)
         jr      .have_attr
 .focused:
-        ld      a, (ui_theme_button_focus)
+        ld      a, (ui_theme_menu_bar_focus)
+        jr      .have_attr
+.disabled:
+        ld      a, (ui_theme_menu_disabled)
 .have_attr:
         ld      (ui_menu_attr), a
-        call    ui_menu_set_hotkey_attr
+        bit     7, (iy + UI_MENU_ITEM_FLAGS)
+        call    z, ui_menu_set_hotkey_attr
+        call    nz, ui_menu_set_hotkey_disabled
         ld      a, (ix + UI_MENU_BAR_Y)
         ld      d, a
         ld      a, (ix + UI_MENU_BAR_X)
@@ -401,7 +449,8 @@ ui_menu_open_popup:
         ld      (ui_menu_popup_selected), a
         ld      a, 1
         ld      (ui_menu_popup_open), a
-        jp      ui_draw_menu_dropdown
+        call    ui_draw_menu_dropdown
+        jp      ui_menu_update_popup_hint
 
 ui_menu_close_popup:
         ld      a, (ui_menu_popup_open)
@@ -410,6 +459,7 @@ ui_menu_close_popup:
         call    ui_clear_menu_dropdown_state
         xor     a
         ld      (ui_menu_popup_open), a
+        call    ui_menu_update_top_hint
         ret
 
 ui_menu_focus_next:
@@ -417,6 +467,9 @@ ui_menu_focus_next:
         ld      (ui_menu_keep_popup), a
         call    ui_menu_close_popup
         call    ui_menu_clear_focus
+        ld      a, (ui_menu_item_count_value)
+        ld      (ui_menu_focus_attempts), a
+.step:
         ld      a, (ui_menu_focus_index)
         inc     a
         ld      b, a
@@ -427,7 +480,15 @@ ui_menu_focus_next:
 .store:
         ld      a, b
         ld      (ui_menu_focus_index), a
+        call    ui_menu_focus_selectable
+        jr      nc, .draw
+        ld      a, (ui_menu_focus_attempts)
+        dec     a
+        ld      (ui_menu_focus_attempts), a
+        jr      nz, .step
+.draw:
         call    ui_menu_draw_focus
+        call    ui_menu_update_top_hint
         ld      a, (ui_menu_keep_popup)
         or      a
         ret     z
@@ -438,6 +499,9 @@ ui_menu_focus_prev:
         ld      (ui_menu_keep_popup), a
         call    ui_menu_close_popup
         call    ui_menu_clear_focus
+        ld      a, (ui_menu_item_count_value)
+        ld      (ui_menu_focus_attempts), a
+.step:
         ld      a, (ui_menu_focus_index)
         or      a
         jr      nz, .dec
@@ -445,11 +509,32 @@ ui_menu_focus_prev:
 .dec:
         dec     a
         ld      (ui_menu_focus_index), a
+        call    ui_menu_focus_selectable
+        jr      nc, .draw
+        ld      a, (ui_menu_focus_attempts)
+        dec     a
+        ld      (ui_menu_focus_attempts), a
+        jr      nz, .step
+.draw:
         call    ui_menu_draw_focus
+        call    ui_menu_update_top_hint
         ld      a, (ui_menu_keep_popup)
         or      a
         ret     z
         jp      ui_menu_open_popup
+
+ui_menu_focus_selectable:
+        ld      ix, (ui_menu_bar_ptr)
+        ld      a, (ui_menu_focus_index)
+        call    ui_menu_find_item
+        ret     c
+        bit     7, (iy + UI_MENU_ITEM_FLAGS)
+        jr      nz, .disabled
+        or      a
+        ret
+.disabled:
+        scf
+        ret
 
 ui_menu_redraw_popup:
         ld      ix, (ui_menu_bar_ptr)
@@ -462,7 +547,8 @@ ui_menu_redraw_popup_selection:
         ld      a, (ui_menu_old_popup_selected)
         call    ui_menu_draw_popup_row_by_index
         ld      a, (ui_menu_popup_selected)
-        jp      ui_menu_draw_popup_row_by_index
+        call    ui_menu_draw_popup_row_by_index
+        jp      ui_menu_update_popup_hint
 
 ui_menu_draw_popup_row_by_index:
         ld      (ui_menu_popup_row), a
@@ -471,6 +557,8 @@ ui_menu_draw_popup_row_by_index:
         push    hl
         bit     2, (hl)
         jr      nz, .separator
+        bit     7, (hl)
+        jr      nz, .disabled_row
         ld      a, (ui_menu_popup_row)
         ld      b, a
         ld      a, (ui_menu_popup_selected)
@@ -479,10 +567,15 @@ ui_menu_draw_popup_row_by_index:
         ld      a, (ui_theme_window)
         jr      .row_attr
 .focused_row:
-        ld      a, (ui_theme_button_focus)
+        ld      a, (ui_theme_menu_popup_focus)
+        jr      .row_attr
+.disabled_row:
+        ld      a, (ui_theme_menu_disabled)
 .row_attr:
         ld      (ui_menu_attr), a
-        call    ui_menu_set_hotkey_attr
+        bit     7, (hl)
+        call    z, ui_menu_set_hotkey_attr
+        call    nz, ui_menu_set_hotkey_disabled
         ld      a, (ui_menu_popup_x)
         inc     a
         ld      e, a
@@ -557,7 +650,11 @@ ui_menu_popup_first:
         cp      UI_MENU_POPUP_END
         jr      z, .none
         bit     2, (hl)
-        jr      z, .found
+        jr      nz, .skip
+        bit     7, (hl)
+        jr      nz, .skip
+        jr      .found
+.skip:
         inc     c
         ld      de, UI_MENU_POPUP_SIZE
         add     hl, de
@@ -591,17 +688,23 @@ ui_menu_find_popup_item:
 ui_menu_popup_next:
         ld      a, (ui_menu_popup_open)
         or      a
-        ret     z
+        jr      nz, .open
+        jp      ui_menu_open_popup
+.open:
         ld      iy, (ui_menu_active_item_ptr)
         call    ui_menu_popup_count
         ld      a, c
         or      a
         ret     z
-        ld      b, a
+        ld      (ui_menu_popup_count_value), a
+        ld      (ui_menu_popup_attempts), a
         ld      a, (ui_menu_popup_selected)
 .loop:
         inc     a
+        ld      b, a
+        ld      a, (ui_menu_popup_count_value)
         cp      b
+        ld      a, b
         jr      nz, .check
         xor     a
 .check:
@@ -610,29 +713,42 @@ ui_menu_popup_next:
         pop     af
         ret     c
         bit     2, (hl)
-        jr      nz, .loop
+        jr      nz, .skip
+        bit     7, (hl)
+        jr      nz, .skip
         ld      b, a
         ld      a, (ui_menu_popup_selected)
         ld      (ui_menu_old_popup_selected), a
         ld      a, b
         ld      (ui_menu_popup_selected), a
         jp      ui_menu_redraw_popup_selection
+.skip:
+        ld      c, a
+        ld      a, (ui_menu_popup_attempts)
+        dec     a
+        ld      (ui_menu_popup_attempts), a
+        ret     z
+        ld      a, c
+        jr      .loop
 
 ui_menu_popup_prev:
         ld      a, (ui_menu_popup_open)
         or      a
-        ret     z
+        jr      nz, .open
+        jp      ui_menu_open_popup
+.open:
         ld      iy, (ui_menu_active_item_ptr)
         call    ui_menu_popup_count
         ld      a, c
         or      a
         ret     z
-        ld      b, a
+        ld      (ui_menu_popup_count_value), a
+        ld      (ui_menu_popup_attempts), a
         ld      a, (ui_menu_popup_selected)
 .loop:
         or      a
         jr      nz, .dec
-        ld      a, b
+        ld      a, (ui_menu_popup_count_value)
 .dec:
         dec     a
         push    af
@@ -640,13 +756,23 @@ ui_menu_popup_prev:
         pop     af
         ret     c
         bit     2, (hl)
-        jr      nz, .loop
+        jr      nz, .skip
+        bit     7, (hl)
+        jr      nz, .skip
         ld      b, a
         ld      a, (ui_menu_popup_selected)
         ld      (ui_menu_old_popup_selected), a
         ld      a, b
         ld      (ui_menu_popup_selected), a
         jp      ui_menu_redraw_popup_selection
+.skip:
+        ld      c, a
+        ld      a, (ui_menu_popup_attempts)
+        dec     a
+        ld      (ui_menu_popup_attempts), a
+        ret     z
+        ld      a, c
+        jr      .loop
 
 ui_menu_commit_selected:
         ld      a, (ui_menu_popup_open)
@@ -661,6 +787,8 @@ ui_menu_commit_selected:
         call    ui_menu_find_popup_item
         ret     c
         bit     2, (hl)
+        jr      nz, .ignore
+        bit     7, (hl)
         jr      nz, .ignore
         ld      de, UI_MENU_POPUP_COMMAND
         add     hl, de
@@ -691,6 +819,8 @@ ui_menu_popup_hotkey:
         cp      UI_MENU_POPUP_END
         jr      z, .missing
         bit     2, (hl)
+        jr      nz, .next
+        bit     7, (hl)
         jr      nz, .next
         inc     hl
         ld      a, (ui_event_key)
@@ -725,7 +855,10 @@ ui_menu_top_hotkey:
         ld      a, (ui_event_key)
         cp      (hl)
         pop     hl
+        jr      nz, .next
+        bit     7, (hl)
         jr      z, .hit
+.next:
         inc     c
         ld      de, UI_MENU_ITEM_SIZE
         add     hl, de
@@ -804,6 +937,8 @@ ui_menu_mouse_bar:
         push    hl
         push    hl
         pop     iy
+        bit     7, (iy + UI_MENU_ITEM_FLAGS)
+        jr      nz, .next_pop
         ld      a, (ix + UI_MENU_BAR_X)
         add     a, (iy + UI_MENU_ITEM_X)
         ld      (ui_menu_item_left), a
@@ -861,6 +996,43 @@ ui_menu_visible_width:
         inc     d
         inc     hl
         jr      .loop
+
+ui_menu_update_top_hint:
+        IF UI_ENABLE_HINTS
+        ld      iy, (ui_menu_active_item_ptr)
+        ld      l, (iy + UI_MENU_ITEM_HINT)
+        ld      h, (iy + UI_MENU_ITEM_HINT + 1)
+        ld      a, h
+        or      l
+        jp      nz, ui_set_context_hint
+        jp      ui_clear_context_hint
+        ELSE
+        ret
+        ENDIF
+
+ui_menu_update_popup_hint:
+        IF UI_ENABLE_HINTS
+        ld      a, (ui_menu_popup_open)
+        or      a
+        jr      z, ui_menu_update_top_hint
+        ld      iy, (ui_menu_active_item_ptr)
+        ld      a, (ui_menu_popup_selected)
+        call    ui_menu_find_popup_item
+        jr      c, ui_menu_update_top_hint
+        ld      de, UI_MENU_POPUP_HINT
+        add     hl, de
+        ld      e, (hl)
+        inc     hl
+        ld      d, (hl)
+        ld      h, d
+        ld      l, e
+        ld      a, h
+        or      l
+        jp      nz, ui_set_context_hint
+        jp      ui_clear_context_hint
+        ELSE
+        ret
+        ENDIF
 
 ui_draw_menu_popup_frame:
         ld      a, (ui_theme_window)
@@ -1012,6 +1184,11 @@ ui_menu_set_hotkey_attr:
         ld      (ui_menu_hotkey_attr), a
         ret
 
+ui_menu_set_hotkey_disabled:
+        ld      a, (ui_menu_attr)
+        ld      (ui_menu_hotkey_attr), a
+        ret
+
 ui_menu_attr:
         db      0
 ui_menu_hotkey_attr:
@@ -1043,6 +1220,12 @@ ui_menu_old_popup_selected:
 ui_menu_popup_open:
         db      0
 ui_menu_keep_popup:
+        db      0
+ui_menu_focus_attempts:
+        db      0
+ui_menu_popup_attempts:
+        db      0
+ui_menu_popup_count_value:
         db      0
 ui_menu_mouse_x:
         db      0

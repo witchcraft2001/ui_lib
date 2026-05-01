@@ -28,9 +28,12 @@ my_theme:
         db      2Eh     ; focused button hotkey
         db      17h     ; text field, TASM-like blue input
         db      1Fh     ; focused text field
+        db      2Fh     ; focused horizontal menu item
+        db      0Fh     ; focused dropdown menu item
+        db      78h     ; disabled menu item
 
         ld      hl, my_theme
         call    ui_set_theme
 ```
 
-Таблица содержит `UI_THEME_SIZE` байт. Поля также доступны через смещения `UI_THEME_*` и через текущие переменные `ui_theme_desktop`, `ui_theme_window`, `ui_theme_button`, `ui_theme_button_focus`, `ui_theme_button_shadow`, `ui_theme_text_field` и другие.
+Таблица содержит `UI_THEME_SIZE` байт. Поля также доступны через смещения `UI_THEME_*` и через текущие переменные `ui_theme_desktop`, `ui_theme_window`, `ui_theme_button`, `ui_theme_button_focus`, `ui_theme_menu_bar_focus`, `ui_theme_menu_popup_focus`, `ui_theme_menu_disabled` и другие.

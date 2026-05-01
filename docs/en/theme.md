@@ -28,9 +28,12 @@ my_theme:
         db      2Eh     ; focused button hotkey
         db      17h     ; text field, TASM-like blue input
         db      1Fh     ; focused text field
+        db      2Fh     ; focused horizontal menu item
+        db      0Fh     ; focused dropdown menu item
+        db      78h     ; disabled menu item
 
         ld      hl, my_theme
         call    ui_set_theme
 ```
 
-The table has `UI_THEME_SIZE` bytes. Fields are also available through `UI_THEME_*` offsets and active variables such as `ui_theme_desktop`, `ui_theme_window`, `ui_theme_button`, `ui_theme_button_focus`, `ui_theme_button_shadow`, and `ui_theme_text_field`.
+The table has `UI_THEME_SIZE` bytes. Fields are also available through `UI_THEME_*` offsets and active variables such as `ui_theme_desktop`, `ui_theme_window`, `ui_theme_button`, `ui_theme_button_focus`, `ui_theme_menu_bar_focus`, `ui_theme_menu_popup_focus`, `ui_theme_menu_disabled`, and others.

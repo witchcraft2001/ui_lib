@@ -14,6 +14,7 @@ menu_items:
         dw      file_label
         dw      file_popup
         db      14                  ; popup width
+        dw      file_hint
         db      UI_MENU_ITEMS_END
 
 file_popup:
@@ -23,7 +24,27 @@ file_popup:
         db      UI_MENU_POPUP_END
 ```
 
-MenuBar item: `x, flags, hotkey, label_ptr, popup_ptr, popup_width`. Popup item: `flags, hotkey, command, label_ptr, hint_ptr`. Use `UI_FLAG_SEPARATOR` for separators.
+`MenuBar` layout: `x, y, width, menu_items_ptr`.
+
+`MenuBar item` layout: `x, flags, hotkey, label_ptr, popup_ptr, popup_width, hint_ptr`.
+
+- `x` is the item column relative to the menu bar origin.
+- `flags`: `UI_FLAG_DISABLED` prevents selection.
+- `hotkey` is the ASCII shortcut key.
+- `label_ptr` is an ASCIIZ label; `&` marks the highlighted hot character.
+- `popup_ptr` points to dropdown items, or `0` when no popup is attached.
+- `popup_width` is the dropdown width including the frame.
+- `hint_ptr` points to the status-line hint, or `0`.
+
+`Popup item` layout: `flags, hotkey, command, label_ptr, hint_ptr`.
+
+- `flags`: `UI_FLAG_SEPARATOR` draws a separator, `UI_FLAG_DISABLED` disables the row.
+- `hotkey` is the ASCII shortcut while the dropdown is open.
+- `command` is the byte returned by `ui_menu_bar_run`.
+- `label_ptr` is an ASCIIZ label with optional `&` hotkey marker.
+- `hint_ptr` points to the status-line hint.
+
+Horizontal and vertical focus colors are separate theme fields: `UI_THEME_MENU_BAR_FOCUS` and `UI_THEME_MENU_POPUP_FOCUS`. Disabled menu rows use `UI_THEME_MENU_DISABLED`.
 
 ## GroupBox
 
