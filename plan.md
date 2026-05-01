@@ -61,7 +61,7 @@
   - Реализовать menu bar с dropdown-окнами, hotkeys, mouse support, separators и optional hints.
   - Реализовать полноценный `ComboBox` на базе универсального list popup.
   - Проверить UX на уровне `fm`/`TASM`: навигация клавиатурой, мышью, закрытие по Esc/клику вне меню.
-  - Статус: компактный `ItemSelector` выделен отдельно; добавлен первый настоящий `ComboBox` с framed dropdown popup, mouse/key выбором, `Up`/`Down`/`Home`/`End`, `Enter` commit, `Esc` cancel и scroll marker для длинных списков. Универсальный list popup API и menu bar еще не готовы.
+  - Статус: компактный `ItemSelector` выделен отдельно; добавлен первый настоящий `ComboBox` с framed dropdown popup, mouse/key выбором, `Up`/`Down`/`Home`/`End`, `Enter` commit, `Esc` cancel и scroll marker для длинных списков; начат `MenuBar` с descriptor tables, hotkey labels, separator descriptors, draw/dropdown primitives и отдельным `ui_menu_bar_run`: верхнее меню и dropdown разделены как `CurMenu`/`CurMBox` в TASM/FM, popup скрыт по умолчанию, `Enter` открывает, `Esc` закрывает. Универсальный list popup API и интеграция MenuBar в общий app/dialog dispatcher еще не готовы.
 
 - [ ] Этап 7. Dialog/window manager
   - Реализовать окна и модальные диалоги с таблицами виджетов.

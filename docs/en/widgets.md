@@ -1,5 +1,30 @@
 # Widgets
 
+## MenuBar
+
+`MenuBar` draws the top menu row and dropdown windows from descriptor tables. Coordinates are explicit, so the module does not require a fixed address and can be used separately from `Dialog`. `ui_menu_bar_run` keeps focus on the top row, `Left`/`Right` move across menu items, `Enter`/mouse click opens the dropdown, `Up`/`Down` moves inside an open dropdown, and `Esc` closes the dropdown or exits the menu.
+
+```asm
+menu_bar:
+        db      0, 0, 80
+        dw      menu_items
+
+menu_items:
+        db      1, 0, "f"
+        dw      file_label
+        dw      file_popup
+        db      14                  ; popup width
+        db      UI_MENU_ITEMS_END
+
+file_popup:
+        db      0, "x", UI_CMD_CANCEL
+        dw      exit_label
+        dw      exit_hint
+        db      UI_MENU_POPUP_END
+```
+
+MenuBar item: `x, flags, hotkey, label_ptr, popup_ptr, popup_width`. Popup item: `flags, hotkey, command, label_ptr, hint_ptr`. Use `UI_FLAG_SEPARATOR` for separators.
+
 ## GroupBox
 
 `GroupBox` draws a framed area inside a parent window. Coordinates are relative to `UI_WINDOW_X/Y`.

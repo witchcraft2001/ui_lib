@@ -31,6 +31,7 @@ code_start:
         include "src/core/hint.asm"
         include "src/draw/text.asm"
         include "src/widgets/window.asm"
+        include "src/widgets/menu_bar.asm"
         include "src/widgets/button.asm"
         include "src/widgets/text_field.asm"
         include "src/widgets/group_box.asm"
@@ -54,6 +55,10 @@ demo_main:
         ld      b, a
         pop     af
         call    ui_clear_screen
+        ld      ix, demo_menu_bar
+        call    ui_menu_bar_run
+        cp      UI_CMD_CANCEL
+        jp      z, demo_exit
 
         ld      ix, demo_dialog
         call    ui_dialog_run
@@ -194,6 +199,54 @@ demo_window:
         db      15, 4, 50, 20
         dw      demo_title
 
+demo_menu_bar:
+        db      0, 0, 80
+        dw      demo_menu_items
+
+demo_menu_items:
+demo_menu_file:
+        db      1, 0, "f"
+        dw      demo_menu_file_label
+        dw      demo_menu_file_popup
+        db      14
+demo_menu_options:
+        db      9, 0, "o"
+        dw      demo_menu_options_label
+        dw      demo_menu_options_popup
+        db      16
+demo_menu_help:
+        db      21, 0, "h"
+        dw      demo_menu_help_label
+        dw      demo_menu_help_popup
+        db      14
+        db      UI_MENU_ITEMS_END
+
+demo_menu_file_popup:
+        db      0, "r", UI_CMD_OK
+        dw      demo_menu_run_label
+        dw      demo_menu_run_hint
+        db      UI_FLAG_SEPARATOR, 0, 0
+        dw      0, 0
+        db      0, "x", UI_CMD_CANCEL
+        dw      demo_menu_exit_label
+        dw      demo_menu_exit_hint
+        db      UI_MENU_POPUP_END
+
+demo_menu_options_popup:
+        db      0, "t", UI_CMD_NONE
+        dw      demo_menu_theme_label
+        dw      demo_menu_theme_hint
+        db      0, "d", UI_CMD_NONE
+        dw      demo_menu_drive_label
+        dw      demo_menu_drive_hint
+        db      UI_MENU_POPUP_END
+
+demo_menu_help_popup:
+        db      0, "a", UI_CMD_NONE
+        dw      demo_menu_about_label
+        dw      demo_menu_about_hint
+        db      UI_MENU_POPUP_END
+
 demo_buttons:
 demo_button_ok:
         db      13, 15, UI_FLAG_FOCUSED, UI_CMD_OK, "o"
@@ -290,6 +343,32 @@ demo_radio_safe:
 
 demo_title:
         db      " Sprinter UI Demo ", 0
+demo_menu_file_label:
+        db      "&File", 0
+demo_menu_options_label:
+        db      "&Options", 0
+demo_menu_help_label:
+        db      "&Help", 0
+demo_menu_run_label:
+        db      "&Run dialog", 0
+demo_menu_exit_label:
+        db      "E&xit", 0
+demo_menu_theme_label:
+        db      "&Theme", 0
+demo_menu_drive_label:
+        db      "&Drive", 0
+demo_menu_about_label:
+        db      "&About", 0
+demo_menu_run_hint:
+        db      "Run the widget demo dialog.", 0
+demo_menu_exit_hint:
+        db      "Exit the demo.", 0
+demo_menu_theme_hint:
+        db      "Theme menu placeholder.", 0
+demo_menu_drive_hint:
+        db      "Drive menu placeholder.", 0
+demo_menu_about_hint:
+        db      "About this demo.", 0
 demo_input_title:
         db      " Input ", 0
 demo_options_title:

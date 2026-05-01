@@ -39,6 +39,7 @@ UI_THEME_SIZE           equ     14
 UI_FLAG_DISABLED        equ     80h
 UI_FLAG_FOCUSED         equ     40h
 UI_FLAG_PRESSED         equ     20h
+UI_FLAG_SEPARATOR       equ     04h
 UI_FLAG_CHECKED         equ     01h
 UI_FLAG_PASSWORD        equ     02h
 
@@ -68,6 +69,8 @@ UI_SCAN_HOME           equ     57h
 UI_SCAN_UP             equ     58h
 
 UI_BUTTONS_END         equ     0FFh
+UI_MENU_ITEMS_END      equ     0FFh
+UI_MENU_POPUP_END      equ     0FFh
 UI_TEXT_FIELDS_END     equ     0FFh
 UI_ITEM_SELECTORS_END          equ     0FFh
 UI_COMBOS_END          equ     0FFh

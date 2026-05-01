@@ -1,5 +1,30 @@
 # Виджеты
 
+## MenuBar
+
+`MenuBar` рисует верхнюю строку меню и dropdown-окна по таблицам. Координаты задаются явно, поэтому модуль не требует фиксированного адреса и может использоваться отдельно от `Dialog`. `ui_menu_bar_run` держит фокус на верхней строке, `Left`/`Right` переключают пункты меню, `Enter`/mouse click открывают dropdown, `Up`/`Down` двигают выбор внутри открытого dropdown, `Esc` закрывает dropdown или выходит из меню.
+
+```asm
+menu_bar:
+        db      0, 0, 80
+        dw      menu_items
+
+menu_items:
+        db      1, 0, "f"
+        dw      file_label
+        dw      file_popup
+        db      14                  ; popup width
+        db      UI_MENU_ITEMS_END
+
+file_popup:
+        db      0, "x", UI_CMD_CANCEL
+        dw      exit_label
+        dw      exit_hint
+        db      UI_MENU_POPUP_END
+```
+
+MenuBar item: `x, flags, hotkey, label_ptr, popup_ptr, popup_width`. Popup item: `flags, hotkey, command, label_ptr, hint_ptr`. Для separator используйте `UI_FLAG_SEPARATOR`.
+
 ## GroupBox
 
 `GroupBox` рисует рамку внутри родительского окна. Координаты относительны `UI_WINDOW_X/Y`.

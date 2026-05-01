@@ -39,6 +39,48 @@ UI_BUTTON_HOTKEY        equ     4
 UI_BUTTON_LABEL         equ     5
 UI_BUTTON_SIZE          equ     7
 
+; MenuBar descriptor:
+;   +0 x
+;   +1 y
+;   +2 width
+;   +3 word menu item table
+
+UI_MENU_BAR_X           equ     0
+UI_MENU_BAR_Y           equ     1
+UI_MENU_BAR_W           equ     2
+UI_MENU_BAR_ITEMS       equ     3
+UI_MENU_BAR_SIZE        equ     5
+
+; MenuBar item descriptor:
+;   +0 x relative to menu bar
+;   +1 flags
+;   +2 hot key ASCII
+;   +3 word label ASCIIZ, '&' marks hot character
+;   +5 word popup item table, may be 0
+;   +7 popup width including frame
+
+UI_MENU_ITEM_X          equ     0
+UI_MENU_ITEM_FLAGS      equ     1
+UI_MENU_ITEM_HOTKEY     equ     2
+UI_MENU_ITEM_LABEL      equ     3
+UI_MENU_ITEM_POPUP      equ     5
+UI_MENU_ITEM_POPUP_W    equ     7
+UI_MENU_ITEM_SIZE       equ     8
+
+; Menu popup item descriptor:
+;   +0 flags, bit 2 = separator
+;   +1 hot key ASCII
+;   +2 command
+;   +3 word label ASCIIZ, '&' marks hot character
+;   +5 word hint ASCIIZ, may be 0
+
+UI_MENU_POPUP_FLAGS     equ     0
+UI_MENU_POPUP_HOTKEY    equ     1
+UI_MENU_POPUP_COMMAND   equ     2
+UI_MENU_POPUP_LABEL     equ     3
+UI_MENU_POPUP_HINT      equ     5
+UI_MENU_POPUP_SIZE      equ     7
+
 ; Dialog descriptor:
 ;   +0 word window descriptor
 ;   +2 word buttons table
