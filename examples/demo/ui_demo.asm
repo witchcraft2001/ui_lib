@@ -81,6 +81,52 @@ demo_main:
         ld      e, 29
         call    ui_print_z
 
+        ; Diagnostic line: cmd / mouse pos / focus index, all in hex.
+        ld      hl, demo_diag_label
+        ld      a, (ui_theme_window)
+        ld      d, 14
+        ld      e, 20
+        call    ui_print_z
+
+        ld      hl, demo_diag_buf
+        ld      a, (demo_last_command)
+        call    demo_put_hex
+        ld      (hl), " "
+        inc     hl
+        ld      (hl), "X"
+        inc     hl
+        ld      (hl), "="
+        inc     hl
+        ld      a, (ui_event_mouse_x)
+        call    demo_put_hex
+        ld      (hl), " "
+        inc     hl
+        ld      (hl), "Y"
+        inc     hl
+        ld      (hl), "="
+        inc     hl
+        ld      a, (ui_event_mouse_y)
+        call    demo_put_hex
+        ld      (hl), " "
+        inc     hl
+        ld      (hl), "F"
+        inc     hl
+        ld      (hl), "="
+        inc     hl
+        ld      a, (ui_dialog_focus_index)
+        call    demo_put_hex
+        ld      (hl), 0
+        ld      hl, demo_diag_label_cmd
+        ld      a, (ui_theme_hotkey)
+        ld      d, 16
+        ld      e, 20
+        call    ui_print_z
+        ld      hl, demo_diag_buf
+        ld      a, (ui_theme_hotkey)
+        ld      d, 16
+        ld      e, 24
+        call    ui_print_z
+
         ld      hl, demo_hint
         ld      a, (ui_theme_hint)
         ld      d, 31
@@ -95,6 +141,32 @@ demo_exit:
         ld      b, 0
         ld      c, DSS_EXIT
         rst     10h
+
+; demo_put_hex
+; In:  A=byte, HL=destination
+; Out: HL advanced past 2 written hex chars.
+demo_put_hex:
+        push    af
+        rrca
+        rrca
+        rrca
+        rrca
+        and     0Fh
+        call    .nibble
+        ld      (hl), a
+        inc     hl
+        pop     af
+        and     0Fh
+        call    .nibble
+        ld      (hl), a
+        inc     hl
+        ret
+.nibble:
+        add     a, "0"
+        cp      "9" + 1
+        ret     c
+        add     a, "A" - "0" - 10
+        ret
 
 demo_no_memory:
         ld      a, " "
@@ -178,7 +250,7 @@ demo_radio_fast_label:
 demo_radio_safe_label:
         db      "&Safe mode", 0
 demo_body_text:
-        db      "Dialog command:", 0
+        db      "Last button pressed:", 0
 demo_ok_label:
         db      "  &OK  ", 0
 demo_cancel_label:
@@ -186,15 +258,21 @@ demo_cancel_label:
 demo_hint:
         db      "Use Enter, O, C, Esc or mouse. Press any key to exit.", 0
 demo_ok_text:
-        db      "OK", 0
+        db      "[ OK ]      cmd=01h", 0
 demo_cancel_text:
-        db      "Cancel", 0
+        db      "[ Cancel ]  cmd=02h  (or Esc key)", 0
 demo_no_memory_text:
         db      "UI init failed: no DSS memory", 0
+demo_diag_label:
+        db      "Diagnostics (hex):", 0
+demo_diag_label_cmd:
+        db      "cmd=", 0
 demo_theme:
         db      17h, 70h, 7Fh, 7Eh, 20h, 2Fh
         db      78h, 08h, 1Eh, 70h, 2Eh, 2Eh
 demo_last_command:
         db      0
+demo_diag_buf:
+        ds      24, 0
 
 demo_end:

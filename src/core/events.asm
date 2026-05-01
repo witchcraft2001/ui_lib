@@ -10,6 +10,8 @@ ui_event_mouse_x:
         db      0
 ui_event_mouse_y:
         db      0
+ui_event_mouse_buttons:
+        db      0
 ui_event_command:
         db      UI_CMD_NONE
 ui_mouse_prev_buttons:
@@ -52,18 +54,20 @@ ui_poll_mouse:
         or      a
         ret     z
 
-        ld      c, BIOS_MOUSE_READ
+        ld      a, BIOS_MOUSE_READ
+        ld      c, a
         rst     30h
         ret     c
-        and     01h
+        ld      b, a
+        and     01h               ; only left mouse button activates UI
         jr      z, .released
 
-        ld      b, a
         ld      a, (ui_mouse_prev_buttons)
         and     01h
         ret     nz
         ld      a, b
         ld      (ui_mouse_prev_buttons), a
+        ld      (ui_event_mouse_buttons), a
 
         ; Convert pixel X in HL to text column.
         srl     h
@@ -92,4 +96,5 @@ ui_poll_mouse:
 .released:
         xor     a
         ld      (ui_mouse_prev_buttons), a
+        ld      (ui_event_mouse_buttons), a
         ret

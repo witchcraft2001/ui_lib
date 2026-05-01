@@ -348,6 +348,7 @@ ui_dialog_clear_buttons:
         ld      de, UI_BUTTON_FLAGS
         add     hl, de
         res     6, (hl)
+        res     5, (hl)
         pop     hl
         ld      de, UI_BUTTON_SIZE
         add     hl, de
@@ -803,18 +804,23 @@ ui_dialog_hotkey:
         xor     a
         ld      (ui_dialog_handled), a
         call    ui_dialog_hotkey_check
+        push    af
         ld      a, (ui_dialog_handled)
         or      a
         jr      nz, .handled
+        pop     af
         ret     nc
         call    ui_dialog_hotkey_radio
+        push    af
         ld      a, (ui_dialog_handled)
         or      a
         jr      nz, .handled
+        pop     af
         ret     nc
         call    ui_dialog_hotkey_button
         ret
 .handled:
+        pop     af
         scf
         ret
 
@@ -956,18 +962,23 @@ ui_dialog_mouse:
         xor     a
         ld      (ui_dialog_current_index), a
         call    ui_dialog_mouse_checks
+        push    af                       ; preserve CF from sub-call
         ld      a, (ui_dialog_handled)
         or      a
         jr      nz, .handled
+        pop     af
         ret     nc
         call    ui_dialog_mouse_radios
+        push    af
         ld      a, (ui_dialog_handled)
         or      a
         jr      nz, .handled
+        pop     af
         ret     nc
         call    ui_dialog_mouse_buttons
         ret
 .handled:
+        pop     af                       ; discard preserved flags
         scf
         ret
 
@@ -1112,15 +1123,19 @@ ui_dialog_mouse_buttons:
 ui_dialog_activate_button_mouse:
         ld      a, (ui_dialog_focus_index)
         ld      (ui_dialog_target_index), a
-        ld      ix, (ui_dialog_active)
-        ld      l, (ix + UI_DIALOG_BUTTONS)
-        ld      h, (ix + UI_DIALOG_BUTTONS + 1)
         ld      b, 0
         call    ui_dialog_count_checks
         call    ui_dialog_count_radios
         ld      a, (ui_dialog_target_index)
         sub     b
         ld      (ui_dialog_target_index), a
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_BUTTONS)
+        ld      h, (ix + UI_DIALOG_BUTTONS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
 .loop:
         ld      a, (hl)
         cp      UI_BUTTONS_END
@@ -1145,6 +1160,7 @@ ui_dialog_activate_button_mouse:
         pop     iy
         call    ui_button_press_mouse_feedback
         pop     hl
+        ret     c
         ld      de, UI_BUTTON_COMMAND
         add     hl, de
         ld      a, (hl)

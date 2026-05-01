@@ -32,12 +32,14 @@ ui_init:
 
         xor     a
         ld      (ui_mouse_available), a
-        ld      c, 00h             ; initialize mouse if present
+        ld      a, 00h             ; initialize mouse if present
+        ld      c, a
         rst     30h
         jr      c, .mouse_done
         ld      a, 1
         ld      (ui_mouse_available), a
-        ld      c, 01h             ; show mouse cursor if available
+        ld      a, BIOS_MOUSE_SHOW ; show mouse cursor if available
+        ld      c, a
         rst     30h
 .mouse_done:
         IF UI_USE_DSS_WINDOW_BUFFER
@@ -58,7 +60,8 @@ ui_shutdown:
         ld      a, (ui_mouse_available)
         or      a
         jr      z, .mouse_done
-        ld      c, 02h             ; hide mouse cursor if available
+        ld      a, BIOS_MOUSE_HIDE ; hide mouse cursor if available
+        ld      c, a
         rst     30h
 .mouse_done:
         IF UI_USE_DSS_WINDOW_BUFFER

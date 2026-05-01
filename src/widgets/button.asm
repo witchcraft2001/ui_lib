@@ -206,32 +206,90 @@ ui_button_press_key_feedback:
         ret
 
 ; ui_button_press_mouse_feedback
+; Display the pressed visual and hold it until the mouse button is released.
+; While held, the cursor position is sampled each frame. On release, the last
+; sampled position is hit-tested against the widget: if the cursor is still
+; over the button, return CF=0 (commit); otherwise return CF=1 (cancel) so the
+; caller can suppress the click action.
 ; In:  IX=parent window descriptor, IY=button descriptor
-; Out: none
+; Out: CF=0 click committed (released over button), CF=1 cancelled
 ; Clobbers: AF, BC, DE, HL
 ui_button_press_mouse_feedback:
         set     5, (iy + UI_BUTTON_FLAGS)
         call    ui_draw_button
-        call    ui_button_press_delay
-        call    ui_wait_mouse_release
-        res     5, (iy + UI_BUTTON_FLAGS)
-        call    ui_draw_button
-        ret
-
-ui_wait_mouse_release:
+        ; Seed the latest cursor position from the click event so that hit
+        ; testing has a valid coordinate even if no further mouse reads happen.
+        ld      a, (ui_event_mouse_x)
+        ld      (ui_button_last_x), a
+        ld      a, (ui_event_mouse_y)
+        ld      (ui_button_last_y), a
+        ; Mandatory minimum visible press time so the user always sees the
+        ; pressed visual even on very fast clicks.
+        ld      b, 4
+.min_hold:
+        halt
+        djnz    .min_hold
         ld      a, (ui_mouse_available)
         or      a
-        ret     z
-.loop:
-        ld      c, BIOS_MOUSE_REFRESH
-        rst     30h
+        jr      z, .commit
+.wait_loop:
+        push    ix
+        push    iy
         ld      c, BIOS_MOUSE_READ
         rst     30h
-        ret     c
-        and     01h
-        ret     z
+        pop     iy
+        pop     ix
+        jr      c, .commit
+        and     01h               ; only the left button gates the press
+        jr      z, .check_position
+        ; Buttons still pressed: refresh the saved position. Skip this when
+        ; released - some drivers return a stale or zero position when no
+        ; buttons are held, which would defeat the cursor-on-button check.
+        srl     h
+        rr      l
+        srl     h
+        rr      l
+        srl     h
+        rr      l
+        ld      a, l
+        ld      (ui_button_last_x), a
+        srl     d
+        rr      e
+        srl     d
+        rr      e
+        srl     d
+        rr      e
+        ld      a, e
+        ld      (ui_button_last_y), a
         halt
-        jr      .loop
+        jr      .wait_loop
+.check_position:
+        ld      a, (ui_button_last_x)
+        ld      hl, ui_button_last_y
+        ld      b, (hl)
+        call    ui_button_hit_test
+        jr      c, .cancel
+.commit:
+        res     5, (iy + UI_BUTTON_FLAGS)
+        call    ui_draw_button
+        xor     a
+        ld      (ui_mouse_prev_buttons), a
+        ld      (ui_event_mouse_buttons), a
+        or      a
+        ret
+.cancel:
+        res     5, (iy + UI_BUTTON_FLAGS)
+        call    ui_draw_button
+        xor     a
+        ld      (ui_mouse_prev_buttons), a
+        ld      (ui_event_mouse_buttons), a
+        scf
+        ret
+
+ui_button_last_x:
+        db      0
+ui_button_last_y:
+        db      0
 
 ui_wait_key_release:
         ld      b, 20

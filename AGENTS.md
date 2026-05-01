@@ -2,56 +2,55 @@
 
 ## Project Structure & Module Organization
 
-This repository is for a compact Z80 ASM UI library for the Sprinter Peters Plus text-mode screen. Consumers must link only required widgets.
+This repository contains a compact Z80 ASM UI library for Sprinter Peters Plus text mode `80x32`. The library must remain modular: applications include only the widgets they need.
 
-- `src/core/` for init/shutdown, input, focus, events, and drawing helpers.
-- `src/widgets/` for optional `button`, `checkbox`, `radio_button`, `text_field`, `window`, `dialog`, etc.
-- `include/` for public `.inc` files; `examples/` for sjasmplus demos.
-- `tools/` or `run/` for build/image scripts; `docs/ru/` and `docs/en/` for documentation.
+- `include/` - public API and local platform constants. Always include copied files from `include/platform/`, never absolute paths to external manuals.
+- `src/core/` - init/shutdown, theme, events, mouse/keyboard integration.
+- `src/draw/` - text-mode char/attribute drawing primitives.
+- `src/widgets/` - independent widget modules: window, dialog, button, checkbox, radio button, group box, separator.
+- `examples/demo/ui_demo.asm` - current integration demo.
+- `docs/ru/`, `docs/en/` - bilingual API and widget docs.
+- `run/` - build and FAT12 image scripts.
+- `references/` - visual references from TASM/fformat-style UIs.
 
-Use these Sprinter projects as adaptation sources:
-`/Users/dmitry/dev/zx/sprinter/sprinter_bios`,
-`/Users/dmitry/dev/zx/sprinter/sprinter_dss`,
-`/Users/dmitry/dev/zx/sprinter/sprinter_ai_doc/manual`,
-`/Users/dmitry/dev/zx/sprinter/sources/tasm_071/TASM`,
-`/Users/dmitry/dev/zx/sprinter/sources/fformat/src/fformat_v113`,
-`/Users/dmitry/dev/zx/sprinter/sources/fm/FM-SRC/FM`.
-
-## Architecture Requirements
-
-Match or exceed `fformat`/`TASM` UI quality: mouse support, hotkeys, focus traversal, activation shortcuts, pressed/highlighted feedback, and disabled states. Window background save/restore is optional. When enabled, allocate DSS-reserved page memory in init and release it in shutdown. When disabled, callers repaint or restore the screen.
-
-Do not make the full library mandatory. Each widget must keep separable code/data dependencies, so single-widget users do not pull unrelated code or RAM.
+Reference sources: `sprinter_ai_doc/manual` is the primary DSS/BIOS source; `sprinter_dss` and `sprinter_bios` are secondary verification sources. UI behavior should be compared with TASM, fformat, fm, and texteditor.
 
 ## Build, Test, and Development Commands
 
-Use `sjasmplus`. Keep scripts in `run/` or `tools/`, modeled after `/Users/dmitry/dev/zx/sprinter/kode/run/make.sh` and `create_floppy_image.sh`.
+- `run/make.sh` - builds `build/demo/UI_DEMO.EXE` with `sjasmplus --syntax=f` and writes `build/demo/UI_DEMO.LST`.
+- `run/create_floppy_image.sh` - creates `build/demo/ui_demo.img` and copies `UI_DEMO.EXE` into it.
+- `mdir -i build/demo/ui_demo.img ::` - verifies image contents.
+- `git diff --check` - catches whitespace/patch issues.
 
-Expected workflow after each implementation iteration:
-
-- build library and demo apps with `sjasmplus`;
-- generate listings for debugging;
-- prepare a bootable/testable disk image with scripts similar to `kode/run`;
-- run repository checks such as `git diff --check`.
+After every code iteration, build the demo and regenerate the disk image.
 
 ## Coding Style & Naming Conventions
 
-Write assembly comments in English. Use lowercase names with underscores, for example `radio_button.asm`. Prefix public labels consistently: `ui_init`, `ui_shutdown`, `ui_button_draw`. Keep public API `.inc` files separate from private implementation.
+Use English comments in ASM. Keep labels lowercase with `ui_` prefixes for public routines, for example `ui_init`, `ui_draw_button`, `ui_dialog_run`. File names use lowercase snake case, e.g. `radio_button.asm`.
 
-Favor small routines, explicit register contracts, and documented clobbers. Note RAM usage near buffers, tables, and per-widget state.
+Every routine should document inputs, outputs, and clobbered registers. Preserve `IX/IY` around BIOS/DSS calls when descriptors are live. Descriptors use relative coordinates inside a parent window and must remain relocatable; do not require fixed code addresses.
+
+## UI Style Guide
+
+The accepted visual direction is Borland Pascal/TASM-like text UI:
+
+- gray dialog/window body, white double outer frame, black inner group frames and separators;
+- black labels on gray, yellow hotkey letters;
+- green buttons, yellow hotkey letters, black text for inactive buttons, white text when focused if theme enables it;
+- black window shadows; button shadow should follow the fformat style, not a tall block;
+- pressed buttons shift one text cell right and hide their button shadow until release;
+- support `Tab`, `Shift+Tab`/`Alt+Tab`, `Space`, `Enter`, hotkeys, mouse focus and activation.
+
+Theme colors are runtime-configurable through `ui_set_theme` and the `UI_THEME_*` layout in `include/ui.inc`.
 
 ## Testing Guidelines
 
-Every feature needs a demo under `examples/`. Cover keyboard-only use, mouse use, hotkeys, disabled controls, focus changes, and window close/restore behavior. Include one single-widget demo to verify modular linking and RAM savings.
+Demo behavior must cover keyboard navigation, mouse activation, hotkeys, focus changes, checked/unchecked states, disabled states, button pressed feedback, and shadow rendering. Prefer screenshots or emulator notes for visible UI changes.
 
 ## Documentation Guidelines
 
-Maintain Russian and English docs. Cover API entry points, init/shutdown calls, memory model, DSS-backed window buffers, widget states, shortcuts, mouse behavior, and examples.
-
-## Commit & Pull Request Guidelines
-
-Use imperative commit subjects such as `Add button widget core`. PRs should describe UI behavior, list build/demo/image commands, and include screenshots or emulator notes for visible changes.
+Keep Russian and English docs in sync. Document descriptor formats, module dependencies, init/shutdown, memory assumptions, optional DSS-backed window buffer behavior, theme layout, and example usage.
 
 ## Agent-Specific Instructions
 
-Before implementing, inspect reference projects. Preserve user changes, avoid unrelated refactors, and do not invent unavailable tools or commands. After code changes, build demos and prepare a disk image when scripts exist.
+Do not revert user changes. Do not introduce absolute include paths. Keep modules separable and avoid pulling unrelated widgets into single-widget consumers. When fixing UI behavior, inspect TASM/fformat/fm implementations before inventing a new pattern.
