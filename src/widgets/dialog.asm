@@ -14,6 +14,8 @@ ui_dialog_handled:
         db      0
 ui_dialog_last_focus_index:
         db      0FFh
+ui_dialog_old_focus_index:
+        db      0FFh
 
 ; ui_dialog_run
 ; In:  IX=dialog descriptor
@@ -21,6 +23,7 @@ ui_dialog_last_focus_index:
 ; Clobbers: AF, BC, DE, HL, IX, IY
 ui_dialog_run:
         ld      (ui_dialog_active), ix
+        call    ui_dialog_clear_focus
         call    ui_dialog_draw_all
         call    ui_dialog_count_focus
         ld      (ui_dialog_focus_count), a
@@ -378,6 +381,34 @@ ui_dialog_set_focus:
         call    ui_dialog_set_focus_button
 .draw_new:
         pop     af
+        ld      (ui_dialog_last_focus_index), a
+        call    ui_dialog_draw_focus_index
+        ret
+
+; ui_dialog_change_focus_to_current
+; Mouse button hits already know the requested global focus index in
+; ui_dialog_current_index. Use the current focus as the old element and redraw
+; only the old and new widgets.
+ui_dialog_change_focus_to_current:
+        ld      a, (ui_dialog_focus_index)
+        ld      (ui_dialog_old_focus_index), a
+        ld      b, a
+        ld      a, (ui_dialog_current_index)
+        ld      (ui_dialog_focus_index), a
+        cp      b
+        ret     z
+        call    ui_dialog_clear_focus
+        ld      a, (ui_dialog_old_focus_index)
+        call    ui_dialog_draw_focus_index
+        ld      a, (ui_dialog_focus_index)
+        ld      (ui_dialog_target_index), a
+        call    ui_dialog_set_focus_check
+        jr      nc, .draw_new
+        call    ui_dialog_set_focus_radio
+        jr      nc, .draw_new
+        call    ui_dialog_set_focus_button
+.draw_new:
+        ld      a, (ui_dialog_focus_index)
         ld      (ui_dialog_last_focus_index), a
         call    ui_dialog_draw_focus_index
         ret
@@ -1114,9 +1145,7 @@ ui_dialog_mouse_buttons:
         add     hl, de
         jr      .loop
 .hit:
-        ld      a, (ui_dialog_current_index)
-        ld      (ui_dialog_focus_index), a
-        call    ui_dialog_set_focus
+        call    ui_dialog_change_focus_to_current
         call    ui_dialog_activate_button_mouse
         ret
 
