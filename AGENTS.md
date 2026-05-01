@@ -7,7 +7,7 @@ This repository contains a compact Z80 ASM UI library for Sprinter Peters Plus t
 - `include/` - public API and local platform constants. Always include copied files from `include/platform/`, never absolute paths to external manuals.
 - `src/core/` - init/shutdown, theme, events, mouse/keyboard integration.
 - `src/draw/` - text-mode char/attribute drawing primitives.
-- `src/widgets/` - independent widget modules: window, dialog, button, checkbox, radio button, group box, separator.
+- `src/widgets/` - independent widget modules: window, dialog, button, checkbox, radio button, text field, item selector, combo box, group box, separator.
 - `examples/demo/ui_demo.asm` - current integration demo.
 - `docs/ru/`, `docs/en/` - bilingual API and widget docs.
 - `run/` - build and FAT12 image scripts.
@@ -40,6 +40,7 @@ The accepted visual direction is Borland Pascal/TASM-like text UI:
 - black window shadows; button shadow should follow the fformat style, not a tall block;
 - pressed buttons shift one text cell right and hide their button shadow until release;
 - support `Tab`, `Shift+Tab`/`Alt+Tab`, `Space`, `Enter`, hotkeys, mouse focus and activation.
+- keep `ItemSelector` as the compact cyclic selector with left/right navigation; use `ComboBox` only for the framed dropdown popup control.
 
 Theme colors are runtime-configurable through `ui_set_theme` and the `UI_THEME_*` layout in `include/ui.inc`.
 

@@ -71,14 +71,50 @@ text_buffer:
 
 Формат: `x, y, width, flags, hotkey, buffer_ptr, max_len, cursor`.
 
+## ItemSelector
+
+`ItemSelector` хранит выбранный индекс в descriptor и показывает строку из таблицы ASCIIZ-указателей. Это компактный selector без выпадающего popup: `Space`, `Enter`, hotkey или mouse click переключают следующий пункт по кругу, `Left` переключает в обратную сторону, `Right` - вперед.
+
+```asm
+item_selector_example:
+        db      5, 11, 16, 0, "t"
+        dw      item_selector_items
+        db      3, 0                 ; count, selected index
+
+item_selector_items:
+        dw      item_tasm
+        dw      item_fformat
+        dw      item_blue
+```
+
+Формат: `x, y, width, flags, hotkey, items_ptr, count, selected`.
+
+## ComboBox
+
+`ComboBox` использует такую же таблицу строк, но открывает выпадающий список с отдельной рамкой и фоном. `Space`, `Enter`, hotkey или mouse click открывают popup. Внутри popup работают `Up`/`Down`/`Home`/`End`, `Enter` или click выбирает пункт, `Esc` или click вне popup отменяет выбор. Если элементов больше высоты popup, на правой рамке показывается маркер прокрутки.
+
+```asm
+combo_example:
+        db      26, 11, 16, 0, "d"
+        dw      combo_items
+        db      3, 0, 3              ; count, selected index, popup height
+
+combo_items:
+        dw      item_drive_a
+        dw      item_drive_b
+        dw      item_ram
+```
+
+Формат: `x, y, width, flags, hotkey, items_ptr, count, selected, popup_height`.
+
 ## Dialog Navigation
 
-`ui_dialog_run` поддерживает фокус для `TextField`, `CheckBox`, `RadioButton` и `Button`. Порядок обхода: text field table, checkbox table, radio table, button table.
+`ui_dialog_run` поддерживает фокус для `TextField`, `CheckBox`, `RadioButton`, `ItemSelector`, `ComboBox` и `Button`. Порядок обхода: text field table, checkbox table, radio table, item selector table, combo box table, button table.
 
 - `Tab` переводит фокус вперед.
 - `Shift+Tab` или `Alt+Tab` переводит фокус назад.
 - Печатные клавиши редактируют активное текстовое поле. `Backspace` удаляет символ перед курсором, `Delete` удаляет символ под курсором, `Left`/`Right`/`Home`/`End` двигают курсор.
-- `Space` вводит пробел в активное текстовое поле или активирует другой элемент. `Enter` активирует текущий элемент.
+- `Space` вводит пробел в активное текстовое поле или активирует другой элемент. `Enter` активирует текущий элемент. Для `ItemSelector` активация выбирает следующий пункт; для `ComboBox` открывает popup.
 - Hotkey из descriptor активирует элемент напрямую.
 - Мышь переводит фокус на элемент под курсором и активирует его.
 - Если перед сборкой определить `DEFINE UI_ENABLE_HINTS 1` и подключить `src/core/hint.asm`, диалог будет обновлять нижнюю строку подсказки по текущему focus index.
@@ -94,6 +130,8 @@ dialog_example:
         dw      groups_table
         dw      separators_table
         dw      text_fields_table
+        dw      item_selectors_table
+        dw      combos_table
         dw      hints_table          ; optional when UI_ENABLE_HINTS=1
 
 hints_table:
@@ -101,6 +139,8 @@ hints_table:
         dw      checkbox_hint
         dw      first_radio_hint
         dw      second_radio_hint
+        dw      item_selector_hint
+        dw      combo_hint
         dw      ok_button_hint
         dw      cancel_button_hint
 ```

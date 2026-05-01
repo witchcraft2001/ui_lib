@@ -47,7 +47,9 @@ UI_BUTTON_SIZE          equ     7
 ;   +8 word group box table, may be 0
 ;   +10 word separator table, may be 0
 ;   +12 word text field table, may be 0
-;   +14 word hint table, may be 0 when UI_ENABLE_HINTS is enabled
+;   +14 word item selector table, may be 0
+;   +16 word combo box table, may be 0
+;   +18 word hint table, may be 0 when UI_ENABLE_HINTS is enabled
 
 UI_DIALOG_WINDOW        equ     0
 UI_DIALOG_BUTTONS       equ     2
@@ -56,8 +58,10 @@ UI_DIALOG_RADIOS        equ     6
 UI_DIALOG_GROUPS        equ     8
 UI_DIALOG_SEPARATORS    equ     10
 UI_DIALOG_TEXT_FIELDS   equ     12
-UI_DIALOG_HINTS         equ     14
-UI_DIALOG_SIZE          equ     16
+UI_DIALOG_ITEM_SELECTORS        equ     14
+UI_DIALOG_COMBOS        equ     16
+UI_DIALOG_HINTS         equ     18
+UI_DIALOG_SIZE          equ     20
 
 ; GroupBox descriptor:
 ;   +0 x relative to parent window
@@ -116,6 +120,48 @@ UI_TEXT_BUFFER          equ     5
 UI_TEXT_MAXLEN          equ     7
 UI_TEXT_CURSOR          equ     8
 UI_TEXT_SIZE            equ     9
+
+; ItemSelector descriptor:
+;   +0 x relative to parent window
+;   +1 y relative to parent window
+;   +2 width
+;   +3 flags
+;   +4 hot key ASCII
+;   +5 word item pointer table, each item is ASCIIZ
+;   +7 item count
+;   +8 selected item index
+
+UI_ITEM_SELECTOR_X              equ     0
+UI_ITEM_SELECTOR_Y              equ     1
+UI_ITEM_SELECTOR_W              equ     2
+UI_ITEM_SELECTOR_FLAGS          equ     3
+UI_ITEM_SELECTOR_HOTKEY         equ     4
+UI_ITEM_SELECTOR_ITEMS          equ     5
+UI_ITEM_SELECTOR_COUNT          equ     7
+UI_ITEM_SELECTOR_SELECTED       equ     8
+UI_ITEM_SELECTOR_SIZE           equ     9
+
+; ComboBox descriptor:
+;   +0 x relative to parent window
+;   +1 y relative to parent window
+;   +2 width
+;   +3 flags
+;   +4 hot key ASCII
+;   +5 word item pointer table, each item is ASCIIZ
+;   +7 item count
+;   +8 selected item index
+;   +9 popup height
+
+UI_COMBO_X              equ     0
+UI_COMBO_Y              equ     1
+UI_COMBO_W              equ     2
+UI_COMBO_FLAGS          equ     3
+UI_COMBO_HOTKEY         equ     4
+UI_COMBO_ITEMS          equ     5
+UI_COMBO_COUNT          equ     7
+UI_COMBO_SELECTED       equ     8
+UI_COMBO_POPUP_H        equ     9
+UI_COMBO_SIZE           equ     10
 
 ; RadioButton descriptor:
 ;   +0 x relative to parent window

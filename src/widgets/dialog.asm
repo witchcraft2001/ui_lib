@@ -61,6 +61,8 @@ ui_dialog_run:
         jr      z, .activate
         call    ui_dialog_text_key
         jr      c, .loop
+        call    ui_dialog_item_selector_key
+        jr      c, .loop
         ld      a, (ui_event_key)
         cp      UI_KEY_SPACE
         jr      z, .activate
@@ -128,6 +130,8 @@ ui_dialog_draw_all:
         call    ui_dialog_draw_text_fields
         call    ui_dialog_draw_checks
         call    ui_dialog_draw_radios
+        call    ui_dialog_draw_item_selectors
+        call    ui_dialog_draw_combos
         call    ui_dialog_draw_buttons
         ret
 
@@ -254,6 +258,52 @@ ui_dialog_draw_radios:
         add     hl, de
         jr      .loop
 
+ui_dialog_draw_item_selectors:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_ITEM_SELECTORS)
+        ld      h, (ix + UI_DIALOG_ITEM_SELECTORS + 1)
+        ld      a, h
+        or      l
+        ret     z
+        call    ui_dialog_parent_to_ix
+.loop:
+        ld      a, (hl)
+        cp      UI_ITEM_SELECTORS_END
+        ret     z
+        push    hl
+        push    ix
+        push    hl
+        pop     iy
+        call    ui_draw_item_selector
+        pop     ix
+        pop     hl
+        ld      de, UI_ITEM_SELECTOR_SIZE
+        add     hl, de
+        jr      .loop
+
+ui_dialog_draw_combos:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_COMBOS)
+        ld      h, (ix + UI_DIALOG_COMBOS + 1)
+        ld      a, h
+        or      l
+        ret     z
+        call    ui_dialog_parent_to_ix
+.loop:
+        ld      a, (hl)
+        cp      UI_COMBOS_END
+        ret     z
+        push    hl
+        push    ix
+        push    hl
+        pop     iy
+        call    ui_draw_combo_box
+        pop     ix
+        pop     hl
+        ld      de, UI_COMBO_SIZE
+        add     hl, de
+        jr      .loop
+
 ui_dialog_draw_buttons:
         ld      ix, (ui_dialog_active)
         ld      l, (ix + UI_DIALOG_BUTTONS)
@@ -282,6 +332,8 @@ ui_dialog_count_focus:
         call    ui_dialog_count_text_fields
         call    ui_dialog_count_checks
         call    ui_dialog_count_radios
+        call    ui_dialog_count_item_selectors
+        call    ui_dialog_count_combos
         call    ui_dialog_count_buttons
         ld      a, b
         ret
@@ -355,6 +407,52 @@ ui_dialog_count_radios:
         add     hl, de
         jr      .loop
 
+ui_dialog_count_item_selectors:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_ITEM_SELECTORS)
+        ld      h, (ix + UI_DIALOG_ITEM_SELECTORS + 1)
+        ld      a, h
+        or      l
+        ret     z
+.loop:
+        ld      a, (hl)
+        cp      UI_ITEM_SELECTORS_END
+        ret     z
+        push    hl
+        ld      de, UI_ITEM_SELECTOR_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        inc     b
+.next:
+        ld      de, UI_ITEM_SELECTOR_SIZE
+        add     hl, de
+        jr      .loop
+
+ui_dialog_count_combos:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_COMBOS)
+        ld      h, (ix + UI_DIALOG_COMBOS + 1)
+        ld      a, h
+        or      l
+        ret     z
+.loop:
+        ld      a, (hl)
+        cp      UI_COMBOS_END
+        ret     z
+        push    hl
+        ld      de, UI_COMBO_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        inc     b
+.next:
+        ld      de, UI_COMBO_SIZE
+        add     hl, de
+        jr      .loop
+
 ui_dialog_count_buttons:
         ld      ix, (ui_dialog_active)
         ld      l, (ix + UI_DIALOG_BUTTONS)
@@ -382,6 +480,8 @@ ui_dialog_clear_focus:
         call    ui_dialog_clear_text_fields
         call    ui_dialog_clear_checks
         call    ui_dialog_clear_radios
+        call    ui_dialog_clear_item_selectors
+        call    ui_dialog_clear_combos
         call    ui_dialog_clear_buttons
         ret
 
@@ -445,6 +545,46 @@ ui_dialog_clear_radios:
         add     hl, de
         jr      .loop
 
+ui_dialog_clear_item_selectors:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_ITEM_SELECTORS)
+        ld      h, (ix + UI_DIALOG_ITEM_SELECTORS + 1)
+        ld      a, h
+        or      l
+        ret     z
+.loop:
+        ld      a, (hl)
+        cp      UI_ITEM_SELECTORS_END
+        ret     z
+        push    hl
+        ld      de, UI_ITEM_SELECTOR_FLAGS
+        add     hl, de
+        res     6, (hl)
+        pop     hl
+        ld      de, UI_ITEM_SELECTOR_SIZE
+        add     hl, de
+        jr      .loop
+
+ui_dialog_clear_combos:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_COMBOS)
+        ld      h, (ix + UI_DIALOG_COMBOS + 1)
+        ld      a, h
+        or      l
+        ret     z
+.loop:
+        ld      a, (hl)
+        cp      UI_COMBOS_END
+        ret     z
+        push    hl
+        ld      de, UI_COMBO_FLAGS
+        add     hl, de
+        res     6, (hl)
+        pop     hl
+        ld      de, UI_COMBO_SIZE
+        add     hl, de
+        jr      .loop
+
 ui_dialog_clear_buttons:
         ld      ix, (ui_dialog_active)
         ld      l, (ix + UI_DIALOG_BUTTONS)
@@ -493,6 +633,10 @@ ui_dialog_set_focus:
         jr      nc, .draw_new
         call    ui_dialog_set_focus_radio
         jr      nc, .draw_new
+        call    ui_dialog_set_focus_item_selector
+        jr      nc, .draw_new
+        call    ui_dialog_set_focus_combo
+        jr      nc, .draw_new
         call    ui_dialog_set_focus_button
 .draw_new:
         pop     af
@@ -529,6 +673,10 @@ ui_dialog_change_focus_to_current:
         call    ui_dialog_set_focus_check
         jr      nc, .draw_new
         call    ui_dialog_set_focus_radio
+        jr      nc, .draw_new
+        call    ui_dialog_set_focus_item_selector
+        jr      nc, .draw_new
+        call    ui_dialog_set_focus_combo
         jr      nc, .draw_new
         call    ui_dialog_set_focus_button
 .draw_new:
@@ -572,6 +720,10 @@ ui_dialog_draw_focus_index:
         call    ui_dialog_draw_focus_check
         ret     nc
         call    ui_dialog_draw_focus_radio
+        ret     nc
+        call    ui_dialog_draw_focus_item_selector
+        ret     nc
+        call    ui_dialog_draw_focus_combo
         ret     nc
         jp      ui_dialog_draw_focus_button
 
@@ -683,6 +835,74 @@ ui_dialog_set_focus_radio:
 .hit:
         push    hl
         ld      de, UI_RADIO_FLAGS
+        add     hl, de
+        set     6, (hl)
+        pop     hl
+        or      a
+        ret
+
+ui_dialog_set_focus_item_selector:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_ITEM_SELECTORS)
+        ld      h, (ix + UI_DIALOG_ITEM_SELECTORS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
+.loop:
+        ld      a, (hl)
+        cp      UI_ITEM_SELECTORS_END
+        scf
+        ret     z
+        push    hl
+        ld      de, UI_ITEM_SELECTOR_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        call    ui_dialog_focus_match
+        jr      nc, .hit
+.next:
+        ld      de, UI_ITEM_SELECTOR_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        push    hl
+        ld      de, UI_ITEM_SELECTOR_FLAGS
+        add     hl, de
+        set     6, (hl)
+        pop     hl
+        or      a
+        ret
+
+ui_dialog_set_focus_combo:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_COMBOS)
+        ld      h, (ix + UI_DIALOG_COMBOS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
+.loop:
+        ld      a, (hl)
+        cp      UI_COMBOS_END
+        scf
+        ret     z
+        push    hl
+        ld      de, UI_COMBO_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        call    ui_dialog_focus_match
+        jr      nc, .hit
+.next:
+        ld      de, UI_COMBO_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        push    hl
+        ld      de, UI_COMBO_FLAGS
         add     hl, de
         set     6, (hl)
         pop     hl
@@ -824,6 +1044,76 @@ ui_dialog_draw_focus_radio:
         push    hl
         pop     iy
         call    ui_draw_radio_button
+        pop     hl
+        or      a
+        ret
+
+ui_dialog_draw_focus_item_selector:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_ITEM_SELECTORS)
+        ld      h, (ix + UI_DIALOG_ITEM_SELECTORS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
+        call    ui_dialog_parent_to_ix
+.loop:
+        ld      a, (hl)
+        cp      UI_ITEM_SELECTORS_END
+        scf
+        ret     z
+        push    hl
+        ld      de, UI_ITEM_SELECTOR_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        call    ui_dialog_focus_match
+        jr      nc, .hit
+.next:
+        ld      de, UI_ITEM_SELECTOR_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        push    hl
+        push    hl
+        pop     iy
+        call    ui_draw_item_selector
+        pop     hl
+        or      a
+        ret
+
+ui_dialog_draw_focus_combo:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_COMBOS)
+        ld      h, (ix + UI_DIALOG_COMBOS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
+        call    ui_dialog_parent_to_ix
+.loop:
+        ld      a, (hl)
+        cp      UI_COMBOS_END
+        scf
+        ret     z
+        push    hl
+        ld      de, UI_COMBO_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        call    ui_dialog_focus_match
+        jr      nc, .hit
+.next:
+        ld      de, UI_COMBO_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        push    hl
+        push    hl
+        pop     iy
+        call    ui_draw_combo_box
         pop     hl
         or      a
         ret
@@ -1012,6 +1302,14 @@ ui_dialog_activate_focused_key:
         ld      a, (ui_dialog_handled)
         or      a
         jr      nz, .handled
+        call    ui_dialog_activate_item_selector
+        ld      a, (ui_dialog_handled)
+        or      a
+        jr      nz, .handled
+        call    ui_dialog_activate_combo
+        ld      a, (ui_dialog_handled)
+        or      a
+        jr      nz, .handled
         call    ui_dialog_activate_button_key
         ret
 .handled:
@@ -1151,6 +1449,164 @@ ui_dialog_clear_radio_checks:
         add     hl, de
         jr      .loop
 
+ui_dialog_activate_item_selector:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_ITEM_SELECTORS)
+        ld      h, (ix + UI_DIALOG_ITEM_SELECTORS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
+.loop:
+        ld      a, (hl)
+        cp      UI_ITEM_SELECTORS_END
+        scf
+        ret     z
+        push    hl
+        ld      de, UI_ITEM_SELECTOR_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        call    ui_dialog_focus_match
+        jr      nc, .hit
+.next:
+        ld      de, UI_ITEM_SELECTOR_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        ld      a, 1
+        ld      (ui_dialog_handled), a
+        call    ui_dialog_parent_to_ix
+        push    hl
+        push    hl
+        pop     iy
+        call    ui_item_selector_next
+        call    ui_draw_item_selector
+        pop     hl
+        scf
+        ret
+
+ui_dialog_item_selector_key:
+        ld      a, (ui_event_scan)
+        cp      UI_SCAN_LEFT
+        jr      z, .left
+        cp      UI_SCAN_RIGHT
+        jr      z, .right
+        ld      a, (ui_event_key)
+        cp      4Bh
+        jr      z, .left
+        cp      4Dh
+        jr      z, .right
+        or      a
+        ret
+.left:
+        ld      a, UI_SCAN_LEFT
+        jr      .editable
+.right:
+        ld      a, UI_SCAN_RIGHT
+.editable:
+        ld      (ui_dialog_item_selector_scan), a
+        ld      a, (ui_dialog_focus_index)
+        ld      (ui_dialog_target_index), a
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_ITEM_SELECTORS)
+        ld      h, (ix + UI_DIALOG_ITEM_SELECTORS + 1)
+        ld      a, h
+        or      l
+        jr      z, .not_handled
+.loop:
+        ld      a, (hl)
+        cp      UI_ITEM_SELECTORS_END
+        jr      z, .not_handled
+        push    hl
+        ld      de, UI_ITEM_SELECTOR_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        call    ui_dialog_focus_match
+        jr      nc, .hit
+.next:
+        ld      de, UI_ITEM_SELECTOR_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        call    ui_dialog_parent_to_ix
+        push    hl
+        push    hl
+        pop     iy
+        ld      a, (ui_dialog_item_selector_scan)
+        cp      UI_SCAN_LEFT
+        jr      z, .prev
+        call    ui_item_selector_next
+        jr      .draw
+.prev:
+        call    ui_item_selector_prev
+.draw:
+        call    ui_draw_item_selector
+        pop     hl
+        scf
+        ret
+.not_handled:
+        or      a
+        ret
+
+ui_dialog_item_selector_scan:
+        db      0
+
+ui_dialog_activate_combo:
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_COMBOS)
+        ld      h, (ix + UI_DIALOG_COMBOS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
+.loop:
+        ld      a, (hl)
+        cp      UI_COMBOS_END
+        scf
+        ret     z
+        push    hl
+        ld      de, UI_COMBO_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        call    ui_dialog_focus_match
+        jr      nc, .hit
+.next:
+        ld      de, UI_COMBO_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        ld      a, 1
+        ld      (ui_dialog_handled), a
+        call    ui_dialog_parent_to_ix
+        push    hl
+        push    hl
+        pop     iy
+        call    ui_combo_select_popup
+        pop     hl
+        call    ui_dialog_redraw_controls
+        IF UI_ENABLE_HINTS
+        call    ui_dialog_update_hint
+        ENDIF
+        scf
+        ret
+
+ui_dialog_redraw_controls:
+        call    ui_dialog_draw_groups
+        call    ui_dialog_draw_separators
+        call    ui_dialog_draw_text_fields
+        call    ui_dialog_draw_checks
+        call    ui_dialog_draw_radios
+        call    ui_dialog_draw_item_selectors
+        call    ui_dialog_draw_combos
+        call    ui_dialog_draw_buttons
+        ret
+
 ui_dialog_activate_button_key:
         ld      ix, (ui_dialog_active)
         ld      l, (ix + UI_DIALOG_BUTTONS)
@@ -1208,6 +1664,20 @@ ui_dialog_hotkey:
         pop     af
         ret     nc
         call    ui_dialog_hotkey_radio
+        push    af
+        ld      a, (ui_dialog_handled)
+        or      a
+        jr      nz, .handled
+        pop     af
+        ret     nc
+        call    ui_dialog_hotkey_item_selector
+        push    af
+        ld      a, (ui_dialog_handled)
+        or      a
+        jr      nz, .handled
+        pop     af
+        ret     nc
+        call    ui_dialog_hotkey_combo
         push    af
         ld      a, (ui_dialog_handled)
         or      a
@@ -1368,6 +1838,8 @@ ui_dialog_hotkey_button:
         call    ui_dialog_count_text_fields
         call    ui_dialog_count_checks
         call    ui_dialog_count_radios
+        call    ui_dialog_count_item_selectors
+        call    ui_dialog_count_combos
         ld      ix, (ui_dialog_active)
         ld      l, (ix + UI_DIALOG_BUTTONS)
         ld      h, (ix + UI_DIALOG_BUTTONS + 1)
@@ -1404,6 +1876,89 @@ ui_dialog_hotkey_button:
         call    ui_dialog_set_focus
         jp      ui_dialog_activate_focused_key
 
+ui_dialog_hotkey_item_selector:
+        ld      b, 0
+        call    ui_dialog_count_text_fields
+        call    ui_dialog_count_checks
+        call    ui_dialog_count_radios
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_ITEM_SELECTORS)
+        ld      h, (ix + UI_DIALOG_ITEM_SELECTORS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
+.loop:
+        ld      a, (hl)
+        cp      UI_ITEM_SELECTORS_END
+        scf
+        ret     z
+        push    hl
+        ld      de, UI_ITEM_SELECTOR_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        push    hl
+        ld      de, UI_ITEM_SELECTOR_HOTKEY
+        add     hl, de
+        ld      a, (ui_event_key)
+        call    ui_dialog_key_match
+        pop     hl
+        jr      nc, .hit
+        inc     b
+.next:
+        ld      de, UI_ITEM_SELECTOR_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        ld      a, b
+        ld      (ui_dialog_focus_index), a
+        call    ui_dialog_set_focus
+        jp      ui_dialog_activate_focused_key
+
+ui_dialog_hotkey_combo:
+        ld      b, 0
+        call    ui_dialog_count_text_fields
+        call    ui_dialog_count_checks
+        call    ui_dialog_count_radios
+        call    ui_dialog_count_item_selectors
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_COMBOS)
+        ld      h, (ix + UI_DIALOG_COMBOS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
+.loop:
+        ld      a, (hl)
+        cp      UI_COMBOS_END
+        scf
+        ret     z
+        push    hl
+        ld      de, UI_COMBO_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .next
+        push    hl
+        ld      de, UI_COMBO_HOTKEY
+        add     hl, de
+        ld      a, (ui_event_key)
+        call    ui_dialog_key_match
+        pop     hl
+        jr      nc, .hit
+        inc     b
+.next:
+        ld      de, UI_COMBO_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        ld      a, b
+        ld      (ui_dialog_focus_index), a
+        call    ui_dialog_set_focus
+        jp      ui_dialog_activate_focused_key
+
 ui_dialog_mouse:
         xor     a
         ld      (ui_dialog_handled), a
@@ -1424,6 +1979,20 @@ ui_dialog_mouse:
         pop     af
         ret     nc
         call    ui_dialog_mouse_radios
+        push    af
+        ld      a, (ui_dialog_handled)
+        or      a
+        jr      nz, .handled
+        pop     af
+        ret     nc
+        call    ui_dialog_mouse_item_selectors
+        push    af
+        ld      a, (ui_dialog_handled)
+        or      a
+        jr      nz, .handled
+        pop     af
+        ret     nc
+        call    ui_dialog_mouse_combos
         push    af
         ld      a, (ui_dialog_handled)
         or      a
@@ -1519,10 +2088,36 @@ ui_dialog_mouse_checks:
         add     hl, de
         jr      .loop
 .hit:
+        push    hl
         ld      a, (ui_dialog_current_index)
         ld      (ui_dialog_focus_index), a
         call    ui_dialog_set_focus
-        jp      ui_dialog_activate_focused_key
+        pop     hl
+        call    ui_dialog_parent_to_ix
+        push    hl
+        pop     iy
+        ld      a, (ui_event_mouse_x)
+        ld      b, a
+        ld      a, (ix + UI_WINDOW_X)
+        add     a, (iy + UI_ITEM_SELECTOR_X)
+        ld      c, a
+        ld      a, b
+        sub     c
+        ld      b, a
+        ld      a, (iy + UI_ITEM_SELECTOR_W)
+        srl     a
+        cp      b
+        jr      nc, .prev
+        call    ui_item_selector_next
+        jr      .draw
+.prev:
+        call    ui_item_selector_prev
+.draw:
+        call    ui_draw_item_selector
+        ld      a, 1
+        ld      (ui_dialog_handled), a
+        scf
+        ret
 
 ui_dialog_mouse_radios:
         ld      b, 0
@@ -1575,6 +2170,8 @@ ui_dialog_mouse_buttons:
         call    ui_dialog_count_text_fields
         call    ui_dialog_count_checks
         call    ui_dialog_count_radios
+        call    ui_dialog_count_item_selectors
+        call    ui_dialog_count_combos
         ld      a, b
         ld      (ui_dialog_current_index), a
         ld      ix, (ui_dialog_active)
@@ -1621,12 +2218,136 @@ ui_dialog_mouse_buttons:
         call    ui_dialog_activate_button_mouse
         ret
 
+ui_dialog_mouse_item_selectors:
+        ld      b, 0
+        call    ui_dialog_count_text_fields
+        call    ui_dialog_count_checks
+        call    ui_dialog_count_radios
+        ld      a, b
+        ld      (ui_dialog_current_index), a
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_ITEM_SELECTORS)
+        ld      h, (ix + UI_DIALOG_ITEM_SELECTORS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
+        call    ui_dialog_parent_to_ix
+.loop:
+        ld      a, (hl)
+        cp      UI_ITEM_SELECTORS_END
+        scf
+        ret     z
+        push    hl
+        ld      de, UI_ITEM_SELECTOR_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .skip
+        push    hl
+        push    ix
+        push    hl
+        pop     iy
+        call    ui_dialog_item_selector_hit_test
+        pop     ix
+        pop     hl
+        jr      nc, .hit
+        ld      a, (ui_dialog_current_index)
+        inc     a
+        ld      (ui_dialog_current_index), a
+.skip:
+        ld      de, UI_ITEM_SELECTOR_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        push    hl
+        ld      a, (ui_dialog_current_index)
+        ld      (ui_dialog_focus_index), a
+        call    ui_dialog_set_focus
+        pop     hl
+        call    ui_dialog_parent_to_ix
+        push    hl
+        pop     iy
+        ld      a, (ui_event_mouse_x)
+        ld      b, a
+        ld      a, (ix + UI_WINDOW_X)
+        add     a, (iy + UI_ITEM_SELECTOR_X)
+        ld      c, a
+        ld      a, b
+        sub     c
+        ld      b, a
+        ld      a, (iy + UI_ITEM_SELECTOR_W)
+        srl     a
+        cp      b
+        jr      nc, .prev
+        call    ui_item_selector_next
+        jr      .draw
+.prev:
+        call    ui_item_selector_prev
+.draw:
+        call    ui_draw_item_selector
+        ld      a, 1
+        ld      (ui_dialog_handled), a
+        scf
+        ret
+
+ui_dialog_mouse_combos:
+        ld      b, 0
+        call    ui_dialog_count_text_fields
+        call    ui_dialog_count_checks
+        call    ui_dialog_count_radios
+        call    ui_dialog_count_item_selectors
+        ld      a, b
+        ld      (ui_dialog_current_index), a
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_COMBOS)
+        ld      h, (ix + UI_DIALOG_COMBOS + 1)
+        ld      a, h
+        or      l
+        scf
+        ret     z
+        call    ui_dialog_parent_to_ix
+.loop:
+        ld      a, (hl)
+        cp      UI_COMBOS_END
+        scf
+        ret     z
+        push    hl
+        ld      de, UI_COMBO_FLAGS
+        add     hl, de
+        bit     7, (hl)
+        pop     hl
+        jr      nz, .skip
+        push    hl
+        push    ix
+        push    hl
+        pop     iy
+        call    ui_dialog_combo_hit_test
+        pop     ix
+        pop     hl
+        jr      nc, .hit
+        ld      a, (ui_dialog_current_index)
+        inc     a
+        ld      (ui_dialog_current_index), a
+.skip:
+        ld      de, UI_COMBO_SIZE
+        add     hl, de
+        jr      .loop
+.hit:
+        ld      a, (ui_dialog_current_index)
+        ld      (ui_dialog_focus_index), a
+        call    ui_dialog_set_focus
+        jp      ui_dialog_activate_focused_key
+
 ui_dialog_activate_button_mouse:
         ld      a, (ui_dialog_focus_index)
         ld      (ui_dialog_target_index), a
         ld      b, 0
+        call    ui_dialog_count_text_fields
         call    ui_dialog_count_checks
         call    ui_dialog_count_radios
+        call    ui_dialog_count_item_selectors
+        call    ui_dialog_count_combos
         ld      a, (ui_dialog_target_index)
         sub     b
         ld      (ui_dialog_target_index), a
@@ -1742,6 +2463,56 @@ ui_dialog_radio_hit_test:
         ld      a, d
         add     a, b
         add     a, 4
+        ld      e, a
+        ld      a, (ui_event_mouse_x)
+        cp      e
+        jr      nc, .miss
+        or      a
+        ret
+.miss:
+        scf
+        ret
+
+ui_dialog_item_selector_hit_test:
+        ld      a, (ix + UI_WINDOW_Y)
+        add     a, (iy + UI_ITEM_SELECTOR_Y)
+        ld      b, a
+        ld      a, (ui_event_mouse_y)
+        cp      b
+        jr      nz, .miss
+        ld      a, (ix + UI_WINDOW_X)
+        add     a, (iy + UI_ITEM_SELECTOR_X)
+        ld      d, a
+        ld      a, (ui_event_mouse_x)
+        cp      d
+        jr      c, .miss
+        ld      a, d
+        add     a, (iy + UI_ITEM_SELECTOR_W)
+        ld      e, a
+        ld      a, (ui_event_mouse_x)
+        cp      e
+        jr      nc, .miss
+        or      a
+        ret
+.miss:
+        scf
+        ret
+
+ui_dialog_combo_hit_test:
+        ld      a, (ix + UI_WINDOW_Y)
+        add     a, (iy + UI_COMBO_Y)
+        ld      b, a
+        ld      a, (ui_event_mouse_y)
+        cp      b
+        jr      nz, .miss
+        ld      a, (ix + UI_WINDOW_X)
+        add     a, (iy + UI_COMBO_X)
+        ld      d, a
+        ld      a, (ui_event_mouse_x)
+        cp      d
+        jr      c, .miss
+        ld      a, d
+        add     a, (iy + UI_COMBO_W)
         ld      e, a
         ld      a, (ui_event_mouse_x)
         cp      e

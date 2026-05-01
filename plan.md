@@ -17,8 +17,8 @@
 
 ## Архитектурные решения
 
-- Публичный API строить вокруг контекста `ui_context`, descriptor tables и единых событий: key, combo key, mouse, command, message.
-- Виджеты разделить на независимые модули: core, draw, input, focus, menu, dialog, button, text_field, checkbox, radio_button, combobox, group_box, separator, status_hint.
+- Публичный API строить вокруг контекста `ui_context`, descriptor tables и единых событий: key, hotkey, mouse, command, message.
+- Виджеты разделить на независимые модули: core, draw, input, focus, menu, dialog, button, text_field, checkbox, radio_button, item_selector, combobox, group_box, separator, status_hint.
 - Каждый модуль должен иметь отдельный `.asm` и `.inc`; подключение одного виджета не должно тянуть остальные.
 - Описатели виджетов должны быть relocatable: координаты относительны окну, адреса буферов задает пользователь, callbacks/commands задаются через таблицу.
 - Сохранение фона под окнами сделать опциональным: либо DSS page buffer через `ui_init`/`ui_shutdown`, либо пользовательский repaint без выделения памяти.
@@ -55,12 +55,13 @@
 - [ ] Этап 5. Базовые виджеты
   - Реализовать `Button`, `TextField` с password mask, `CheckBox`, `RadioButton`, `GroupBox`.
   - Для каждого виджета сделать draw/event module, descriptor format, command output и demo case.
-  - Статус: реализованы `Button`, draw-only `GroupBox`, dialog-integrated `CheckBox`, `RadioButton` и базовый `TextField` с RAM-буфером, password-mask flag, hotkey-фокусом, mouse focus, мигающим курсором, вводом, Backspace/Delete и Left/Right/Home/End; selection/scrolling еще не готовы.
+  - Статус: реализованы `Button`, draw-only `GroupBox`, dialog-integrated `CheckBox`, `RadioButton`, базовый `TextField` с RAM-буфером, password-mask flag, hotkey-фокусом, mouse focus, мигающим курсором, вводом, Backspace/Delete и Left/Right/Home/End; добавлен `ItemSelector` без dropdown popup, с фокусом, hotkey, mouse click, циклическим выбором и обратным переключением через `Left`. Text selection/scrolling еще не готовы.
 
-- [ ] Этап 6. Menu и item selector
+- [ ] Этап 6. Menu и ComboBox/dropdown
   - Реализовать menu bar с dropdown-окнами, hotkeys, mouse support, separators и optional hints.
-  - Реализовать `ComboBox`/item selector на базе универсального list popup.
+  - Реализовать полноценный `ComboBox` на базе универсального list popup.
   - Проверить UX на уровне `fm`/`TASM`: навигация клавиатурой, мышью, закрытие по Esc/клику вне меню.
+  - Статус: компактный `ItemSelector` выделен отдельно; добавлен первый настоящий `ComboBox` с framed dropdown popup, mouse/key выбором, `Up`/`Down`/`Home`/`End`, `Enter` commit, `Esc` cancel и scroll marker для длинных списков. Универсальный list popup API и menu bar еще не готовы.
 
 - [ ] Этап 7. Dialog/window manager
   - Реализовать окна и модальные диалоги с таблицами виджетов.

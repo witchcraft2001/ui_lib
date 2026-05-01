@@ -49,7 +49,7 @@ UI_CMD_CANCEL           equ     02h
 UI_EVENT_NONE           equ     00h
 UI_EVENT_MOUSE          equ     01h
 UI_EVENT_KEY            equ     02h
-UI_EVENT_COMBO_KEY      equ     03h
+UI_EVENT_HOTKEY         equ     03h
 UI_EVENT_COMMAND        equ     04h
 UI_EVENT_MESSAGE        equ     05h
 
@@ -61,12 +61,16 @@ UI_KEY_SPACE           equ     20h
 ; DSS ScanKey returns Sprinter keyboard position codes in D.
 UI_SCAN_DELETE         equ     4Fh
 UI_SCAN_END            equ     51h
+UI_SCAN_DOWN           equ     52h
 UI_SCAN_LEFT           equ     54h
 UI_SCAN_RIGHT          equ     56h
 UI_SCAN_HOME           equ     57h
+UI_SCAN_UP             equ     58h
 
 UI_BUTTONS_END         equ     0FFh
 UI_TEXT_FIELDS_END     equ     0FFh
+UI_ITEM_SELECTORS_END          equ     0FFh
+UI_COMBOS_END          equ     0FFh
 UI_CHECKS_END          equ     0FFh
 UI_RADIOS_END          equ     0FFh
 UI_GROUPS_END          equ     0FFh

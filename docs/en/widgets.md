@@ -71,14 +71,50 @@ text_buffer:
 
 Format: `x, y, width, flags, hotkey, buffer_ptr, max_len, cursor`.
 
+## ItemSelector
+
+`ItemSelector` stores the selected index in the descriptor and displays a string from an ASCIIZ pointer table. It is a compact selector without a dropdown popup: `Space`, `Enter`, hotkey, or mouse click cycles to the next item, `Left` moves backward, and `Right` moves forward.
+
+```asm
+item_selector_example:
+        db      5, 11, 16, 0, "t"
+        dw      item_selector_items
+        db      3, 0                 ; count, selected index
+
+item_selector_items:
+        dw      item_tasm
+        dw      item_fformat
+        dw      item_blue
+```
+
+Format: `x, y, width, flags, hotkey, items_ptr, count, selected`.
+
+## ComboBox
+
+`ComboBox` uses the same string table shape, but opens a dropdown list with its own frame and background. `Space`, `Enter`, hotkey, or mouse click opens the popup. Inside the popup, `Up`/`Down`/`Home`/`End` move selection, `Enter` or click commits, and `Esc` or an outside click cancels. When item count exceeds popup height, the right frame shows a scroll marker.
+
+```asm
+combo_example:
+        db      26, 11, 16, 0, "d"
+        dw      combo_items
+        db      3, 0, 3              ; count, selected index, popup height
+
+combo_items:
+        dw      item_drive_a
+        dw      item_drive_b
+        dw      item_ram
+```
+
+Format: `x, y, width, flags, hotkey, items_ptr, count, selected, popup_height`.
+
 ## Dialog Navigation
 
-`ui_dialog_run` supports focus for `TextField`, `CheckBox`, `RadioButton`, and `Button`. Traversal order is text field table, checkbox table, radio table, then button table.
+`ui_dialog_run` supports focus for `TextField`, `CheckBox`, `RadioButton`, `ItemSelector`, `ComboBox`, and `Button`. Traversal order is text field table, checkbox table, radio table, item selector table, combo box table, then button table.
 
 - `Tab` moves focus forward.
 - `Shift+Tab` or `Alt+Tab` moves focus backward.
 - Printable keys edit the focused text field. `Backspace` deletes before cursor, `Delete` deletes under cursor, and `Left`/`Right`/`Home`/`End` move the cursor.
-- `Space` edits a focused text field or activates other focused controls. `Enter` activates the focused control.
+- `Space` edits a focused text field or activates other focused controls. `Enter` activates the focused control. For `ItemSelector`, activation selects the next item; for `ComboBox`, it opens the popup.
 - The descriptor hotkey activates a control directly.
 - Mouse click focuses and activates the control under the pointer.
 - If the build defines `DEFINE UI_ENABLE_HINTS 1` and includes `src/core/hint.asm`, the dialog updates the bottom hint line from the current focus index.
@@ -94,6 +130,8 @@ dialog_example:
         dw      groups_table
         dw      separators_table
         dw      text_fields_table
+        dw      item_selectors_table
+        dw      combos_table
         dw      hints_table          ; optional when UI_ENABLE_HINTS=1
 
 hints_table:
@@ -101,6 +139,8 @@ hints_table:
         dw      checkbox_hint
         dw      first_radio_hint
         dw      second_radio_hint
+        dw      item_selector_hint
+        dw      combo_hint
         dw      ok_button_hint
         dw      cancel_button_hint
 ```

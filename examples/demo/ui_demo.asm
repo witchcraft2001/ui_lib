@@ -37,6 +37,8 @@ code_start:
         include "src/widgets/separator.asm"
         include "src/widgets/checkbox.asm"
         include "src/widgets/radio_button.asm"
+        include "src/widgets/item_selector.asm"
+        include "src/widgets/combo_box.asm"
         include "src/widgets/button_events.asm"
         include "src/widgets/dialog.asm"
 
@@ -210,6 +212,8 @@ demo_dialog:
         dw      demo_groups
         dw      demo_separators
         dw      demo_text_fields
+        dw      demo_item_selectors
+        dw      demo_combos
         dw      demo_hints
 
 demo_hints:
@@ -217,6 +221,8 @@ demo_hints:
         dw      demo_hint_password
         dw      demo_hint_fast
         dw      demo_hint_safe
+        dw      demo_hint_item_selector
+        dw      demo_hint_combo
         dw      demo_hint_ok
         dw      demo_hint_cancel
 
@@ -247,6 +253,30 @@ demo_text_name:
         dw      demo_text_name_buffer
         db      12, 4
         db      UI_TEXT_FIELDS_END
+
+demo_item_selectors:
+demo_item_selector_theme:
+        db      5, 11, 16, 0, "t"
+        dw      demo_item_selector_theme_items
+        db      3, 0
+        db      UI_ITEM_SELECTORS_END
+
+demo_item_selector_theme_items:
+        dw      demo_item_selector_item_tasm
+        dw      demo_item_selector_item_fformat
+        dw      demo_item_selector_item_blue
+
+demo_combos:
+demo_combo_drive:
+        db      26, 11, 16, 0, "d"
+        dw      demo_combo_drive_items
+        db      3, 0, 3
+        db      UI_COMBOS_END
+
+demo_combo_drive_items:
+        dw      demo_combo_drive_a
+        dw      demo_combo_drive_b
+        dw      demo_combo_drive_ram
 
 demo_radios:
 demo_radio_fast:
@@ -286,6 +316,10 @@ demo_hint_fast:
         db      "Fast mode: radio option selected with Space, hotkey or mouse.", 0
 demo_hint_safe:
         db      "Safe mode: radio option selected with Space, hotkey or mouse.", 0
+demo_hint_item_selector:
+        db      "Theme selector: Space, Enter, T or mouse cycles the selected item.", 0
+demo_hint_combo:
+        db      "Drive combo: Enter, Space, D or mouse opens the dropdown list.", 0
 demo_hint_ok:
         db      "OK: Enter, Space, O or mouse confirms the dialog.", 0
 demo_hint_cancel:
@@ -294,6 +328,18 @@ demo_ok_text:
         db      "[ OK ]      cmd=01h", 0
 demo_cancel_text:
         db      "[ Cancel ]  cmd=02h  (or Esc key)", 0
+demo_item_selector_item_tasm:
+        db      "TASM gray", 0
+demo_item_selector_item_fformat:
+        db      "fformat", 0
+demo_item_selector_item_blue:
+        db      "Blue BP7", 0
+demo_combo_drive_a:
+        db      "Drive A:", 0
+demo_combo_drive_b:
+        db      "Drive B:", 0
+demo_combo_drive_ram:
+        db      "RAM disk", 0
 demo_no_memory_text:
         db      "UI init failed: no DSS memory", 0
 demo_diag_label:
