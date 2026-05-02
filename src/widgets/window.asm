@@ -81,7 +81,7 @@ ui_window_save_under:
 ; Clobbers: AF, BC, DE, HL, IX
 ui_window_restore_under:
         IF UI_USE_DSS_WINDOW_BUFFER
-        call    ui_window_pop_save_slot
+        call    ui_window_peek_save_slot
         ret     c
         call    ui_window_prepare_buffer_page
         ret     c
@@ -100,6 +100,8 @@ ui_window_restore_under:
         di
         call    ui_call_dss
         ei
+        ret     c
+        call    ui_window_commit_restore_slot
         ret
         ELSE
         or      a
@@ -169,12 +171,11 @@ ui_window_push_save_slot:
         or      a
         ret
 
-ui_window_pop_save_slot:
+ui_window_peek_save_slot:
         ld      a, (ui_window_save_depth)
         or      a
         jr      z, .error
         dec     a
-        ld      (ui_window_save_depth), a
         ld      e, a
         ld      d, 0
         ld      hl, ui_window_save_x_stack
@@ -201,15 +202,21 @@ ui_window_pop_save_slot:
         add     hl, de
         ld      a, (hl)
         ld      (ui_window_save_addr + 1), a
+        or      a
+        ret
+.error:
+        scf
+        ret
+
+ui_window_commit_restore_slot:
         ld      hl, (ui_window_save_addr)
         ld      de, 0C000h
         or      a
         sbc     hl, de
         ld      (ui_window_save_offset), hl
-        or      a
-        ret
-.error:
-        scf
+        ld      a, (ui_window_save_depth)
+        dec     a
+        ld      (ui_window_save_depth), a
         ret
 
 ui_window_calc_save_bytes:

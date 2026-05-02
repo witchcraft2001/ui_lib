@@ -70,6 +70,7 @@ demo_main:
 
         IF UI_USE_DSS_WINDOW_BUFFER
         call    demo_pause_after_restore
+        call    demo_nested_window_restore_test
         ENDIF
 
         ld      a, " "
@@ -216,6 +217,72 @@ demo_pause_after_restore:
         ld      c, DSS_K_CLEAR
         rst     10h
         ret
+
+demo_nested_window_restore_test:
+        ld      a, " "
+        push    af
+        ld      a, (ui_theme_desktop)
+        ld      b, a
+        pop     af
+        call    ui_clear_screen
+        ld      hl, demo_nested_backdrop_1
+        ld      a, (ui_theme_hotkey)
+        ld      d, 8
+        ld      e, 14
+        call    ui_print_z
+        ld      hl, demo_nested_backdrop_2
+        ld      a, (ui_theme_window_title)
+        ld      d, 19
+        ld      e, 18
+        call    ui_print_z
+
+        ld      ix, demo_nested_outer_window
+        call    ui_window_save_under
+        jr      c, .error
+        ld      ix, demo_nested_outer_window
+        call    ui_draw_window
+        ld      hl, demo_nested_outer_text
+        ld      a, (ui_theme_window)
+        ld      d, 10
+        ld      e, 22
+        call    ui_print_z
+
+        ld      ix, demo_nested_inner_window
+        call    ui_window_save_under
+        jr      c, .error
+        ld      ix, demo_nested_inner_window
+        call    ui_draw_window
+        ld      hl, demo_nested_inner_text
+        ld      a, (ui_theme_window)
+        ld      d, 13
+        ld      e, 31
+        call    ui_print_z
+
+        ld      hl, demo_nested_step_1
+        call    demo_wait_with_hint
+        call    ui_window_restore_under
+        jr      c, .error
+        ld      hl, demo_nested_step_2
+        call    demo_wait_with_hint
+        call    ui_window_restore_under
+        jr      c, .error
+        ld      hl, demo_nested_step_3
+        call    demo_wait_with_hint
+        ret
+.error:
+        ld      hl, demo_nested_error
+        call    demo_wait_with_hint
+        ret
+
+demo_wait_with_hint:
+        ld      a, (ui_theme_hint)
+        ld      d, 31
+        ld      e, 1
+        call    ui_print_z
+        ld      b, DSS_WAITKEY
+        ld      c, DSS_K_CLEAR
+        rst     10h
+        ret
         ENDIF
 
 demo_no_memory:
@@ -232,11 +299,20 @@ demo_no_memory:
         call    ui_print_z
         ld      c, DSS_WAITKEY
         rst     10h
-        jr      demo_exit
+        jp      demo_exit
 
 demo_window:
         db      15, 4, 50, 20
         dw      demo_title
+
+        IF UI_USE_DSS_WINDOW_BUFFER
+demo_nested_outer_window:
+        db      18, 6, 44, 14
+        dw      demo_nested_outer_title
+demo_nested_inner_window:
+        db      27, 10, 26, 8
+        dw      demo_nested_inner_title
+        ENDIF
 
 demo_menu_bar:
         db      0, 0, 80
@@ -490,6 +566,26 @@ demo_restore_backdrop_3:
         db      "Close dialog: this backdrop must reappear", 0
 demo_restore_pause_hint:
         db      "Dialog closed. If save/restore works, the backdrop is visible. Press any key.", 0
+demo_nested_outer_title:
+        db      " Outer ", 0
+demo_nested_inner_title:
+        db      " Inner ", 0
+demo_nested_backdrop_1:
+        db      "Nested restore test backdrop line A", 0
+demo_nested_backdrop_2:
+        db      "Nested restore test backdrop line B", 0
+demo_nested_outer_text:
+        db      "Outer window content under inner window", 0
+demo_nested_inner_text:
+        db      "Inner window", 0
+demo_nested_step_1:
+        db      "Nested test: press key to restore inner window.", 0
+demo_nested_step_2:
+        db      "Inner restored. Outer content should be intact. Press key.", 0
+demo_nested_step_3:
+        db      "Outer restored. Backdrop should be intact. Press key.", 0
+demo_nested_error:
+        db      "Nested restore test failed: save/restore stack returned CF=1.", 0
         ENDIF
 demo_hint_text_name:
         db      "Name field: type text, use Left/Right/Home/End, Backspace/Delete.", 0
