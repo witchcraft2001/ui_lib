@@ -172,7 +172,7 @@ Format: `x, y, width, flags, hotkey, items_ptr, count, selected`.
 
 ## ComboBox
 
-`ComboBox` uses the same string table shape, but opens a dropdown list with its own frame and background. `Space`, `Enter`, hotkey, or mouse click opens the popup. Inside the popup, `Up`/`Down`/`Home`/`End` move selection, `Enter` or click commits, and `Esc` or an outside click cancels. When item count exceeds popup height, the right frame shows a scroll marker.
+`ComboBox` uses the same string table shape, but opens a dropdown list with its own frame and background. `Space`, `Enter`, hotkey, or mouse click opens the popup. The right dropdown button uses 3 cells inside the total widget width and is drawn as `[▼]`, so the text area is `width - 3`. Inside the popup, `Up`/`Down`/`Home`/`End` move selection, `Enter` or click commits, and `Esc` or an outside click cancels. When item count exceeds popup height, the right frame shows a scroll marker.
 
 ```asm
 combo_example:

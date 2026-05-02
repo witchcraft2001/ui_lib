@@ -29,9 +29,9 @@ ui_draw_combo_box:
         pop     af
         call    ui_fill_rect
         ld      a, (ui_combo_width)
-        cp      2
-        ret     c
-        dec     a
+        cp      4
+        jr      c, .skip_text
+        sub     3
         ld      (ui_combo_text_width), a
         ld      a, (iy + UI_COMBO_COUNT)
         or      a
@@ -43,14 +43,7 @@ ui_draw_combo_box:
         ld      d, a
         call    ui_combo_print_text
 .skip_text:
-        ld      a, (ui_combo_base_x)
-        add     a, (iy + UI_COMBO_W)
-        dec     a
-        ld      e, a
-        ld      a, (ui_combo_base_y)
-        ld      d, a
-        ld      a, 1Fh
-        jp      ui_combo_put
+        jp      ui_combo_draw_drop_button
 
 ; ui_combo_select_popup
 ; Opens dropdown popup and updates selected item on commit.
@@ -71,23 +64,23 @@ ui_combo_select_popup:
         ld      (ui_combo_popup_top), a
         call    ui_combo_popup_height
         call    ui_combo_popup_make_visible
-.loop:
         call    ui_draw_combo_popup
+.loop:
         call    ui_poll_event
         ld      a, (ui_event_type)
         cp      UI_EVENT_KEY
         jr      z, .key
         cp      UI_EVENT_MOUSE
-        jr      z, .mouse
+        jp      z, .mouse
         jr      .loop
 .key:
         ld      a, (ui_event_key)
         cp      UI_KEY_ESCAPE
-        jr      z, .cancel
+        jp      z, .cancel
         cp      UI_KEY_ENTER
-        jr      z, .commit
+        jp      z, .commit
         cp      UI_KEY_SPACE
-        jr      z, .commit
+        jp      z, .commit
         ld      a, (ui_event_scan)
         cp      UI_SCAN_UP
         jr      z, .up
@@ -101,34 +94,54 @@ ui_combo_select_popup:
 .up:
         ld      a, (ui_combo_popup_selected)
         or      a
-        jr      z, .loop
+        jp      z, .loop
+.up_move:
+        call    ui_combo_popup_save_move_state
+        ld      a, (ui_combo_popup_selected)
         dec     a
         ld      (ui_combo_popup_selected), a
         call    ui_combo_popup_make_visible
-        jr      .loop
+        call    ui_combo_popup_refresh_after_move
+        jp      .loop
 .down:
         ld      a, (ui_combo_popup_selected)
         inc     a
         ld      b, a
         ld      a, (iy + UI_COMBO_COUNT)
         cp      b
-        jr      z, .loop
-        jr      c, .loop
+        jp      z, .loop
+        jp      c, .loop
+        call    ui_combo_popup_save_move_state
         ld      a, b
         ld      (ui_combo_popup_selected), a
         call    ui_combo_popup_make_visible
-        jr      .loop
+        call    ui_combo_popup_refresh_after_move
+        jp      .loop
 .home:
+        ld      a, (ui_combo_popup_selected)
+        or      a
+        jp      z, .loop
+.home_move:
+        call    ui_combo_popup_save_move_state
         xor     a
         ld      (ui_combo_popup_selected), a
         ld      (ui_combo_popup_top), a
-        jr      .loop
+        call    ui_combo_popup_refresh_after_move
+        jp      .loop
 .end:
         ld      a, (iy + UI_COMBO_COUNT)
         dec     a
+        ld      b, a
+        ld      a, (ui_combo_popup_selected)
+        cp      b
+        jp      z, .loop
+.end_move:
+        call    ui_combo_popup_save_move_state
+        ld      a, b
         ld      (ui_combo_popup_selected), a
         call    ui_combo_popup_make_visible
-        jr      .loop
+        call    ui_combo_popup_refresh_after_move
+        jp      .loop
 .mouse:
         call    ui_combo_popup_mouse_hit
         jr      c, .cancel
@@ -227,6 +240,25 @@ ui_combo_print_text:
         djnz    .loop
         ret
 
+ui_combo_draw_drop_button:
+        ld      a, (ui_combo_width)
+        cp      3
+        ret     c
+        ld      a, (ui_combo_base_x)
+        add     a, (iy + UI_COMBO_W)
+        sub     3
+        ld      e, a
+        ld      a, (ui_combo_base_y)
+        ld      d, a
+        ld      a, "["
+        call    ui_combo_put
+        inc     e
+        ld      a, 1Fh
+        call    ui_combo_put
+        inc     e
+        ld      a, "]"
+        jp      ui_combo_put
+
 ui_combo_popup_height:
         ld      a, (iy + UI_COMBO_POPUP_H)
         or      a
@@ -298,6 +330,121 @@ ui_combo_popup_clamp_top:
         ld      (ui_combo_popup_top), a
         ret
 
+ui_combo_popup_save_move_state:
+        ld      a, (ui_combo_popup_selected)
+        ld      (ui_combo_popup_old_selected), a
+        ld      a, (ui_combo_popup_top)
+        ld      (ui_combo_popup_old_top), a
+        ret
+
+ui_combo_popup_refresh_after_move:
+        ld      a, (ui_combo_popup_old_top)
+        ld      b, a
+        ld      a, (ui_combo_popup_top)
+        cp      b
+        jr      z, .same_top
+        ld      c, a
+        ld      a, b
+        inc     a
+        cp      c
+        jr      z, .scroll_up
+        ld      a, c
+        inc     a
+        cp      b
+        jr      z, .scroll_down
+        jp      ui_draw_combo_popup
+.scroll_up:
+        call    ui_combo_popup_unfocus_old
+        call    ui_combo_scroll_rows_up
+        ld      a, (ui_combo_popup_h)
+        dec     a
+        ld      (ui_combo_popup_row), a
+        call    ui_draw_combo_popup_row
+        jp      ui_combo_redraw_scroll_column
+.scroll_down:
+        call    ui_combo_popup_unfocus_old
+        call    ui_combo_scroll_rows_down
+        xor     a
+        ld      (ui_combo_popup_row), a
+        call    ui_draw_combo_popup_row
+        jp      ui_combo_redraw_scroll_column
+.same_top:
+        ld      a, (ui_combo_popup_old_selected)
+        ld      b, a
+        ld      a, (ui_combo_popup_top)
+        ld      c, a
+        ld      a, b
+        sub     c
+        ld      (ui_combo_popup_row), a
+        call    ui_draw_combo_popup_row
+        ld      a, (ui_combo_popup_selected)
+        ld      b, a
+        ld      a, (ui_combo_popup_top)
+        ld      c, a
+        ld      a, b
+        sub     c
+        ld      (ui_combo_popup_row), a
+        call    ui_draw_combo_popup_row
+        jp      ui_combo_redraw_scroll_column
+
+ui_combo_popup_unfocus_old:
+        ld      a, (ui_combo_popup_old_selected)
+        ld      b, a
+        ld      a, (ui_combo_popup_old_top)
+        ld      c, a
+        ld      a, b
+        sub     c
+        ret     c
+        ld      b, a
+        ld      a, (ui_combo_popup_h)
+        cp      b
+        ret     c
+        ret     z
+        ld      a, (ui_combo_popup_selected)
+        ld      (ui_combo_popup_saved_selected), a
+        ld      a, (ui_combo_popup_top)
+        ld      (ui_combo_popup_saved_top), a
+        ld      a, (ui_combo_popup_old_top)
+        ld      (ui_combo_popup_top), a
+        ld      a, 0FFh             ; force normal row colors before scrolling
+        ld      (ui_combo_popup_selected), a
+        ld      a, b
+        ld      (ui_combo_popup_row), a
+        call    ui_draw_combo_popup_row
+        ld      a, (ui_combo_popup_saved_selected)
+        ld      (ui_combo_popup_selected), a
+        ld      a, (ui_combo_popup_saved_top)
+        ld      (ui_combo_popup_top), a
+        ret
+
+ui_combo_scroll_rows_up:
+        ld      b, 1                ; DSS direction 1: scroll up
+        jr      ui_combo_scroll_rows
+
+ui_combo_scroll_rows_down:
+        ld      b, 2                ; DSS direction 2: scroll down
+
+ui_combo_scroll_rows:
+        ld      a, (ui_combo_popup_y)
+        inc     a
+        ld      d, a
+        ld      a, (ui_combo_popup_x)
+        inc     a
+        ld      e, a
+        ld      a, (ui_combo_popup_h)
+        ld      h, a
+        ld      a, (iy + UI_COMBO_W)
+        sub     2
+        ld      l, a
+        push    ix
+        push    iy
+        xor     a                 ; clear vacated line after DSS scroll
+        ld      c, DSS_SCROLL
+        call    ui_call_dss
+        pop     iy
+        pop     ix
+        ret
+
 ui_draw_combo_popup:
         ld      a, (ix + UI_WINDOW_X)
         add     a, (iy + UI_COMBO_X)
@@ -327,6 +474,19 @@ ui_draw_combo_popup:
         ld      b, a
         ld      a, (ui_combo_popup_h)
         cp      b
+        ret     z
+        call    ui_draw_combo_popup_row
+        ld      a, (ui_combo_popup_row)
+        inc     a
+        ld      (ui_combo_popup_row), a
+        jr      .row_loop
+
+ui_draw_combo_popup_row:
+        ld      a, (ui_combo_popup_row)
+        ld      b, a
+        ld      a, (ui_combo_popup_h)
+        cp      b
+        ret     c
         ret     z
         ld      a, (ui_combo_popup_top)
         add     a, b
@@ -373,10 +533,7 @@ ui_draw_combo_popup:
         add     a, d
         ld      d, a
         call    ui_combo_print_text
-        ld      a, (ui_combo_popup_row)
-        inc     a
-        ld      (ui_combo_popup_row), a
-        jr      .row_loop
+        ret
 
 ui_combo_popup_mouse_hit:
         ld      a, (ui_event_mouse_x)
@@ -539,16 +696,40 @@ ui_draw_combo_scroll:
         cp      b
         ret     z
         ret     c
+        ld      hl, 0
         ld      a, (ui_combo_popup_selected)
-        ld      c, a
-        ld      a, (ui_combo_popup_top)
         ld      b, a
-        ld      a, c
-        sub     b
-        jr      nc, .row_ready
-.zero:
+        ld      a, (ui_combo_popup_h)
+        ld      e, a
+        ld      d, 0
+.mul_loop:
+        ld      a, b
+        or      a
+        jr      z, .mul_done
+        add     hl, de
+        dec     b
+        jr      .mul_loop
+.mul_done:
+        ld      a, (iy + UI_COMBO_COUNT)
+        ld      e, a
+        ld      d, 0
         xor     a
-.row_ready:
+.div_loop:
+        ld      b, a
+        ld      a, h
+        or      a
+        jr      nz, .subtract
+        ld      a, l
+        cp      e
+        jr      c, .div_done
+.subtract:
+        or      a
+        sbc     hl, de
+        ld      a, b
+        inc     a
+        jr      .div_loop
+.div_done:
+        ld      a, b
         ld      c, a
         ld      a, (ui_combo_popup_h)
         cp      c
@@ -571,6 +752,39 @@ ui_draw_combo_scroll:
         ld      b, a
         ld      a, 0DBh
         jp      ui_put_cell
+
+ui_combo_redraw_scroll_column:
+        ld      a, (ui_combo_popup_h)
+        ld      b, a
+        ld      a, (iy + UI_COMBO_COUNT)
+        cp      b
+        ret     z
+        ret     c
+        ld      a, (ui_combo_popup_h)
+        ld      c, a
+.loop:
+        ld      a, (ui_combo_popup_y)
+        ld      d, a
+        ld      a, (ui_combo_popup_h)
+        sub     c
+        inc     a
+        add     a, d
+        ld      d, a
+        ld      a, (ui_combo_popup_x)
+        add     a, (iy + UI_COMBO_W)
+        dec     a
+        ld      e, a
+        ld      a, (ui_theme_text_field_focus)
+        ld      b, a
+        ld      a, 0B3h
+        push    bc
+        push    de
+        call    ui_put_cell
+        pop     de
+        pop     bc
+        dec     c
+        jr      nz, .loop
+        jp      ui_draw_combo_scroll
 
 ui_clear_combo_popup:
         ld      a, (ui_combo_popup_x)
@@ -608,6 +822,14 @@ ui_combo_popup_h:
 ui_combo_popup_top:
         db      0
 ui_combo_popup_selected:
+        db      0
+ui_combo_popup_old_selected:
+        db      0
+ui_combo_popup_old_top:
+        db      0
+ui_combo_popup_saved_selected:
+        db      0
+ui_combo_popup_saved_top:
         db      0
 ui_combo_popup_row:
         db      0

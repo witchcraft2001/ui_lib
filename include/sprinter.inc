@@ -16,6 +16,7 @@ DSS_GETMEM      equ     Dss.GetMem
 DSS_FREEMEM     equ     Dss.FreeMem
 DSS_SETWIN3     equ     Dss.SetWin3
 DSS_EXIT        equ     Dss.Exit
+DSS_SCROLL      equ     Dss.Scroll
 DSS_CLEAR       equ     Dss.Clear
 DSS_WRCHAR      equ     Dss.WrChar
 DSS_WINCOPY     equ     Dss.WinCopy

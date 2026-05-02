@@ -463,13 +463,18 @@ demo_combos:
 demo_combo_drive:
         db      26, 11, 16, 0, "d"
         dw      demo_combo_drive_items
-        db      3, 0, 3
+        db      8, 0, 4
         db      UI_COMBOS_END
 
 demo_combo_drive_items:
         dw      demo_combo_drive_a
         dw      demo_combo_drive_b
         dw      demo_combo_drive_ram
+        dw      demo_combo_drive_flash
+        dw      demo_combo_drive_rom
+        dw      demo_combo_drive_net
+        dw      demo_combo_drive_tape
+        dw      demo_combo_drive_none
 
 demo_radios:
 demo_radio_fast:
@@ -619,6 +624,16 @@ demo_combo_drive_b:
         db      "Drive B:", 0
 demo_combo_drive_ram:
         db      "RAM disk", 0
+demo_combo_drive_flash:
+        db      "Flash card", 0
+demo_combo_drive_rom:
+        db      "ROM image", 0
+demo_combo_drive_net:
+        db      "Network", 0
+demo_combo_drive_tape:
+        db      "Tape input", 0
+demo_combo_drive_none:
+        db      "No drive", 0
 demo_no_memory_text:
         db      "UI init failed: no DSS memory", 0
 demo_diag_label:
