@@ -1,5 +1,9 @@
 ; Window drawing and optional background save/restore.
 
+        IFNDEF UI_WINDOW_SAVE_DEPTH
+UI_WINDOW_SAVE_DEPTH equ 4
+        ENDIF
+
 ui_window_saved_x:
         db      0
 ui_window_saved_y:
@@ -12,6 +16,26 @@ ui_window_buffer_page:
         db      0
 ui_window_saved_p3:
         db      0
+ui_window_save_depth:
+        db      0
+ui_window_save_offset:
+        dw      0
+ui_window_save_addr:
+        dw      0
+ui_window_save_bytes:
+        dw      0
+ui_window_save_x_stack:
+        ds      UI_WINDOW_SAVE_DEPTH, 0
+ui_window_save_y_stack:
+        ds      UI_WINDOW_SAVE_DEPTH, 0
+ui_window_save_w_stack:
+        ds      UI_WINDOW_SAVE_DEPTH, 0
+ui_window_save_h_stack:
+        ds      UI_WINDOW_SAVE_DEPTH, 0
+ui_window_save_off_lo_stack:
+        ds      UI_WINDOW_SAVE_DEPTH, 0
+ui_window_save_off_hi_stack:
+        ds      UI_WINDOW_SAVE_DEPTH, 0
 
 ; ui_window_save_under
 ; In:  IX=window descriptor
@@ -20,6 +44,8 @@ ui_window_saved_p3:
 ui_window_save_under:
         IF UI_USE_DSS_WINDOW_BUFFER
         call    ui_window_calc_save_rect
+        call    ui_window_alloc_save_slot
+        ret     c
         call    ui_window_prepare_buffer_page
         ret     c
         ld      a, (ui_window_saved_y)
@@ -30,13 +56,19 @@ ui_window_save_under:
         ld      h, a
         ld      a, (ui_window_saved_w)
         ld      l, a
-        ld      ix, 0C000h
+        ld      ix, (ui_window_save_addr)
         ld      a, (ui_window_buffer_page)
         ld      b, a
         ld      c, DSS_WINCOPY
         di
         call    ui_call_dss
         ei
+        jr      c, .copy_error
+        call    ui_window_push_save_slot
+        ret
+.copy_error:
+        call    ui_window_free_pending_slot
+        scf
         ret
         ELSE
         or      a
@@ -49,6 +81,8 @@ ui_window_save_under:
 ; Clobbers: AF, BC, DE, HL, IX
 ui_window_restore_under:
         IF UI_USE_DSS_WINDOW_BUFFER
+        call    ui_window_pop_save_slot
+        ret     c
         call    ui_window_prepare_buffer_page
         ret     c
         ld      a, (ui_window_saved_y)
@@ -59,7 +93,7 @@ ui_window_restore_under:
         ld      h, a
         ld      a, (ui_window_saved_w)
         ld      l, a
-        ld      ix, 0C000h
+        ld      ix, (ui_window_save_addr)
         ld      a, (ui_window_buffer_page)
         ld      b, a
         ld      c, DSS_WINREST
@@ -73,6 +107,128 @@ ui_window_restore_under:
         ENDIF
 
         IF UI_USE_DSS_WINDOW_BUFFER
+ui_window_alloc_save_slot:
+        ld      a, (ui_window_save_depth)
+        cp      UI_WINDOW_SAVE_DEPTH
+        jr      nc, .error
+        call    ui_window_calc_save_bytes
+        ld      (ui_window_save_bytes), hl
+        ld      de, (ui_window_save_offset)
+        add     hl, de
+        ld      a, h
+        cp      40h
+        jr      nc, .error
+        ld      hl, (ui_window_save_offset)
+        ld      de, 0C000h
+        add     hl, de
+        ld      (ui_window_save_addr), hl
+        or      a
+        ret
+.error:
+        scf
+        ret
+
+ui_window_free_pending_slot:
+        ret
+
+ui_window_push_save_slot:
+        ld      a, (ui_window_save_depth)
+        ld      e, a
+        ld      d, 0
+        ld      hl, ui_window_save_x_stack
+        add     hl, de
+        ld      a, (ui_window_saved_x)
+        ld      (hl), a
+        ld      hl, ui_window_save_y_stack
+        add     hl, de
+        ld      a, (ui_window_saved_y)
+        ld      (hl), a
+        ld      hl, ui_window_save_w_stack
+        add     hl, de
+        ld      a, (ui_window_saved_w)
+        ld      (hl), a
+        ld      hl, ui_window_save_h_stack
+        add     hl, de
+        ld      a, (ui_window_saved_h)
+        ld      (hl), a
+        ld      hl, ui_window_save_off_lo_stack
+        add     hl, de
+        ld      a, (ui_window_save_addr)
+        ld      (hl), a
+        ld      hl, ui_window_save_off_hi_stack
+        add     hl, de
+        ld      a, (ui_window_save_addr + 1)
+        ld      (hl), a
+        ld      hl, (ui_window_save_bytes)
+        ld      de, (ui_window_save_offset)
+        add     hl, de
+        ld      (ui_window_save_offset), hl
+        ld      a, (ui_window_save_depth)
+        inc     a
+        ld      (ui_window_save_depth), a
+        or      a
+        ret
+
+ui_window_pop_save_slot:
+        ld      a, (ui_window_save_depth)
+        or      a
+        jr      z, .error
+        dec     a
+        ld      (ui_window_save_depth), a
+        ld      e, a
+        ld      d, 0
+        ld      hl, ui_window_save_x_stack
+        add     hl, de
+        ld      a, (hl)
+        ld      (ui_window_saved_x), a
+        ld      hl, ui_window_save_y_stack
+        add     hl, de
+        ld      a, (hl)
+        ld      (ui_window_saved_y), a
+        ld      hl, ui_window_save_w_stack
+        add     hl, de
+        ld      a, (hl)
+        ld      (ui_window_saved_w), a
+        ld      hl, ui_window_save_h_stack
+        add     hl, de
+        ld      a, (hl)
+        ld      (ui_window_saved_h), a
+        ld      hl, ui_window_save_off_lo_stack
+        add     hl, de
+        ld      a, (hl)
+        ld      (ui_window_save_addr), a
+        ld      hl, ui_window_save_off_hi_stack
+        add     hl, de
+        ld      a, (hl)
+        ld      (ui_window_save_addr + 1), a
+        ld      hl, (ui_window_save_addr)
+        ld      de, 0C000h
+        or      a
+        sbc     hl, de
+        ld      (ui_window_save_offset), hl
+        or      a
+        ret
+.error:
+        scf
+        ret
+
+ui_window_calc_save_bytes:
+        ld      a, (ui_window_saved_h)
+        ld      b, a
+        ld      c, 0
+        ld      hl, 0
+        ld      a, (ui_window_saved_w)
+        add     a, a
+        ld      e, a
+        ld      d, 0
+.loop:
+        ld      a, b
+        or      a
+        ret     z
+        add     hl, de
+        dec     b
+        jr      .loop
+
 ui_window_prepare_buffer_page:
         ld      a, (ui_window_block_id)
         or      a

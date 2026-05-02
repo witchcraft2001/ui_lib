@@ -164,7 +164,7 @@ Format: `x, y, width, flags, hotkey, items_ptr, count, selected, popup_height`.
 
 By default, windows do not save anything: the application repaints the background after closing. If the build defines `DEFINE UI_USE_DSS_WINDOW_BUFFER 1`, `ui_init` allocates one DSS page and `ui_shutdown` frees it. `ui_dialog_run` automatically saves the dialog area including its shadow before drawing and restores it on exit.
 
-For direct window use, call `ui_window_save_under` and `ui_window_restore_under`. `IX` must point to the window descriptor when saving; restore uses the last saved rectangle. The buffer is single-slot, so nested windows require discipline: restore the current window before saving another one, or use application-side repaint.
+For direct window use, call `ui_window_save_under` and `ui_window_restore_under`. `IX` must point to the window descriptor when saving; restore is LIFO, so the last saved window must be closed first. By default, the stack stores up to `UI_WINDOW_SAVE_DEPTH=4` areas in one DSS page; override the depth before including `window.asm`. If the total saved area exceeds 16 KB, `ui_window_save_under` returns `CF=1`, and the application must repaint the background itself.
 
 ## Dialog Navigation
 

@@ -48,6 +48,10 @@ ui_init:
         rst     10h
         ret     c
         ld      (ui_window_block_id), a
+        xor     a
+        ld      (ui_window_save_depth), a
+        ld      (ui_window_save_offset), a
+        ld      (ui_window_save_offset + 1), a
         ENDIF
         or      a
         ret
@@ -72,6 +76,9 @@ ui_shutdown:
         rst     10h
         xor     a
         ld      (ui_window_block_id), a
+        ld      (ui_window_save_depth), a
+        ld      (ui_window_save_offset), a
+        ld      (ui_window_save_offset + 1), a
         ENDIF
         ret
 
