@@ -1,5 +1,33 @@
 # Виджеты
 
+## Минимальное подключение
+
+Приложение подключает только те `.asm` модули, которые реально использует. Пример `examples/button_only/button_only.asm` собирает окно с одной кнопкой без `Dialog`, `MenuBar`, `TextField`, `CheckBox`, `RadioButton`, `ItemSelector` и `ComboBox`.
+
+```asm
+        include "include/ui.inc"
+        include "src/core/theme.asm"
+        include "src/core/init.asm"
+        include "src/core/events.asm"
+        include "src/draw/text.asm"
+        include "src/widgets/window.asm"
+        include "src/widgets/button.asm"
+        include "src/widgets/button_events.asm"
+```
+
+Сборка примера:
+
+```sh
+run/make.sh
+run/create_floppy_image.sh
+```
+
+Дефолтный образ `build/demo/ui_demo.img` содержит `UI_DEMO.EXE` и `BUTTON.EXE`. Отдельный образ только с button-only примером можно создать командой `run/create_floppy_image.sh build/examples/BUTTON_ONLY.EXE build/examples/button_only.img BUTTON.EXE`.
+
+Такой подход оставляет выбор за целевой программой: подключить виджет inline в основной код, собрать библиотечный блок под отдельный адрес или вызывать код из отдельной страницы памяти.
+
+Для простого текста без отдельного виджета используйте `ui_print_wrapped_z`: `HL` - ASCIIZ-текст, `A` - атрибут, `D/E` - row/column, `B` - ширина, `C` - максимум строк. Byte `0Ah` внутри строки принудительно переносит вывод на следующую строку.
+
 ## MenuBar
 
 `MenuBar` рисует верхнюю строку меню и dropdown-окна по таблицам. Координаты задаются явно, поэтому модуль не требует фиксированного адреса и может использоваться отдельно от `Dialog`. `ui_menu_bar_run` держит фокус на верхней строке, `Left`/`Right` переключают пункты меню, `Enter`/mouse click открывают dropdown, `Up`/`Down` двигают выбор внутри открытого dropdown, `Esc` закрывает dropdown или выходит из меню. Shortcut пункта меню ищется по всем dropdown-таблицам, поэтому `Alt+X` или hotkey из другого раскрытого меню работает как accelerator.

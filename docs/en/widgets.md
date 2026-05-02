@@ -1,5 +1,33 @@
 # Widgets
 
+## Minimal Linking
+
+Applications include only the `.asm` modules they use. `examples/button_only/button_only.asm` builds a window with one button without linking `Dialog`, `MenuBar`, `TextField`, `CheckBox`, `RadioButton`, `ItemSelector`, or `ComboBox`.
+
+```asm
+        include "include/ui.inc"
+        include "src/core/theme.asm"
+        include "src/core/init.asm"
+        include "src/core/events.asm"
+        include "src/draw/text.asm"
+        include "src/widgets/window.asm"
+        include "src/widgets/button.asm"
+        include "src/widgets/button_events.asm"
+```
+
+Build the example:
+
+```sh
+run/make.sh
+run/create_floppy_image.sh
+```
+
+The default `build/demo/ui_demo.img` image contains both `UI_DEMO.EXE` and `BUTTON.EXE`. To create a separate button-only image, run `run/create_floppy_image.sh build/examples/BUTTON_ONLY.EXE build/examples/button_only.img BUTTON.EXE`.
+
+This keeps placement policy in the target program: inline the widget code, build a library block at a chosen address, or call it from a separate memory page.
+
+For simple text without a widget, use `ui_print_wrapped_z`: `HL` is ASCIIZ text, `A` is the attribute, `D/E` is row/column, `B` is width, and `C` is max rows. Byte `0Ah` inside the string forces a new line.
+
 ## MenuBar
 
 `MenuBar` draws the top menu row and dropdown windows from descriptor tables. Coordinates are explicit, so the module does not require a fixed address and can be used separately from `Dialog`. `ui_menu_bar_run` keeps focus on the top row, `Left`/`Right` move across menu items, `Enter`/mouse click opens the dropdown, `Up`/`Down` moves inside an open dropdown, and `Esc` closes the dropdown or exits the menu. Menu item shortcuts are searched across all dropdown tables, so `Alt+X` or a shortcut from another opened menu works as an accelerator.

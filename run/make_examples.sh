@@ -9,16 +9,7 @@ if ! command -v sjasmplus >/dev/null 2>&1; then
   exit 1
 fi
 
-mkdir -p "$repo_root/build/demo" "$repo_root/build/examples"
-
-sjasmplus \
-  --nologo \
-  --syntax=f \
-  --fullpath \
-  --lst="$repo_root/build/demo/UI_DEMO.LST" \
-  "$repo_root/examples/demo/ui_demo.asm"
-
-echo "Built $repo_root/build/demo/UI_DEMO.EXE"
+mkdir -p "$repo_root/build/examples"
 
 sjasmplus \
   --nologo \

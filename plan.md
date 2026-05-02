@@ -44,7 +44,7 @@
   - Реализовать draw primitives: char/attr write, fill rect, frame, shadow, invert range, hotkey highlight.
   - Добавить стандартную палитру BP7-style и возможность пользовательской палитры.
   - Добавить separator: горизонтальная линия для меню и диалогов.
-  - Статус: реализованы базовые char/attr write, fill rect, window frame, window/button shadow, hotkey highlight, `GroupBox`, `Separator`, цвета `TextField` и настраиваемая global theme; invert range еще не готов.
+  - Статус: реализованы базовые char/attr write, fill rect, window frame, window/button shadow, hotkey highlight, `GroupBox`, `Separator`, `ui_print_wrapped_z` с ограничением ширины/строк и принудительным `0Ah` newline, цвета `TextField` и настраиваемая global theme; invert range еще не готов.
 
 - [ ] Этап 4. Focus, events и подсказки
   - Реализовать Tab/Shift+Tab, arrows, Enter, Esc, F10, Alt/hotkeys, mouse click/release.
@@ -73,6 +73,7 @@
   - Написать docs на русском и английском: API, descriptors, memory model, examples, integration guide.
   - Добавить demo-приложение, показывающее меню, подсказки, диалог, все базовые виджеты и mouse/hotkeys.
   - Добавить minimal-link examples: only button, only dialog, only menu.
+  - Статус: добавлен `examples/button_only/button_only.asm` и `run/make_examples.sh`; пример подключает только core/theme/events, draw/text, window, button и button_events, чтобы проверить модульное подключение без остальных виджетов. `run/make.sh` собирает пример вместе с основным demo, а дефолтный `run/create_floppy_image.sh` кладет в `build/demo/ui_demo.img` оба файла: `UI_DEMO.EXE` и `BUTTON.EXE`.
 
 - [ ] Этап 9. Оптимизация и приемка
   - Измерить размер кода и RAM по модулям, убрать лишние зависимости.

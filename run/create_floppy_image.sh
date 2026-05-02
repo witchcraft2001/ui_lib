@@ -11,6 +11,12 @@ repo_root="$(cd "$script_dir/.." && pwd)"
 
 exe_path="${1:-$repo_root/build/demo/UI_DEMO.EXE}"
 image_path="${2:-$repo_root/build/demo/ui_demo.img}"
+image_exe_name="${3:-UI_DEMO.EXE}"
+include_default_examples=0
+
+if [ "$#" -eq 0 ]; then
+  include_default_examples=1
+fi
 
 if [ ! -f "$exe_path" ]; then
   echo "Error: EXE file not found: $exe_path" >&2
@@ -21,7 +27,14 @@ mkdir -p "$(dirname "$image_path")"
 rm -f "$image_path"
 
 mformat -C -i "$image_path" -f 1440 ::
-mcopy -i "$image_path" -o "$exe_path" ::UI_DEMO.EXE
+mcopy -i "$image_path" -o "$exe_path" ::"$image_exe_name"
+
+if [ "$include_default_examples" -eq 1 ] && [ -f "$repo_root/build/examples/BUTTON_ONLY.EXE" ]; then
+  mcopy -i "$image_path" -o "$repo_root/build/examples/BUTTON_ONLY.EXE" ::BUTTON.EXE
+fi
 
 echo "Created FAT12 floppy image: $image_path"
-echo "Copied file: $exe_path -> ::UI_DEMO.EXE"
+echo "Copied file: $exe_path -> ::$image_exe_name"
+if [ "$include_default_examples" -eq 1 ] && [ -f "$repo_root/build/examples/BUTTON_ONLY.EXE" ]; then
+  echo "Copied file: $repo_root/build/examples/BUTTON_ONLY.EXE -> ::BUTTON.EXE"
+fi

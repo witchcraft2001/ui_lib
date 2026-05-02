@@ -90,6 +90,99 @@ ui_print_attr:
 ui_print_char:
         db      0
 
+; ui_print_wrapped_z
+; In:  HL=ASCIIZ text, A=attribute, D=row, E=column, B=width, C=max rows
+; Out: none
+; Clobbers: AF, BC, DE, HL
+; Notes: byte 0Ah starts a new line. Wrapping is cell-based, not word-based.
+ui_print_wrapped_z:
+        ld      (ui_wrap_ptr), hl
+        ld      (ui_wrap_attr), a
+        ld      a, d
+        ld      (ui_wrap_y), a
+        ld      a, e
+        ld      (ui_wrap_x), a
+        ld      (ui_wrap_start_x), a
+        xor     a
+        ld      (ui_wrap_col), a
+        ld      a, b
+        ld      (ui_wrap_width), a
+        or      a
+        ret     z
+        ld      a, c
+        ld      (ui_wrap_rows_left), a
+        or      a
+        ret     z
+.loop:
+        ld      hl, (ui_wrap_ptr)
+        ld      a, (hl)
+        or      a
+        ret     z
+        inc     hl
+        ld      (ui_wrap_ptr), hl
+        cp      0Ah
+        jr      z, .forced_newline
+        ld      (ui_wrap_char), a
+        ld      a, (ui_wrap_col)
+        ld      b, a
+        ld      a, (ui_wrap_width)
+        cp      b
+        jr      nz, .draw_char
+        call    ui_wrap_newline
+        ret     c
+.draw_char:
+        ld      a, (ui_wrap_y)
+        ld      d, a
+        ld      a, (ui_wrap_x)
+        ld      e, a
+        ld      a, (ui_wrap_attr)
+        ld      b, a
+        ld      a, (ui_wrap_char)
+        call    ui_put_cell
+        ld      hl, ui_wrap_x
+        inc     (hl)
+        ld      hl, ui_wrap_col
+        inc     (hl)
+        jr      .loop
+.forced_newline:
+        call    ui_wrap_newline
+        ret     c
+        jr      .loop
+
+ui_wrap_newline:
+        ld      hl, ui_wrap_rows_left
+        dec     (hl)
+        jr      z, .exhausted
+        ld      hl, ui_wrap_y
+        inc     (hl)
+        ld      a, (ui_wrap_start_x)
+        ld      (ui_wrap_x), a
+        xor     a
+        ld      (ui_wrap_col), a
+        ret
+.exhausted:
+        scf
+        ret
+
+ui_wrap_ptr:
+        dw      0
+ui_wrap_attr:
+        db      0
+ui_wrap_char:
+        db      0
+ui_wrap_x:
+        db      0
+ui_wrap_y:
+        db      0
+ui_wrap_start_x:
+        db      0
+ui_wrap_col:
+        db      0
+ui_wrap_width:
+        db      0
+ui_wrap_rows_left:
+        db      0
+
 ; ui_fill_rect
 ; In:  A=char, B=attribute, D=row, E=column, H=height, L=width
 ; Out: none
