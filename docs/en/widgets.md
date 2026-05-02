@@ -2,7 +2,7 @@
 
 ## MenuBar
 
-`MenuBar` draws the top menu row and dropdown windows from descriptor tables. Coordinates are explicit, so the module does not require a fixed address and can be used separately from `Dialog`. `ui_menu_bar_run` keeps focus on the top row, `Left`/`Right` move across menu items, `Enter`/mouse click opens the dropdown, `Up`/`Down` moves inside an open dropdown, and `Esc` closes the dropdown or exits the menu.
+`MenuBar` draws the top menu row and dropdown windows from descriptor tables. Coordinates are explicit, so the module does not require a fixed address and can be used separately from `Dialog`. `ui_menu_bar_run` keeps focus on the top row, `Left`/`Right` move across menu items, `Enter`/mouse click opens the dropdown, `Up`/`Down` moves inside an open dropdown, and `Esc` closes the dropdown or exits the menu. Menu item shortcuts are searched across all dropdown tables, so `Alt+X` or a shortcut from another opened menu works as an accelerator.
 
 ```asm
 menu_bar:
@@ -10,7 +10,7 @@ menu_bar:
         dw      menu_items
 
 menu_items:
-        db      1, 0, "f"
+        db      1, 0, "f", UI_HOTKEY_MOD_NONE
         dw      file_label
         dw      file_popup
         db      14                  ; popup width
@@ -18,30 +18,37 @@ menu_items:
         db      UI_MENU_ITEMS_END
 
 file_popup:
-        db      0, "x", UI_CMD_CANCEL
+        db      0, "x", UI_HOTKEY_MOD_ALT | UI_HOTKEY_NO_MNEMONIC
+        db      UI_CMD_CANCEL
         dw      exit_label
         dw      exit_hint
+        db      0, UI_SCAN_F3, UI_HOTKEY_USE_SCAN | UI_HOTKEY_NO_MNEMONIC
+        db      UI_CMD_NONE
+        dw      diagnostics_label
+        dw      diagnostics_hint
         db      UI_MENU_POPUP_END
 ```
 
 `MenuBar` layout: `x, y, width, menu_items_ptr`.
 
-`MenuBar item` layout: `x, flags, hotkey, label_ptr, popup_ptr, popup_width, hint_ptr`.
+`MenuBar item` layout: `x, flags, hotkey, hotkey_mods, label_ptr, popup_ptr, popup_width, hint_ptr`.
 
 - `x` is the item column relative to the menu bar origin.
 - `flags`: `UI_FLAG_DISABLED` prevents selection.
-- `hotkey` is the ASCII shortcut key, matched case-insensitively.
+- `hotkey` is an ASCII shortcut key or scan code.
+- `hotkey_mods` uses `UI_HOTKEY_MOD_NONE`, `UI_HOTKEY_MOD_ALT`, `UI_HOTKEY_USE_SCAN`, and `UI_HOTKEY_NO_MNEMONIC`.
 - `label_ptr` is an ASCIIZ label; `&` explicitly marks the highlighted hot character. Without `&`, the renderer highlights the first character matching `hotkey`.
 - `popup_ptr` points to dropdown items, or `0` when no popup is attached.
 - `popup_width` is the dropdown width including the frame.
 - `hint_ptr` points to the status-line hint, or `0`.
 
-`Popup item` layout: `flags, hotkey, command, label_ptr, hint_ptr`.
+`Popup item` layout: `flags, hotkey, hotkey_mods, command, label_ptr, hint_ptr`.
 
 - `flags`: `UI_FLAG_SEPARATOR` draws a separator, `UI_FLAG_DISABLED` disables the row.
-- `hotkey` is the ASCII shortcut while the dropdown is open, matched case-insensitively.
+- `hotkey` is the ASCII key or scan code used while the dropdown is open.
+- `hotkey_mods` contains shortcut modifiers/flags. For `Alt+X`, use `hotkey="x"` and `hotkey_mods=UI_HOTKEY_MOD_ALT | UI_HOTKEY_NO_MNEMONIC`. For `F3`, use `hotkey=UI_SCAN_F3` and `hotkey_mods=UI_HOTKEY_USE_SCAN | UI_HOTKEY_NO_MNEMONIC`. `UI_SCAN_F*` uses DSS/TASM-style scan codes (`F3 = #3D`), not raw AT scancodes.
 - `command` is the byte returned by `ui_menu_bar_run`.
-- `label_ptr` is an ASCIIZ label with an optional `&` marker for the hotkey position.
+- `label_ptr` is an ASCIIZ label with an optional `&` marker for the visible mnemonic. For shortcuts without highlighted letters (`F3`, `Alt+X`), omit `&` and set `UI_HOTKEY_NO_MNEMONIC`.
 - `hint_ptr` points to the status-line hint.
 
 Horizontal and vertical focus colors are separate theme fields: `UI_THEME_MENU_BAR_FOCUS` and `UI_THEME_MENU_POPUP_FOCUS`. Disabled menu rows use `UI_THEME_MENU_DISABLED`.

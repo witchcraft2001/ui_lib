@@ -2,7 +2,7 @@
 
 ## MenuBar
 
-`MenuBar` рисует верхнюю строку меню и dropdown-окна по таблицам. Координаты задаются явно, поэтому модуль не требует фиксированного адреса и может использоваться отдельно от `Dialog`. `ui_menu_bar_run` держит фокус на верхней строке, `Left`/`Right` переключают пункты меню, `Enter`/mouse click открывают dropdown, `Up`/`Down` двигают выбор внутри открытого dropdown, `Esc` закрывает dropdown или выходит из меню.
+`MenuBar` рисует верхнюю строку меню и dropdown-окна по таблицам. Координаты задаются явно, поэтому модуль не требует фиксированного адреса и может использоваться отдельно от `Dialog`. `ui_menu_bar_run` держит фокус на верхней строке, `Left`/`Right` переключают пункты меню, `Enter`/mouse click открывают dropdown, `Up`/`Down` двигают выбор внутри открытого dropdown, `Esc` закрывает dropdown или выходит из меню. Shortcut пункта меню ищется по всем dropdown-таблицам, поэтому `Alt+X` или hotkey из другого раскрытого меню работает как accelerator.
 
 ```asm
 menu_bar:
@@ -10,7 +10,7 @@ menu_bar:
         dw      menu_items
 
 menu_items:
-        db      1, 0, "f"
+        db      1, 0, "f", UI_HOTKEY_MOD_NONE
         dw      file_label
         dw      file_popup
         db      14                  ; popup width
@@ -18,30 +18,37 @@ menu_items:
         db      UI_MENU_ITEMS_END
 
 file_popup:
-        db      0, "x", UI_CMD_CANCEL
+        db      0, "x", UI_HOTKEY_MOD_ALT | UI_HOTKEY_NO_MNEMONIC
+        db      UI_CMD_CANCEL
         dw      exit_label
         dw      exit_hint
+        db      0, UI_SCAN_F3, UI_HOTKEY_USE_SCAN | UI_HOTKEY_NO_MNEMONIC
+        db      UI_CMD_NONE
+        dw      diagnostics_label
+        dw      diagnostics_hint
         db      UI_MENU_POPUP_END
 ```
 
 Структура `MenuBar`: `x, y, width, menu_items_ptr`.
 
-Структура `MenuBar item`: `x, flags, hotkey, label_ptr, popup_ptr, popup_width, hint_ptr`.
+Структура `MenuBar item`: `x, flags, hotkey, hotkey_mods, label_ptr, popup_ptr, popup_width, hint_ptr`.
 
 - `x` - колонка пункта относительно начала menu bar.
 - `flags` - `UI_FLAG_DISABLED` запрещает выбор пункта.
-- `hotkey` - ASCII-клавиша быстрого доступа, сравнивается без учета регистра.
+- `hotkey` - ASCII-клавиша или scan-код быстрого доступа.
+- `hotkey_mods` - `UI_HOTKEY_MOD_NONE`, `UI_HOTKEY_MOD_ALT`, `UI_HOTKEY_USE_SCAN`, `UI_HOTKEY_NO_MNEMONIC`.
 - `label_ptr` - ASCIIZ-строка; `&` явно задает подсвеченную букву. Если `&` нет, renderer подсветит первый символ, совпадающий с `hotkey`.
 - `popup_ptr` - таблица пунктов dropdown, `0` если popup нет.
 - `popup_width` - ширина dropdown вместе с рамкой.
 - `hint_ptr` - ASCIIZ-подсказка для status line, `0` если не нужна.
 
-Структура `Popup item`: `flags, hotkey, command, label_ptr, hint_ptr`.
+Структура `Popup item`: `flags, hotkey, hotkey_mods, command, label_ptr, hint_ptr`.
 
 - `flags` - `UI_FLAG_SEPARATOR` рисует разделитель, `UI_FLAG_DISABLED` делает пункт неактивным.
-- `hotkey` - ASCII-клавиша внутри открытого dropdown, сравнивается без учета регистра.
+- `hotkey` - ASCII-клавиша или scan-код внутри открытого dropdown.
+- `hotkey_mods` - модификаторы/флаги shortcut. Для `Alt+X`: `hotkey="x"`, `hotkey_mods=UI_HOTKEY_MOD_ALT | UI_HOTKEY_NO_MNEMONIC`. Для `F3`: `hotkey=UI_SCAN_F3`, `hotkey_mods=UI_HOTKEY_USE_SCAN | UI_HOTKEY_NO_MNEMONIC`. `UI_SCAN_F*` использует DSS/TASM-style scan-коды (`F3 = #3D`), а не raw AT scancode.
 - `command` - байт команды, который вернет `ui_menu_bar_run`.
-- `label_ptr` - ASCIIZ-строка с опциональным `&` для явной позиции hotkey.
+- `label_ptr` - ASCIIZ-строка с опциональным `&` для явной позиции mnemonic. Если нужен shortcut без подсветки буквы (`F3`, `Alt+X`), не ставьте `&` и используйте `UI_HOTKEY_NO_MNEMONIC`.
 - `hint_ptr` - ASCIIZ-подсказка для status line.
 
 Цвета горизонтального и вертикального фокуса разделены в теме: `UI_THEME_MENU_BAR_FOCUS` и `UI_THEME_MENU_POPUP_FOCUS`. Disabled-пункты меню используют `UI_THEME_MENU_DISABLED`.

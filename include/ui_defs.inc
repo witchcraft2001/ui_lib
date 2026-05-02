@@ -22,6 +22,9 @@ UI_COLOR_TEXT_FIELD_FOCUS equ   1Fh
 UI_COLOR_MENU_BAR_FOCUS equ     2Fh
 UI_COLOR_MENU_POPUP_FOCUS equ   0Fh
 UI_COLOR_MENU_DISABLED  equ     78h
+UI_COLOR_MENU_HOTKEY    equ     0Eh
+UI_COLOR_MENU_BAR_FOCUS_HOTKEY equ 2Eh
+UI_COLOR_MENU_POPUP_FOCUS_HOTKEY equ 0Eh
 
 UI_THEME_DESKTOP        equ     0
 UI_THEME_WINDOW         equ     1
@@ -40,7 +43,10 @@ UI_THEME_TEXT_FIELD_FOCUS equ   13
 UI_THEME_MENU_BAR_FOCUS equ     14
 UI_THEME_MENU_POPUP_FOCUS equ   15
 UI_THEME_MENU_DISABLED  equ     16
-UI_THEME_SIZE           equ     17
+UI_THEME_MENU_HOTKEY    equ     17
+UI_THEME_MENU_BAR_FOCUS_HOTKEY equ 18
+UI_THEME_MENU_POPUP_FOCUS_HOTKEY equ 19
+UI_THEME_SIZE           equ     20
 
 UI_FLAG_DISABLED        equ     80h
 UI_FLAG_FOCUSED         equ     40h
@@ -65,7 +71,19 @@ UI_KEY_ESCAPE          equ     1Bh
 UI_KEY_TAB             equ     09h
 UI_KEY_SPACE           equ     20h
 
+UI_HOTKEY_MOD_NONE     equ     00h
+UI_HOTKEY_MOD_ALT      equ     10h
+UI_HOTKEY_USE_SCAN     equ     80h
+UI_HOTKEY_NO_MNEMONIC  equ     40h
+
+UI_KEYMOD_ALT_ANY      equ     15h     ; DSS ScanKey B bits 4, 2, 0
+
 ; DSS ScanKey returns Sprinter keyboard position codes in D.
+UI_SCAN_F1             equ     3Bh
+UI_SCAN_F2             equ     3Ch
+UI_SCAN_F3             equ     3Dh
+UI_SCAN_F4             equ     3Eh
+UI_SCAN_F5             equ     3Fh
 UI_SCAN_DELETE         equ     4Fh
 UI_SCAN_END            equ     51h
 UI_SCAN_DOWN           equ     52h

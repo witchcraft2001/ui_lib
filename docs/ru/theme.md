@@ -31,9 +31,12 @@ my_theme:
         db      2Fh     ; focused horizontal menu item
         db      0Fh     ; focused dropdown menu item
         db      78h     ; disabled menu item
+        db      0Eh     ; menu hotkey
+        db      2Eh     ; focused horizontal menu hotkey
+        db      0Eh     ; focused dropdown menu hotkey
 
         ld      hl, my_theme
         call    ui_set_theme
 ```
 
-Таблица содержит `UI_THEME_SIZE` байт. Поля также доступны через смещения `UI_THEME_*` и через текущие переменные `ui_theme_desktop`, `ui_theme_window`, `ui_theme_button`, `ui_theme_button_focus`, `ui_theme_menu_bar_focus`, `ui_theme_menu_popup_focus`, `ui_theme_menu_disabled` и другие.
+Таблица содержит `UI_THEME_SIZE` байт. Menu hotkey имеет отдельные поля `UI_THEME_MENU_HOTKEY`, `UI_THEME_MENU_BAR_FOCUS_HOTKEY` и `UI_THEME_MENU_POPUP_FOCUS_HOTKEY`, чтобы не смешивать его с hotkey диалогов. Для menu hotkey используется младший nibble цвета, а фон берется из текущего пункта меню, поэтому подсвеченная буква не рисует черный фон поверх серого окна. Поля также доступны через смещения `UI_THEME_*` и текущие переменные `ui_theme_*`.

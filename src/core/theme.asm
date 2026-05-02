@@ -40,6 +40,9 @@ ui_default_theme:
         db      UI_COLOR_MENU_BAR_FOCUS
         db      UI_COLOR_MENU_POPUP_FOCUS
         db      UI_COLOR_MENU_DISABLED
+        db      UI_COLOR_MENU_HOTKEY
+        db      UI_COLOR_MENU_BAR_FOCUS_HOTKEY
+        db      UI_COLOR_MENU_POPUP_FOCUS_HOTKEY
 
 ui_theme:
 ui_theme_desktop:
@@ -76,3 +79,9 @@ ui_theme_menu_popup_focus:
         db      UI_COLOR_MENU_POPUP_FOCUS
 ui_theme_menu_disabled:
         db      UI_COLOR_MENU_DISABLED
+ui_theme_menu_hotkey:
+        db      UI_COLOR_MENU_HOTKEY
+ui_theme_menu_bar_focus_hotkey:
+        db      UI_COLOR_MENU_BAR_FOCUS_HOTKEY
+ui_theme_menu_popup_focus_hotkey:
+        db      UI_COLOR_MENU_POPUP_FOCUS_HOTKEY

@@ -54,34 +54,38 @@ UI_MENU_BAR_SIZE        equ     5
 ; MenuBar item descriptor:
 ;   +0 x relative to menu bar
 ;   +1 flags
-;   +2 hot key ASCII
-;   +3 word label ASCIIZ, '&' marks hot character
-;   +5 word popup item table, may be 0
-;   +7 popup width including frame
-;   +8 word hint ASCIIZ, may be 0
+;   +2 hot key ASCII or scan code
+;   +3 hot key modifiers/flags, see UI_HOTKEY_* constants
+;   +4 word label ASCIIZ, '&' marks visible mnemonic
+;   +6 word popup item table, may be 0
+;   +8 popup width including frame
+;   +9 word hint ASCIIZ, may be 0
 
 UI_MENU_ITEM_X          equ     0
 UI_MENU_ITEM_FLAGS      equ     1
 UI_MENU_ITEM_HOTKEY     equ     2
-UI_MENU_ITEM_LABEL      equ     3
-UI_MENU_ITEM_POPUP      equ     5
-UI_MENU_ITEM_POPUP_W    equ     7
-UI_MENU_ITEM_HINT       equ     8
-UI_MENU_ITEM_SIZE       equ     10
+UI_MENU_ITEM_HOTKEY_MODS equ    3
+UI_MENU_ITEM_LABEL      equ     4
+UI_MENU_ITEM_POPUP      equ     6
+UI_MENU_ITEM_POPUP_W    equ     8
+UI_MENU_ITEM_HINT       equ     9
+UI_MENU_ITEM_SIZE       equ     11
 
 ; Menu popup item descriptor:
 ;   +0 flags, bit 7 = disabled, bit 2 = separator
-;   +1 hot key ASCII
-;   +2 command
-;   +3 word label ASCIIZ, '&' marks hot character
-;   +5 word hint ASCIIZ, may be 0
+;   +1 hot key ASCII or scan code
+;   +2 hot key modifiers/flags, see UI_HOTKEY_* constants
+;   +3 command
+;   +4 word label ASCIIZ, '&' marks visible mnemonic
+;   +6 word hint ASCIIZ, may be 0
 
 UI_MENU_POPUP_FLAGS     equ     0
 UI_MENU_POPUP_HOTKEY    equ     1
-UI_MENU_POPUP_COMMAND   equ     2
-UI_MENU_POPUP_LABEL     equ     3
-UI_MENU_POPUP_HINT      equ     5
-UI_MENU_POPUP_SIZE      equ     7
+UI_MENU_POPUP_HOTKEY_MODS equ   2
+UI_MENU_POPUP_COMMAND   equ     3
+UI_MENU_POPUP_LABEL     equ     4
+UI_MENU_POPUP_HINT      equ     6
+UI_MENU_POPUP_SIZE      equ     8
 
 ; Dialog descriptor:
 ;   +0 word window descriptor

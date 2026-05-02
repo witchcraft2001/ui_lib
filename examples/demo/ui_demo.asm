@@ -205,19 +205,19 @@ demo_menu_bar:
 
 demo_menu_items:
 demo_menu_file:
-        db      1, 0, "f"
+        db      1, 0, "f", UI_HOTKEY_MOD_NONE
         dw      demo_menu_file_label
         dw      demo_menu_file_popup
         db      18
         dw      demo_menu_file_hint
 demo_menu_options:
-        db      9, 0, "o"
+        db      9, 0, "o", UI_HOTKEY_MOD_NONE
         dw      demo_menu_options_label
         dw      demo_menu_options_popup
         db      20
         dw      demo_menu_options_hint
 demo_menu_help:
-        db      21, 0, "h"
+        db      21, 0, "h", UI_HOTKEY_MOD_NONE
         dw      demo_menu_help_label
         dw      demo_menu_help_popup
         db      14
@@ -225,44 +225,49 @@ demo_menu_help:
         db      UI_MENU_ITEMS_END
 
 demo_menu_file_popup:
-        db      0, "r", UI_CMD_OK
+        db      0, "r", UI_HOTKEY_MOD_NONE, UI_CMD_OK
         dw      demo_menu_run_label
         dw      demo_menu_run_hint
-        db      UI_FLAG_DISABLED, "s", UI_CMD_NONE
+        db      UI_FLAG_DISABLED, "s", UI_HOTKEY_MOD_NONE, UI_CMD_NONE
         dw      demo_menu_save_label
         dw      demo_menu_save_hint
-        db      0, "l", UI_CMD_NONE
+        db      0, "l", UI_HOTKEY_MOD_NONE, UI_CMD_NONE
         dw      demo_menu_load_label
         dw      demo_menu_load_hint
-        db      UI_FLAG_SEPARATOR, 0, 0
+        db      0, UI_SCAN_F3, UI_HOTKEY_USE_SCAN | UI_HOTKEY_NO_MNEMONIC
+        db      UI_CMD_OK
+        dw      demo_menu_diag_label
+        dw      demo_menu_diag_hint
+        db      UI_FLAG_SEPARATOR, 0, UI_HOTKEY_MOD_NONE, 0
         dw      0, 0
-        db      0, "x", UI_CMD_CANCEL
+        db      0, "x", UI_HOTKEY_MOD_ALT | UI_HOTKEY_NO_MNEMONIC
+        db      UI_CMD_CANCEL
         dw      demo_menu_exit_label
         dw      demo_menu_exit_hint
         db      UI_MENU_POPUP_END
 
 demo_menu_options_popup:
-        db      0, "t", UI_CMD_NONE
+        db      0, "t", UI_HOTKEY_MOD_NONE, UI_CMD_NONE
         dw      demo_menu_theme_label
         dw      demo_menu_theme_hint
-        db      0, "d", UI_CMD_NONE
+        db      0, "d", UI_HOTKEY_MOD_NONE, UI_CMD_NONE
         dw      demo_menu_drive_label
         dw      demo_menu_drive_hint
-        db      UI_FLAG_DISABLED, "s", UI_CMD_NONE
+        db      UI_FLAG_DISABLED, "s", UI_HOTKEY_MOD_NONE, UI_CMD_NONE
         dw      demo_menu_sound_label
         dw      demo_menu_sound_hint
-        db      0, "m", UI_CMD_NONE
+        db      0, "m", UI_HOTKEY_MOD_NONE, UI_CMD_NONE
         dw      demo_menu_mouse_label
         dw      demo_menu_mouse_hint
-        db      UI_FLAG_SEPARATOR, 0, 0
+        db      UI_FLAG_SEPARATOR, 0, UI_HOTKEY_MOD_NONE, 0
         dw      0, 0
-        db      UI_FLAG_DISABLED, "a", UI_CMD_NONE
+        db      UI_FLAG_DISABLED, "a", UI_HOTKEY_MOD_NONE, UI_CMD_NONE
         dw      demo_menu_advanced_label
         dw      demo_menu_advanced_hint
         db      UI_MENU_POPUP_END
 
 demo_menu_help_popup:
-        db      0, "a", UI_CMD_NONE
+        db      0, "a", UI_HOTKEY_MOD_NONE, UI_CMD_NONE
         dw      demo_menu_about_label
         dw      demo_menu_about_hint
         db      UI_MENU_POPUP_END
@@ -381,8 +386,10 @@ demo_menu_save_label:
         db      "&Save setup", 0
 demo_menu_load_label:
         db      "&Load setup", 0
+demo_menu_diag_label:
+        db      "Diagnostics F3", 0
 demo_menu_exit_label:
-        db      "E&xit", 0
+        db      "Exit Alt+X", 0
 demo_menu_theme_label:
         db      "&Theme", 0
 demo_menu_drive_label:
@@ -401,8 +408,10 @@ demo_menu_save_hint:
         db      "Save setup is disabled in this demo.", 0
 demo_menu_load_hint:
         db      "Load setup placeholder command.", 0
+demo_menu_diag_hint:
+        db      "F3 opens diagnostics without a visible mnemonic.", 0
 demo_menu_exit_hint:
-        db      "Exit the demo.", 0
+        db      "Alt+X exits the demo without a visible mnemonic.", 0
 demo_menu_theme_hint:
         db      "Theme menu placeholder.", 0
 demo_menu_drive_hint:
@@ -475,6 +484,7 @@ demo_theme:
         db      17h, 70h, 7Fh, 7Eh, 20h, 2Fh
         db      78h, 08h, 1Eh, 70h, 2Eh, 2Eh
         db      17h, 1Fh, 2Fh, 0Fh, 78h
+        db      0Eh, 2Eh, 0Eh
 demo_last_command:
         db      0
 demo_diag_buf:

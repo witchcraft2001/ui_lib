@@ -31,9 +31,12 @@ my_theme:
         db      2Fh     ; focused horizontal menu item
         db      0Fh     ; focused dropdown menu item
         db      78h     ; disabled menu item
+        db      0Eh     ; menu hotkey
+        db      2Eh     ; focused horizontal menu hotkey
+        db      0Eh     ; focused dropdown menu hotkey
 
         ld      hl, my_theme
         call    ui_set_theme
 ```
 
-The table has `UI_THEME_SIZE` bytes. Fields are also available through `UI_THEME_*` offsets and active variables such as `ui_theme_desktop`, `ui_theme_window`, `ui_theme_button`, `ui_theme_button_focus`, `ui_theme_menu_bar_focus`, `ui_theme_menu_popup_focus`, `ui_theme_menu_disabled`, and others.
+The table has `UI_THEME_SIZE` bytes. Menu hotkeys use separate fields: `UI_THEME_MENU_HOTKEY`, `UI_THEME_MENU_BAR_FOCUS_HOTKEY`, and `UI_THEME_MENU_POPUP_FOCUS_HOTKEY`, so menu colors do not have to reuse dialog hotkey colors. Menu hotkeys use the low color nibble from these fields and keep the current menu row background, so mnemonic letters do not paint a black background over a gray menu. Fields are also available through `UI_THEME_*` offsets and active `ui_theme_*` variables.
