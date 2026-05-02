@@ -67,6 +67,7 @@
   - Реализовать окна и модальные диалоги с таблицами виджетов.
   - Добавить optional background save/restore через DSS page memory и fallback mode без сохранения.
   - Документировать требования к буферу, размер окна, вложенные окна и ошибки allocation.
+  - Статус: добавлен optional save/restore API `ui_window_save_under`/`ui_window_restore_under` через DSS `WinCopy`/`WinRest` и страницу, выделяемую `ui_init` при `UI_USE_DSS_WINDOW_BUFFER=1`; `ui_dialog_run` автоматически сохраняет и восстанавливает область диалога с тенью. Сейчас буфер одинарный, вложенные окна требуют восстановления перед сохранением следующего окна или пользовательского repaint.
 
 - [ ] Этап 8. Документация и примеры
   - Написать docs на русском и английском: API, descriptors, memory model, examples, integration guide.

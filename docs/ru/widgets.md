@@ -160,6 +160,12 @@ combo_items:
 
 Формат: `x, y, width, flags, hotkey, items_ptr, count, selected, popup_height`.
 
+## Window Background Save/Restore
+
+По умолчанию окна ничего не сохраняют: приложение само перерисовывает фон после закрытия. Если перед сборкой определить `DEFINE UI_USE_DSS_WINDOW_BUFFER 1`, `ui_init` выделит одну DSS-страницу, а `ui_shutdown` освободит ее. `ui_dialog_run` автоматически сохраняет область диалога вместе с тенью перед выводом и восстанавливает ее при выходе.
+
+Для прямого использования окна доступны `ui_window_save_under` и `ui_window_restore_under`. `IX` должен указывать на window descriptor при сохранении; восстановление использует последний сохраненный прямоугольник. Буфер один, поэтому вложенные окна требуют дисциплины: восстановите текущее окно до сохранения следующего или используйте собственную стратегию repaint.
+
 ## Dialog Navigation
 
 `ui_dialog_run` поддерживает фокус для `TextField`, `CheckBox`, `RadioButton`, `ItemSelector`, `ComboBox` и `Button`. Порядок обхода: text field table, checkbox table, radio table, item selector table, combo box table, button table.

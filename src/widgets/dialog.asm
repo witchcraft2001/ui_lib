@@ -22,6 +22,8 @@ ui_dialog_old_focus_index:
         db      0FFh
 ui_dialog_blink_counter:
         db      16
+ui_dialog_saved_under:
+        db      0
 
 ; ui_dialog_run
 ; In:  IX=dialog descriptor
@@ -32,6 +34,7 @@ ui_dialog_run:
         ld      hl, ui_dialog_idle
         ld      (ui_idle_hook), hl
         call    ui_dialog_clear_focus
+        call    ui_dialog_save_under
         call    ui_dialog_draw_all
         call    ui_dialog_count_focus
         ld      (ui_dialog_focus_count), a
@@ -97,10 +100,38 @@ ui_dialog_clear_idle_hook:
         push    af
         ld      hl, 0
         ld      (ui_idle_hook), hl
+        call    ui_dialog_restore_under
         IF UI_ENABLE_HINTS
         call    ui_clear_context_hint
         ENDIF
         pop     af
+        ret
+
+ui_dialog_save_under:
+        xor     a
+        ld      (ui_dialog_saved_under), a
+        IF UI_USE_DSS_WINDOW_BUFFER
+        ld      ix, (ui_dialog_active)
+        ld      l, (ix + UI_DIALOG_WINDOW)
+        ld      h, (ix + UI_DIALOG_WINDOW + 1)
+        push    hl
+        pop     ix
+        call    ui_window_save_under
+        ret     c
+        ld      a, 1
+        ld      (ui_dialog_saved_under), a
+        ENDIF
+        ret
+
+ui_dialog_restore_under:
+        IF UI_USE_DSS_WINDOW_BUFFER
+        ld      a, (ui_dialog_saved_under)
+        or      a
+        ret     z
+        xor     a
+        ld      (ui_dialog_saved_under), a
+        call    ui_window_restore_under
+        ENDIF
         ret
 
 ui_dialog_idle:

@@ -74,3 +74,29 @@ ui_shutdown:
         ld      (ui_window_block_id), a
         ENDIF
         ret
+
+; ui_call_dss
+; Calls Sprinter DSS with P2 mapped to P1 and a temporary stack.
+; This matches texteditor/fformat-style code and is required by DSS calls that
+; can switch memory windows while the application stack is outside WIN2.
+; In:  C=function, other registers as required by DSS
+; Out: DSS result and flags
+ui_call_dss:
+        ld      (.a_value), a
+        in      a, (EmmWin.P2)
+        ld      (.page), a
+        in      a, (EmmWin.P1)
+        out     (EmmWin.P2), a
+        ld      (.sp_save), sp
+        ld      sp, 8040h
+        ld      a, 0
+.a_value equ $-1
+        rst     10h
+        ld      sp, 0
+.sp_save equ $-2
+        push    af
+        ld      a, 0
+.page   equ $-1
+        out     (EmmWin.P2), a
+        pop     af
+        ret

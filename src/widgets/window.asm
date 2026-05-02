@@ -1,4 +1,139 @@
-; Window drawing. The first implementation draws a BP7-like text frame.
+; Window drawing and optional background save/restore.
+
+ui_window_saved_x:
+        db      0
+ui_window_saved_y:
+        db      0
+ui_window_saved_w:
+        db      0
+ui_window_saved_h:
+        db      0
+ui_window_buffer_page:
+        db      0
+ui_window_saved_p3:
+        db      0
+
+; ui_window_save_under
+; In:  IX=window descriptor
+; Out: CF=0 on success, CF=1 when DSS buffer is enabled but unavailable
+; Clobbers: AF, BC, DE, HL, IX
+ui_window_save_under:
+        IF UI_USE_DSS_WINDOW_BUFFER
+        call    ui_window_calc_save_rect
+        call    ui_window_prepare_buffer_page
+        ret     c
+        ld      a, (ui_window_saved_y)
+        ld      d, a
+        ld      a, (ui_window_saved_x)
+        ld      e, a
+        ld      a, (ui_window_saved_h)
+        ld      h, a
+        ld      a, (ui_window_saved_w)
+        ld      l, a
+        ld      ix, 0C000h
+        ld      a, (ui_window_buffer_page)
+        ld      b, a
+        ld      c, DSS_WINCOPY
+        di
+        call    ui_call_dss
+        ei
+        ret
+        ELSE
+        or      a
+        ret
+        ENDIF
+
+; ui_window_restore_under
+; In:  none, uses the last saved rectangle
+; Out: CF=0 on success, CF=1 when DSS buffer is enabled but unavailable
+; Clobbers: AF, BC, DE, HL, IX
+ui_window_restore_under:
+        IF UI_USE_DSS_WINDOW_BUFFER
+        call    ui_window_prepare_buffer_page
+        ret     c
+        ld      a, (ui_window_saved_y)
+        ld      d, a
+        ld      a, (ui_window_saved_x)
+        ld      e, a
+        ld      a, (ui_window_saved_h)
+        ld      h, a
+        ld      a, (ui_window_saved_w)
+        ld      l, a
+        ld      ix, 0C000h
+        ld      a, (ui_window_buffer_page)
+        ld      b, a
+        ld      c, DSS_WINREST
+        di
+        call    ui_call_dss
+        ei
+        ret
+        ELSE
+        or      a
+        ret
+        ENDIF
+
+        IF UI_USE_DSS_WINDOW_BUFFER
+ui_window_prepare_buffer_page:
+        ld      a, (ui_window_block_id)
+        or      a
+        jr      z, .error
+        in      a, (EmmWin.P3)
+        ld      (ui_window_saved_p3), a
+        ld      a, (ui_window_block_id)
+        ld      b, 0
+        ld      c, DSS_SETWIN3
+        call    ui_call_dss
+        jr      c, .restore_error
+        in      a, (EmmWin.P3)
+        ld      (ui_window_buffer_page), a
+        ld      a, (ui_window_saved_p3)
+        out     (EmmWin.P3), a
+        or      a
+        ret
+.restore_error:
+        ld      a, (ui_window_saved_p3)
+        out     (EmmWin.P3), a
+.error:
+        scf
+        ret
+
+ui_window_calc_save_rect:
+        ld      a, (ix + UI_WINDOW_X)
+        ld      (ui_window_saved_x), a
+        ld      a, (ix + UI_WINDOW_Y)
+        ld      (ui_window_saved_y), a
+
+        ld      a, (ix + UI_WINDOW_W)
+        add     a, 2
+        ld      b, a
+        ld      a, UI_SCREEN_COLS
+        ld      c, a
+        ld      a, (ui_window_saved_x)
+        ld      d, a
+        ld      a, c
+        sub     d
+        cp      b
+        jr      c, .store_w
+        ld      a, b
+.store_w:
+        ld      (ui_window_saved_w), a
+
+        ld      a, (ix + UI_WINDOW_H)
+        inc     a
+        ld      b, a
+        ld      a, UI_SCREEN_ROWS
+        ld      c, a
+        ld      a, (ui_window_saved_y)
+        ld      d, a
+        ld      a, c
+        sub     d
+        cp      b
+        jr      c, .store_h
+        ld      a, b
+.store_h:
+        ld      (ui_window_saved_h), a
+        ret
+        ENDIF
 
 ; ui_draw_window
 ; In:  IX=window descriptor

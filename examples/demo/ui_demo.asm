@@ -60,9 +60,17 @@ demo_main:
         cp      UI_CMD_CANCEL
         jp      z, demo_exit
 
+        IF UI_USE_DSS_WINDOW_BUFFER
+        call    demo_draw_restore_backdrop
+        ENDIF
+
         ld      ix, demo_dialog
         call    ui_dialog_run
         ld      (demo_last_command), a
+
+        IF UI_USE_DSS_WINDOW_BUFFER
+        call    demo_pause_after_restore
+        ENDIF
 
         ld      a, " "
         push    af
@@ -178,6 +186,37 @@ demo_put_hex:
         ret     c
         add     a, "A" - "0" - 10
         ret
+
+        IF UI_USE_DSS_WINDOW_BUFFER
+demo_draw_restore_backdrop:
+        ld      hl, demo_restore_backdrop_1
+        ld      a, (ui_theme_window_title)
+        ld      d, 7
+        ld      e, 19
+        call    ui_print_z
+        ld      hl, demo_restore_backdrop_2
+        ld      a, (ui_theme_hotkey)
+        ld      d, 11
+        ld      e, 22
+        call    ui_print_z
+        ld      hl, demo_restore_backdrop_3
+        ld      a, (ui_theme_button)
+        ld      d, 18
+        ld      e, 18
+        call    ui_print_z
+        ret
+
+demo_pause_after_restore:
+        ld      hl, demo_restore_pause_hint
+        ld      a, (ui_theme_hint)
+        ld      d, 31
+        ld      e, 1
+        call    ui_print_z
+        ld      b, DSS_WAITKEY
+        ld      c, DSS_K_CLEAR
+        rst     10h
+        ret
+        ENDIF
 
 demo_no_memory:
         ld      a, " "
@@ -442,6 +481,16 @@ demo_cancel_label:
         db      " &Cancel ", 0
 demo_hint:
         db      "Use Enter, O, C, Esc or mouse. Press any key to exit.", 0
+        IF UI_USE_DSS_WINDOW_BUFFER
+demo_restore_backdrop_1:
+        db      "DSS window buffer restore test", 0
+demo_restore_backdrop_2:
+        db      "This text is behind the dialog", 0
+demo_restore_backdrop_3:
+        db      "Close dialog: this backdrop must reappear", 0
+demo_restore_pause_hint:
+        db      "Dialog closed. If save/restore works, the backdrop is visible. Press any key.", 0
+        ENDIF
 demo_hint_text_name:
         db      "Name field: type text, use Left/Right/Home/End, Backspace/Delete.", 0
 demo_hint_password:

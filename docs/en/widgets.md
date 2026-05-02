@@ -160,6 +160,12 @@ combo_items:
 
 Format: `x, y, width, flags, hotkey, items_ptr, count, selected, popup_height`.
 
+## Window Background Save/Restore
+
+By default, windows do not save anything: the application repaints the background after closing. If the build defines `DEFINE UI_USE_DSS_WINDOW_BUFFER 1`, `ui_init` allocates one DSS page and `ui_shutdown` frees it. `ui_dialog_run` automatically saves the dialog area including its shadow before drawing and restores it on exit.
+
+For direct window use, call `ui_window_save_under` and `ui_window_restore_under`. `IX` must point to the window descriptor when saving; restore uses the last saved rectangle. The buffer is single-slot, so nested windows require discipline: restore the current window before saving another one, or use application-side repaint.
+
 ## Dialog Navigation
 
 `ui_dialog_run` supports focus for `TextField`, `CheckBox`, `RadioButton`, `ItemSelector`, `ComboBox`, and `Button`. Traversal order is text field table, checkbox table, radio table, item selector table, combo box table, then button table.
