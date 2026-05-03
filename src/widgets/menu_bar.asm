@@ -29,18 +29,20 @@ ui_menu_bar_run:
         cp      UI_EVENT_KEY
         jr      z, .key
         cp      UI_EVENT_MOUSE
-        jr      z, .mouse
+        jp      z, .mouse
         jr      .loop
 
 .key:
         ld      a, (ui_event_key)
         cp      UI_KEY_ESCAPE
-        jr      z, .cancel
+        jp      z, .cancel
         cp      UI_KEY_ENTER
         jr      z, .commit
         cp      UI_KEY_SPACE
         jr      z, .commit
         ld      a, (ui_event_scan)
+        cp      UI_SCAN_F10
+        jr      z, .f10
         cp      UI_SCAN_RIGHT
         jr      z, .next_menu
         cp      4Dh
@@ -80,15 +82,24 @@ ui_menu_bar_run:
 .prev_popup:
         call    ui_menu_popup_prev
         jr      .loop
+.f10:
+        ld      a, (ui_menu_popup_open)
+        or      a
+        jr      z, .f10_open
+        call    ui_menu_close_popup
+        jr      .loop
+.f10_open:
+        call    ui_menu_open_popup
+        jp      .loop
 .commit:
         ld      a, (ui_menu_popup_open)
         or      a
         jr      nz, .commit_open
         call    ui_menu_open_popup
-        jr      .loop
+        jp      .loop
 .commit_open:
         call    ui_menu_commit_selected
-        jr      c, .loop
+        jp      c, .loop
 .done:
         push    af
         IF UI_ENABLE_HINTS

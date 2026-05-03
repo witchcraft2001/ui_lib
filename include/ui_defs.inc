@@ -84,6 +84,11 @@ UI_SCAN_F2             equ     3Ch
 UI_SCAN_F3             equ     3Dh
 UI_SCAN_F4             equ     3Eh
 UI_SCAN_F5             equ     3Fh
+UI_SCAN_F6             equ     40h
+UI_SCAN_F7             equ     41h
+UI_SCAN_F8             equ     42h
+UI_SCAN_F9             equ     43h
+UI_SCAN_F10            equ     44h
 UI_SCAN_DELETE         equ     4Fh
 UI_SCAN_END            equ     51h
 UI_SCAN_DOWN           equ     52h

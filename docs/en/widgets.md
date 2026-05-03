@@ -30,7 +30,7 @@ For simple text without a widget, use `ui_print_wrapped_z`: `HL` is ASCIIZ text,
 
 ## MenuBar
 
-`MenuBar` draws the top menu row and dropdown windows from descriptor tables. Coordinates are explicit, so the module does not require a fixed address and can be used separately from `Dialog`. `ui_menu_bar_run` keeps focus on the top row, `Left`/`Right` move across menu items, `Enter`/mouse click opens the dropdown, `Up`/`Down` moves inside an open dropdown, and `Esc` closes the dropdown or exits the menu. Menu item shortcuts are searched across all dropdown tables, so `Alt+X` or a shortcut from another opened menu works as an accelerator.
+`MenuBar` draws the top menu row and dropdown windows from descriptor tables. Coordinates are explicit, so the module does not require a fixed address and can be used separately from `Dialog`. `ui_menu_bar_run` keeps focus on the top row, `Left`/`Right` move across menu items, `Enter`, `F10`, or mouse click opens the dropdown, `F10` closes an open dropdown, `Up`/`Down` moves inside an open dropdown, and `Esc` closes the dropdown or exits the menu. Menu item shortcuts are searched across all dropdown tables, so `Alt+X` or a shortcut from another opened menu works as an accelerator.
 
 ```asm
 menu_bar:
