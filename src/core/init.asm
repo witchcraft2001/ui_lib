@@ -26,7 +26,7 @@ ui_init:
         IF UI_SET_TEXT_MODE
         ld      a, 03h             ; text mode 80x32
         ld      b, 0               ; video page 0
-        ld      c, DSS_SETVMOD
+        ld      c, Dss.SetVMod
         rst     10h
         ENDIF
 
@@ -38,13 +38,13 @@ ui_init:
         jr      c, .mouse_done
         ld      a, 1
         ld      (ui_mouse_available), a
-        ld      a, BIOS_MOUSE_SHOW ; show mouse cursor if available
+        ld      a, Bios.Mouse_Show ; show mouse cursor if available
         ld      c, a
         rst     30h
 .mouse_done:
         IF UI_USE_DSS_WINDOW_BUFFER
         ld      b, 1
-        ld      c, DSS_GETMEM
+        ld      c, Dss.GetMem
         rst     10h
         ret     c
         ld      (ui_window_block_id), a
@@ -64,7 +64,7 @@ ui_shutdown:
         ld      a, (ui_mouse_available)
         or      a
         jr      z, .mouse_done
-        ld      a, BIOS_MOUSE_HIDE ; hide mouse cursor if available
+        ld      a, Bios.Mouse_Hide ; hide mouse cursor if available
         ld      c, a
         rst     30h
 .mouse_done:
@@ -72,7 +72,7 @@ ui_shutdown:
         ld      a, (ui_window_block_id)
         or      a
         ret     z
-        ld      c, DSS_FREEMEM
+        ld      c, Dss.FreeMem
         rst     10h
         xor     a
         ld      (ui_window_block_id), a

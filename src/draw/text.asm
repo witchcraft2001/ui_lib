@@ -246,6 +246,63 @@ ui_put_char:
 ui_put_attr:
         db      0
 
+; ui_invert_range
+; In:  D=row, E=column, B=width
+; Out: none
+; Clobbers: AF, BC, DE, HL
+ui_invert_range:
+        push    ix
+        push    iy
+        ld      a, b
+        ld      (ui_invert_w), a
+        or      a
+        jr      z, .done
+        ld      a, d
+        ld      (ui_invert_y), a
+        ld      a, e
+        ld      (ui_invert_x), a
+.loop:
+        ld      a, (ui_invert_y)
+        ld      d, a
+        ld      a, (ui_invert_x)
+        ld      e, a
+        ld      c, Dss.RdChar
+        call    ui_call_dss
+        ld      (ui_invert_char), a
+        ld      a, b
+        rlca
+        rlca
+        rlca
+        rlca
+        ld      b, a
+        ld      a, (ui_invert_char)
+        push    af
+        ld      a, (ui_invert_y)
+        ld      d, a
+        ld      a, (ui_invert_x)
+        ld      e, a
+        pop     af
+        ld      c, Dss.WrChar
+        call    ui_call_dss
+        ld      hl, ui_invert_x
+        inc     (hl)
+        ld      hl, ui_invert_w
+        dec     (hl)
+        jr      nz, .loop
+.done:
+        pop     iy
+        pop     ix
+        ret
+
+ui_invert_char:
+        db      0
+ui_invert_x:
+        db      0
+ui_invert_y:
+        db      0
+ui_invert_w:
+        db      0
+
 ; ui_call_bios
 ; Calls Sprinter BIOS with P2 mapped to P1 and a temporary stack.
 ; This follows the pattern used by texteditor/fformat-style UI code to

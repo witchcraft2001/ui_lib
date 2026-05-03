@@ -453,7 +453,7 @@ ui_combo_scroll_rows:
         push    ix
         push    iy
         xor     a                 ; clear vacated line after DSS scroll
-        ld      c, DSS_SCROLL
+        ld      c, Dss.Scroll
         call    ui_call_dss
         pop     iy
         pop     ix

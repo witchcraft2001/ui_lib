@@ -44,7 +44,7 @@
   - Реализовать draw primitives: char/attr write, fill rect, frame, shadow, invert range, hotkey highlight.
   - Добавить стандартную палитру BP7-style и возможность пользовательской палитры.
   - Добавить separator: горизонтальная линия для меню и диалогов.
-  - Статус: реализованы базовые char/attr write, fill rect, window frame, window/button shadow, hotkey highlight, `GroupBox`, `Separator`, `ui_print_wrapped_z` с ограничением ширины/строк и принудительным `0Ah` newline, цвета `TextField` и настраиваемая global theme; invert range еще не готов.
+  - Статус: реализованы базовые char/attr write, fill rect, window frame, window/button shadow, hotkey highlight, `GroupBox`, `Separator`, `ui_print_wrapped_z` с ограничением ширины/строк и принудительным `0Ah` newline, `ui_invert_range` для однострочной инверсии атрибутов, цвета `TextField` и настраиваемая global theme.
 
 - [ ] Этап 4. Focus, events и подсказки
   - Реализовать Tab/Shift+Tab, arrows, Enter, Esc, F10, Alt/hotkeys, mouse click/release.

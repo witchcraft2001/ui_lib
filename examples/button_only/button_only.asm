@@ -114,14 +114,14 @@ button_only_show_result:
         ld      d, 15
         ld      e, 20
         call    ui_print_z
-        ld      c, DSS_WAITKEY
+        ld      c, Dss.WaitKey
         rst     10h
 
 button_only_exit:
         call    ui_shutdown
 button_only_exit_raw:
         ld      b, 0
-        ld      c, DSS_EXIT
+        ld      c, Dss.Exit
         rst     10h
 
 button_only_window:

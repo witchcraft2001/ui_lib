@@ -41,6 +41,12 @@ Bios.Lp_Print_Ln6    EQU  08Ch  ; print string variant #6
 Bios.Lp_Cls_Win2     EQU  08Dh  ; alternate clear window
 Bios.Lp_Get_Place    EQU  08Eh  ; get cursor position
 
+; Mouse driver services via RST #30
+Bios.Mouse_Show      EQU  01h   ; show mouse cursor
+Bios.Mouse_Hide      EQU  02h   ; hide mouse cursor
+Bios.Mouse_Read      EQU  03h   ; read mouse state
+Bios.Mouse_Refresh   EQU  83h   ; refresh mouse cursor
+
 ; Drive services
 Bios.Drv_Reset       EQU  051h  ; reset drive/controller
 Bios.Drv_Verify      EQU  054h  ; verify sectors

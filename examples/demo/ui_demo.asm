@@ -153,13 +153,13 @@ demo_main:
         ld      e, 1
         call    ui_print_z
 
-        ld      c, DSS_WAITKEY
+        ld      c, Dss.WaitKey
         rst     10h
 
 demo_exit:
         call    ui_shutdown
         ld      b, 0
-        ld      c, DSS_EXIT
+        ld      c, Dss.Exit
         rst     10h
 
 ; demo_put_hex
@@ -213,8 +213,8 @@ demo_pause_after_restore:
         ld      d, 31
         ld      e, 1
         call    ui_print_z
-        ld      b, DSS_WAITKEY
-        ld      c, DSS_K_CLEAR
+        ld      b, Dss.WaitKey
+        ld      c, Dss.K_Clear
         rst     10h
         ret
 
@@ -279,8 +279,8 @@ demo_wait_with_hint:
         ld      d, 31
         ld      e, 1
         call    ui_print_z
-        ld      b, DSS_WAITKEY
-        ld      c, DSS_K_CLEAR
+        ld      b, Dss.WaitKey
+        ld      c, Dss.K_Clear
         rst     10h
         ret
         ENDIF
@@ -297,7 +297,7 @@ demo_no_memory:
         ld      d, 12
         ld      e, 18
         call    ui_print_z
-        ld      c, DSS_WAITKEY
+        ld      c, Dss.WaitKey
         rst     10h
         jp      demo_exit
 

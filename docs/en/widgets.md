@@ -26,7 +26,7 @@ The default `build/demo/ui_demo.img` image contains both `UI_DEMO.EXE` and `BUTT
 
 This keeps placement policy in the target program: inline the widget code, build a library block at a chosen address, or call it from a separate memory page.
 
-For simple text without a widget, use `ui_print_wrapped_z`: `HL` is ASCIIZ text, `A` is the attribute, `D/E` is row/column, `B` is width, and `C` is max rows. Byte `0Ah` inside the string forces a new line.
+For simple text without a widget, use `ui_print_wrapped_z`: `HL` is ASCIIZ text, `A` is the attribute, `D/E` is row/column, `B` is width, and `C` is max rows. Byte `0Ah` inside the string forces a new line. To invert an already drawn one-line region without reprinting text, call `ui_invert_range` with `D/E` as row/column and `B` as width.
 
 ## MenuBar
 

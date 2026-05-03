@@ -34,7 +34,7 @@ ui_poll_event:
         or      a
         ret     nz
 
-        ld      c, DSS_CTRLKEY
+        ld      c, Dss.CtrlKey
         rst     10h
         or      a
         jr      nz, .consume_key
@@ -42,7 +42,7 @@ ui_poll_event:
         call    ui_call_idle_hook
         jr      .again
 .consume_key:
-        ld      c, DSS_SCANKEY
+        ld      c, Dss.ScanKey
         rst     10h
 .key:
         ld      (ui_event_key), a
@@ -72,7 +72,7 @@ ui_poll_mouse:
         or      a
         ret     z
 
-        ld      a, BIOS_MOUSE_READ
+        ld      a, Bios.Mouse_Read
         ld      c, a
         rst     30h
         ret     c

@@ -59,7 +59,7 @@ ui_window_save_under:
         ld      ix, (ui_window_save_addr)
         ld      a, (ui_window_buffer_page)
         ld      b, a
-        ld      c, DSS_WINCOPY
+        ld      c, Dss.WinCopy
         di
         call    ui_call_dss
         ei
@@ -96,7 +96,7 @@ ui_window_restore_under:
         ld      ix, (ui_window_save_addr)
         ld      a, (ui_window_buffer_page)
         ld      b, a
-        ld      c, DSS_WINREST
+        ld      c, Dss.WinRest
         di
         call    ui_call_dss
         ei
@@ -244,7 +244,7 @@ ui_window_prepare_buffer_page:
         ld      (ui_window_saved_p3), a
         ld      a, (ui_window_block_id)
         ld      b, 0
-        ld      c, DSS_SETWIN3
+        ld      c, Dss.SetWin3
         call    ui_call_dss
         jr      c, .restore_error
         in      a, (EmmWin.P3)

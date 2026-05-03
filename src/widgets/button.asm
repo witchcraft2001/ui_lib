@@ -235,7 +235,7 @@ ui_button_press_mouse_feedback:
 .wait_loop:
         push    ix
         push    iy
-        ld      c, BIOS_MOUSE_READ
+        ld      c, Bios.Mouse_Read
         rst     30h
         pop     iy
         pop     ix
@@ -295,7 +295,7 @@ ui_wait_key_release:
         ld      b, 20
 .loop:
         push    bc
-        ld      c, DSS_TESTKEY
+        ld      c, Dss.TestKey
         rst     10h
         pop     bc
         jr      nz, .consume
@@ -304,7 +304,7 @@ ui_wait_key_release:
         ret
 .consume:
         push    bc
-        ld      c, DSS_SCANKEY
+        ld      c, Dss.ScanKey
         rst     10h
         pop     bc
         ld      b, 20
