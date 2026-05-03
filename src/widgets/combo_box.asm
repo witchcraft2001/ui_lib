@@ -1,5 +1,13 @@
 ; ComboBox drawing and dropdown popup selection.
 
+UI_COMBO_SCROLL_UP_CHAR     equ     1Eh
+UI_COMBO_SCROLL_DOWN_CHAR   equ     1Fh
+UI_COMBO_SCROLL_TRACK_CHAR  equ     0B1h
+UI_COMBO_SCROLL_THUMB_CHAR  equ     0DBh
+UI_COMBO_MOUSE_SCROLL_UP    equ     0FEh
+UI_COMBO_MOUSE_SCROLL_DOWN  equ     0FDh
+UI_COMBO_MOUSE_NO_ACTION    equ     0FCh
+
 ; ui_draw_combo_box
 ; In:  IX=parent window descriptor, IY=combo descriptor
 ; Out: none
@@ -145,6 +153,12 @@ ui_combo_select_popup:
 .mouse:
         call    ui_combo_popup_mouse_hit
         jr      c, .cancel
+        cp      UI_COMBO_MOUSE_SCROLL_UP
+        jp      z, .up
+        cp      UI_COMBO_MOUSE_SCROLL_DOWN
+        jp      z, .down
+        cp      UI_COMBO_MOUSE_NO_ACTION
+        jp      z, .loop
         ld      (ui_combo_popup_selected), a
         jr      .commit
 .commit:
@@ -466,7 +480,7 @@ ui_draw_combo_popup:
         pop     af
         call    ui_fill_rect
         call    ui_draw_combo_popup_frame
-        call    ui_draw_combo_scroll
+        call    ui_combo_redraw_scroll_column
         xor     a
         ld      (ui_combo_popup_row), a
 .row_loop:
@@ -553,7 +567,7 @@ ui_combo_popup_mouse_hit:
         dec     a
         cp      b
         jr      c, .miss
-        jr      z, .miss
+        jr      z, .scrollbar
         ld      a, (ui_event_mouse_y)
         ld      b, a
         ld      a, (ui_combo_popup_y)
@@ -580,6 +594,44 @@ ui_combo_popup_mouse_hit:
         jr      z, .miss
         ld      a, (ui_combo_popup_top)
         add     a, b
+        or      a
+        ret
+.scrollbar:
+        ld      a, (ui_combo_popup_h)
+        cp      3
+        jr      c, .miss
+        ld      b, a
+        ld      a, (iy + UI_COMBO_COUNT)
+        cp      b
+        jr      z, .miss
+        jr      c, .miss
+        ld      a, (ui_event_mouse_y)
+        ld      b, a
+        ld      a, (ui_combo_popup_y)
+        cp      b
+        jr      nc, .miss
+        ld      c, a
+        ld      a, b
+        sub     c
+        ld      b, a
+        ld      a, (ui_combo_popup_h)
+        cp      b
+        jr      c, .miss
+        ld      a, b
+        cp      1
+        jr      z, .scroll_up_hit
+        ld      a, (ui_combo_popup_h)
+        cp      b
+        jr      z, .scroll_down_hit
+        ld      a, UI_COMBO_MOUSE_NO_ACTION
+        or      a
+        ret
+.scroll_up_hit:
+        ld      a, UI_COMBO_MOUSE_SCROLL_UP
+        or      a
+        ret
+.scroll_down_hit:
+        ld      a, UI_COMBO_MOUSE_SCROLL_DOWN
         or      a
         ret
 .miss:
@@ -691,6 +743,8 @@ ui_draw_combo_popup_frame:
 
 ui_draw_combo_scroll:
         ld      a, (ui_combo_popup_h)
+        cp      3
+        ret     c
         ld      b, a
         ld      a, (iy + UI_COMBO_COUNT)
         cp      b
@@ -700,6 +754,7 @@ ui_draw_combo_scroll:
         ld      a, (ui_combo_popup_selected)
         ld      b, a
         ld      a, (ui_combo_popup_h)
+        sub     2
         ld      e, a
         ld      d, 0
 .mul_loop:
@@ -732,16 +787,17 @@ ui_draw_combo_scroll:
         ld      a, b
         ld      c, a
         ld      a, (ui_combo_popup_h)
+        sub     2
         cp      c
         jr      c, .last
         jr      nz, .have_row
 .last:
         ld      a, (ui_combo_popup_h)
-        dec     a
+        sub     3
         ld      c, a
 .have_row:
         ld      a, (ui_combo_popup_y)
-        inc     a
+        add     a, 2
         add     a, c
         ld      d, a
         ld      a, (ui_combo_popup_x)
@@ -750,40 +806,51 @@ ui_draw_combo_scroll:
         ld      e, a
         ld      a, (ui_theme_text_field_focus)
         ld      b, a
-        ld      a, 0DBh
+        ld      a, UI_COMBO_SCROLL_THUMB_CHAR
         jp      ui_put_cell
 
 ui_combo_redraw_scroll_column:
         ld      a, (ui_combo_popup_h)
+        cp      3
+        ret     c
         ld      b, a
         ld      a, (iy + UI_COMBO_COUNT)
         cp      b
         ret     z
         ret     c
-        ld      a, (ui_combo_popup_h)
-        ld      c, a
-.loop:
-        ld      a, (ui_combo_popup_y)
-        ld      d, a
-        ld      a, (ui_combo_popup_h)
-        sub     c
-        inc     a
-        add     a, d
-        ld      d, a
         ld      a, (ui_combo_popup_x)
         add     a, (iy + UI_COMBO_W)
         dec     a
         ld      e, a
+        ld      a, (ui_combo_popup_y)
+        inc     a
+        ld      d, a
         ld      a, (ui_theme_text_field_focus)
         ld      b, a
-        ld      a, 0B3h
+        ld      a, UI_COMBO_SCROLL_UP_CHAR
+        push    de
+        call    ui_put_cell
+        pop     de
+        ld      a, (ui_combo_popup_h)
+        sub     2
+        ld      c, a
+        inc     d
+.loop:
+        ld      a, (ui_theme_text_field_focus)
+        ld      b, a
+        ld      a, UI_COMBO_SCROLL_TRACK_CHAR
         push    bc
         push    de
         call    ui_put_cell
         pop     de
         pop     bc
+        inc     d
         dec     c
         jr      nz, .loop
+        ld      a, (ui_theme_text_field_focus)
+        ld      b, a
+        ld      a, UI_COMBO_SCROLL_DOWN_CHAR
+        call    ui_put_cell
         jp      ui_draw_combo_scroll
 
 ui_clear_combo_popup:
