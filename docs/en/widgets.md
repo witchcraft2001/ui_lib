@@ -134,16 +134,16 @@ Format: `x, y, flags, hotkey, label_ptr`.
 
 ## TextField
 
-`TextField` stores editable text in an application-owned ASCIIZ buffer. Keep the descriptor and buffer in RAM. `UI_FLAG_PASSWORD` masks displayed characters with `*`. The focused field blinks the cursor cell while preserving the character under it.
+`TextField` stores editable text in an application-owned ASCIIZ buffer. Keep the descriptor and buffer in RAM. `UI_FLAG_PASSWORD` masks displayed characters with `*`. The focused field blinks the cursor cell while preserving the character under it. `width` is the visible size; `max_len` may be larger, and the field scrolls horizontally to keep the cursor visible.
 
 ```asm
 text_example:
         db      5, 6, 12, UI_FLAG_PASSWORD, "n"
         dw      text_buffer
-        db      12, 0
+        db      24, 0
 text_buffer:
         db      "demo", 0
-        ds      9, 0
+        ds      21, 0
 
         ld      ix, window_desc
         ld      iy, text_example
@@ -154,7 +154,7 @@ Format: `x, y, width, flags, hotkey, buffer_ptr, max_len, cursor`.
 
 ## ItemSelector
 
-`ItemSelector` stores the selected index in the descriptor and displays a string from an ASCIIZ pointer table. It is a compact selector without a dropdown popup: `Space`, `Enter`, hotkey, or mouse click cycles to the next item, `Left` moves backward, and `Right` moves forward.
+`ItemSelector` stores the selected index in the descriptor and displays a string from an ASCIIZ pointer table. It is a compact selector without a dropdown popup and is drawn with `<` and `>` side markers. `Space`, `Enter`, hotkey, or mouse click cycles to the next item, `Left` moves backward, and `Right` moves forward.
 
 ```asm
 item_selector_example:
@@ -172,7 +172,7 @@ Format: `x, y, width, flags, hotkey, items_ptr, count, selected`.
 
 ## ComboBox
 
-`ComboBox` uses the same string table shape, but opens a dropdown list with its own frame and background. `Space`, `Enter`, hotkey, or mouse click opens the popup. The right dropdown button uses 3 cells inside the total widget width and is drawn as `[▼]`, so the text area is `width - 3`. Inside the popup, `Up`/`Down`/`Home`/`End` move selection, `Enter` or click commits, and `Esc` or an outside click cancels. When item count exceeds popup height, the right frame shows a scroll marker.
+`ComboBox` uses the same string table shape, but opens a dropdown list with its own frame and background. `Space`, `Enter`, hotkey, or mouse click opens the popup. The right dropdown button uses 3 cells inside the total widget width and is drawn as `[↓]`, so the text area is `width - 3`. Inside the popup, `Up`/`Down`/`Home`/`End` move selection, `Enter` or click commits, and `Esc` or an outside click cancels. When item count exceeds popup height, the right column shows a scrollbar with up/down buttons, patterned track, and a thumb; clicking the buttons scrolls one item.
 
 ```asm
 combo_example:

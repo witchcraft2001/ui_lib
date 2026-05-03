@@ -157,7 +157,7 @@ UI_CHECK_SIZE           equ     6
 ;   +4 hot key ASCII, 0 if none
 ;   +5 word editable ASCIIZ buffer in RAM
 ;   +7 max input length
-;   +8 cursor position, currently maintained at end of text
+;   +8 cursor position in buffer
 
 UI_TEXT_X               equ     0
 UI_TEXT_Y               equ     1

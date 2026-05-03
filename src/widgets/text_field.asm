@@ -24,6 +24,7 @@ ui_text_field_attr:
 ; Clobbers: AF, BC, DE, HL
 ui_draw_text_field:
         call    ui_text_field_clamp_cursor
+        call    ui_text_field_update_scroll
         call    ui_text_field_attr
         ld      (ui_text_field_attr_value), a
         ld      a, (ix + UI_WINDOW_X)
@@ -47,7 +48,9 @@ ui_draw_text_field:
         or      a
         jr      z, .put
         ld      a, (ui_text_field_pos)
-        cp      (iy + UI_TEXT_CURSOR)
+        ld      b, a
+        ld      a, (ui_text_field_cursor_screen)
+        cp      b
         jr      nz, .put
         ld      a, (ui_theme_window_title)
         ld      (ui_text_field_attr_value), a
@@ -74,6 +77,9 @@ ui_text_field_char_at_pos:
         ld      l, (iy + UI_TEXT_BUFFER)
         ld      h, (iy + UI_TEXT_BUFFER + 1)
         ld      a, (ui_text_field_pos)
+        ld      b, a
+        ld      a, (ui_text_field_scroll)
+        add     a, b
         ld      e, a
         ld      d, 0
         add     hl, de
@@ -86,6 +92,62 @@ ui_text_field_char_at_pos:
         ret
 .space:
         ld      a, " "
+        ret
+
+; ui_text_field_update_scroll
+; Keeps the cursor visible inside the fixed-width field.
+; In:  IY=text field descriptor
+; Out: none
+; Clobbers: AF, BC, HL
+ui_text_field_update_scroll:
+        ld      l, (iy + UI_TEXT_BUFFER)
+        ld      h, (iy + UI_TEXT_BUFFER + 1)
+        ld      a, (ui_text_field_last_buffer)
+        cp      l
+        jr      nz, .new_field
+        ld      a, (ui_text_field_last_buffer + 1)
+        cp      h
+        jr      z, .same_field
+.new_field:
+        ld      (ui_text_field_last_buffer), hl
+        xor     a
+        ld      (ui_text_field_scroll), a
+.same_field:
+        ld      a, (iy + UI_TEXT_W)
+        or      a
+        jr      z, .zero
+        ld      b, a
+        ld      a, (iy + UI_TEXT_CURSOR)
+        ld      c, a
+        ld      a, (ui_text_field_scroll)
+        cp      c
+        jr      z, .check_right
+        jr      nc, .scroll_left
+.check_right:
+        add     a, b
+        ld      b, a
+        ld      a, c
+        cp      b
+        jr      c, .store_cursor
+        ld      a, (iy + UI_TEXT_W)
+        ld      b, a
+        ld      a, c
+        sub     b
+        inc     a
+        jr      .store
+.scroll_left:
+        ld      a, c
+        jr      .store
+.zero:
+        xor     a
+.store:
+        ld      (ui_text_field_scroll), a
+.store_cursor:
+        ld      a, (ui_text_field_scroll)
+        ld      b, a
+        ld      a, (iy + UI_TEXT_CURSOR)
+        sub     b
+        ld      (ui_text_field_cursor_screen), a
         ret
 
 ; ui_text_field_insert_char
@@ -274,3 +336,9 @@ ui_text_field_len_value:
         db      0
 ui_text_field_cursor_value:
         db      0
+ui_text_field_scroll:
+        db      0
+ui_text_field_cursor_screen:
+        db      0
+ui_text_field_last_buffer:
+        dw      0
