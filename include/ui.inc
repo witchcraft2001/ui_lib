@@ -158,6 +158,7 @@ UI_CHECK_SIZE           equ     6
 ;   +5 word editable ASCIIZ buffer in RAM
 ;   +7 max input length
 ;   +8 cursor position in buffer
+;   +9 horizontal scroll offset
 
 UI_TEXT_X               equ     0
 UI_TEXT_Y               equ     1
@@ -167,7 +168,8 @@ UI_TEXT_HOTKEY          equ     4
 UI_TEXT_BUFFER          equ     5
 UI_TEXT_MAXLEN          equ     7
 UI_TEXT_CURSOR          equ     8
-UI_TEXT_SIZE            equ     9
+UI_TEXT_SCROLL          equ     9
+UI_TEXT_SIZE            equ     10
 
 ; ItemSelector descriptor:
 ;   +0 x relative to parent window

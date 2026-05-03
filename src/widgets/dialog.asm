@@ -2073,7 +2073,20 @@ ui_dialog_mouse_text_fields:
         add     hl, de
         jr      .loop
 .hit:
+        push    hl
         call    ui_dialog_change_focus_to_current
+        call    ui_dialog_parent_to_ix
+        pop     hl
+        push    hl
+        push    hl
+        pop     iy
+        call    ui_dialog_text_field_set_cursor_from_mouse
+        ld      a, 1
+        ld      (ui_text_cursor_visible), a
+        ld      a, 16
+        ld      (ui_dialog_blink_counter), a
+        call    ui_draw_text_field
+        pop     hl
         ld      a, 1
         ld      (ui_dialog_handled), a
         scf
@@ -2444,6 +2457,33 @@ ui_dialog_text_field_hit_test:
         ret
 .miss:
         scf
+        ret
+
+; ui_dialog_text_field_set_cursor_from_mouse
+; In: IX=parent window descriptor, IY=text field descriptor
+; Out: UI_TEXT_CURSOR updated to clicked buffer position
+; Clobbers: AF, BC, HL
+ui_dialog_text_field_set_cursor_from_mouse:
+        ld      a, (ui_event_mouse_x)
+        ld      b, a
+        ld      a, (ix + UI_WINDOW_X)
+        add     a, (iy + UI_TEXT_X)
+        ld      c, a
+        ld      a, b
+        sub     c
+        ld      b, a
+        ld      a, (iy + UI_TEXT_SCROLL)
+        add     a, b
+        ld      b, a
+        push    bc
+        call    ui_text_field_len
+        pop     bc
+        cp      b
+        jr      c, .use_len
+        jr      z, .use_len
+        ld      a, b
+.use_len:
+        ld      (iy + UI_TEXT_CURSOR), a
         ret
 
 ui_dialog_checkbox_hit_test:

@@ -140,7 +140,7 @@ Format: `x, y, flags, hotkey, label_ptr`.
 text_example:
         db      5, 6, 12, UI_FLAG_PASSWORD, "n"
         dw      text_buffer
-        db      24, 0
+        db      24, 0, 0            ; max_len, cursor, scroll
 text_buffer:
         db      "demo", 0
         ds      21, 0
@@ -150,7 +150,7 @@ text_buffer:
         call    ui_draw_text_field
 ```
 
-Format: `x, y, width, flags, hotkey, buffer_ptr, max_len, cursor`.
+Format: `x, y, width, flags, hotkey, buffer_ptr, max_len, cursor, scroll`.
 
 ## ItemSelector
 
@@ -203,7 +203,7 @@ For direct window use, call `ui_window_save_under` and `ui_window_restore_under`
 - Printable keys edit the focused text field. `Backspace` deletes before cursor, `Delete` deletes under cursor, and `Left`/`Right`/`Home`/`End` move the cursor.
 - `Space` edits a focused text field or activates other focused controls. `Enter` activates the focused control. For `ItemSelector`, activation selects the next item; for `ComboBox`, it opens the popup.
 - The descriptor hotkey activates a control directly.
-- Mouse click focuses and activates the control under the pointer.
+- Mouse click focuses and activates the control under the pointer. For `TextField`, the click also moves the cursor to the clicked cell, clamped to the current text length.
 - If the build defines `DEFINE UI_ENABLE_HINTS 1` and includes `src/core/hint.asm`, the dialog updates the bottom hint line from the current focus index.
 
 Extended dialog descriptor:

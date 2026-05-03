@@ -444,7 +444,7 @@ demo_text_fields:
 demo_text_name:
         db      5, 6, 12, 0, "n"
         dw      demo_text_name_buffer
-        db      24, 4
+        db      24, 4, 0
         db      UI_TEXT_FIELDS_END
 
 demo_item_selectors:

@@ -78,7 +78,7 @@ ui_text_field_char_at_pos:
         ld      h, (iy + UI_TEXT_BUFFER + 1)
         ld      a, (ui_text_field_pos)
         ld      b, a
-        ld      a, (ui_text_field_scroll)
+        ld      a, (iy + UI_TEXT_SCROLL)
         add     a, b
         ld      e, a
         ld      d, 0
@@ -98,28 +98,15 @@ ui_text_field_char_at_pos:
 ; Keeps the cursor visible inside the fixed-width field.
 ; In:  IY=text field descriptor
 ; Out: none
-; Clobbers: AF, BC, HL
+; Clobbers: AF, BC
 ui_text_field_update_scroll:
-        ld      l, (iy + UI_TEXT_BUFFER)
-        ld      h, (iy + UI_TEXT_BUFFER + 1)
-        ld      a, (ui_text_field_last_buffer)
-        cp      l
-        jr      nz, .new_field
-        ld      a, (ui_text_field_last_buffer + 1)
-        cp      h
-        jr      z, .same_field
-.new_field:
-        ld      (ui_text_field_last_buffer), hl
-        xor     a
-        ld      (ui_text_field_scroll), a
-.same_field:
         ld      a, (iy + UI_TEXT_W)
         or      a
         jr      z, .zero
         ld      b, a
         ld      a, (iy + UI_TEXT_CURSOR)
         ld      c, a
-        ld      a, (ui_text_field_scroll)
+        ld      a, (iy + UI_TEXT_SCROLL)
         cp      c
         jr      z, .check_right
         jr      nc, .scroll_left
@@ -141,9 +128,9 @@ ui_text_field_update_scroll:
 .zero:
         xor     a
 .store:
-        ld      (ui_text_field_scroll), a
+        ld      (iy + UI_TEXT_SCROLL), a
 .store_cursor:
-        ld      a, (ui_text_field_scroll)
+        ld      a, (iy + UI_TEXT_SCROLL)
         ld      b, a
         ld      a, (iy + UI_TEXT_CURSOR)
         sub     b
@@ -336,9 +323,5 @@ ui_text_field_len_value:
         db      0
 ui_text_field_cursor_value:
         db      0
-ui_text_field_scroll:
-        db      0
 ui_text_field_cursor_screen:
         db      0
-ui_text_field_last_buffer:
-        dw      0

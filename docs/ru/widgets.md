@@ -140,7 +140,7 @@ check_label:
 text_example:
         db      5, 6, 12, UI_FLAG_PASSWORD, "n"
         dw      text_buffer
-        db      24, 0
+        db      24, 0, 0            ; max_len, cursor, scroll
 text_buffer:
         db      "demo", 0
         ds      21, 0
@@ -150,7 +150,7 @@ text_buffer:
         call    ui_draw_text_field
 ```
 
-Формат: `x, y, width, flags, hotkey, buffer_ptr, max_len, cursor`.
+Формат: `x, y, width, flags, hotkey, buffer_ptr, max_len, cursor, scroll`.
 
 ## ItemSelector
 
@@ -203,7 +203,7 @@ combo_items:
 - Печатные клавиши редактируют активное текстовое поле. `Backspace` удаляет символ перед курсором, `Delete` удаляет символ под курсором, `Left`/`Right`/`Home`/`End` двигают курсор.
 - `Space` вводит пробел в активное текстовое поле или активирует другой элемент. `Enter` активирует текущий элемент. Для `ItemSelector` активация выбирает следующий пункт; для `ComboBox` открывает popup.
 - Hotkey из descriptor активирует элемент напрямую.
-- Мышь переводит фокус на элемент под курсором и активирует его.
+- Мышь переводит фокус на элемент под курсором и активирует его. Для `TextField` click также переносит курсор в выбранное знакоместо с ограничением по текущей длине текста.
 - Если перед сборкой определить `DEFINE UI_ENABLE_HINTS 1` и подключить `src/core/hint.asm`, диалог будет обновлять нижнюю строку подсказки по текущему focus index.
 
 Расширенный dialog descriptor:
