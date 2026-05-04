@@ -40,11 +40,11 @@
   - Сделать адаптеры DSS/BIOS: keyboard, mouse, window copy/restore, page allocation.
   - Статус: начаты `ui_init`, `ui_shutdown`, `ui_poll_event`, DSS keyboard polling, BIOS mouse polling и runtime theme API `ui_set_theme`; полная документация contract еще не готова.
 
-- [ ] Этап 3. Отрисовка и тема Borland Pascal 7
+- [x] Этап 3. Отрисовка и тема Borland Pascal 7
   - Реализовать draw primitives: char/attr write, fill rect, frame, shadow, invert range, hotkey highlight.
   - Добавить стандартную палитру BP7-style и возможность пользовательской палитры.
   - Добавить separator: горизонтальная линия для меню и диалогов.
-  - Статус: реализованы базовые char/attr write, fill rect, window frame, window/button shadow, hotkey highlight, `GroupBox`, `Separator`, `ui_print_wrapped_z` с ограничением ширины/строк и принудительным `0Ah` newline, `ui_invert_range` для однострочной инверсии атрибутов, цвета `TextField` и настраиваемая global theme.
+  - Статус: закрыт. Реализованы базовые char/attr write, fill rect, window frame, window/button shadow, hotkey highlight, `GroupBox`, `Separator`, `ui_print_wrapped_z` с ограничением ширины/строк и принудительным `0Ah` newline, `ui_invert_range` для однострочной инверсии атрибутов, цвета `TextField` и настраиваемая global theme.
 
 - [ ] Этап 4. Focus, events и подсказки
   - Реализовать Tab/Shift+Tab, arrows, Enter, Esc, F10, Alt/hotkeys, mouse click/release.
@@ -52,10 +52,10 @@
   - Реализовать status hint line в нижней строке, опционально отключаемую.
   - Статус: реализована базовая dialog-навигация `Tab`, `Shift+Tab`/`Alt+Tab`, `Space`, `Enter`, `Esc`, hotkeys и mouse click для `Button`, `CheckBox`, `RadioButton`; `Left`/`Right`/`Home`/`End` и `Delete` работают для `TextField`; добавлен optional `UI_ENABLE_HINTS` status hint line с таблицей подсказок по focus index; `F10` открывает/закрывает dropdown в `MenuBar`. Общий app-level dispatcher для вызова меню из любого состояния еще не готов.
 
-- [ ] Этап 5. Базовые виджеты
+- [x] Этап 5. Базовые виджеты
   - Реализовать `Button`, `TextField` с password mask, `CheckBox`, `RadioButton`, `GroupBox`.
   - Для каждого виджета сделать draw/event module, descriptor format, command output и demo case.
-  - Статус: реализованы `Button`, draw-only `GroupBox`, dialog-integrated `CheckBox`, `RadioButton`, базовый `TextField` с RAM-буфером, password-mask flag, hotkey-фокусом, mouse focus, мигающим курсором, вводом, Backspace/Delete, Left/Right/Home/End и descriptor-owned горизонтальным скроллингом при `max_len > width`; добавлен `ItemSelector` без dropdown popup, с фокусом, hotkey, mouse click, циклическим выбором и обратным переключением через `Left`. Text selection еще не готов.
+  - Статус: закрыт. Реализованы `Button`, draw-only `GroupBox`, dialog-integrated `CheckBox`, `RadioButton`, базовый `TextField` с RAM-буфером, password-mask flag, hotkey-фокусом, mouse focus, мигающим курсором, вводом, Backspace/Delete, Left/Right/Home/End и descriptor-owned горизонтальным скроллингом при `max_len > width`; добавлен `ItemSelector` без dropdown popup, с фокусом, hotkey, mouse click, циклическим выбором и обратным переключением через `Left`. Text selection не входит в минимальный набор этапа и остается отдельным future enhancement.
 
 - [ ] Этап 6. Menu и ComboBox/dropdown
   - Реализовать menu bar с dropdown-окнами, hotkeys, mouse support, separators и optional hints.
@@ -63,17 +63,17 @@
   - Проверить UX на уровне `fm`/`TASM`: навигация клавиатурой, мышью, закрытие по Esc/клику вне меню.
   - Статус: компактный `ItemSelector` выделен отдельно; добавлен первый настоящий `ComboBox` с framed dropdown popup, mouse/key выбором, `Up`/`Down`/`Home`/`End`, `Enter` commit и `Esc` cancel. ComboBox обновляет только изменившиеся строки при перемещении фокуса внутри видимой области, а при прокрутке на одну строку использует `Dss.Scroll #55` через `ui_call_dss` для внутренней области dropdown и дорисовывает только новую строку; для длинных списков добавлен scrollbar со стрелками, patterned track, thumb и mouse-scroll по стрелкам. Начат `MenuBar` с descriptor tables, hotkey labels, separator/disabled descriptors, per-item hints, draw/dropdown primitives и отдельным `ui_menu_bar_run`: верхнее меню и dropdown разделены как `CurMenu`/`CurMBox` в TASM/FM, popup скрыт по умолчанию, `Enter`/`F10` открывают dropdown, `F10`/`Esc` закрывают. Цвета фокуса horizontal/dropdown menu разделены в теме; menu hotkey рисует только цвет символа поверх текущего фона; descriptor поддерживает ASCII shortcuts, глобальный поиск dropdown accelerators, `Alt+key`, DSS/TASM scan-code shortcuts вроде `F3` и режим без видимой mnemonic-подсветки. Универсальный list popup API и интеграция MenuBar в общий app/dialog dispatcher еще не готовы.
 
-- [ ] Этап 7. Dialog/window manager
+- [x] Этап 7. Dialog/window manager
   - Реализовать окна и модальные диалоги с таблицами виджетов.
   - Добавить optional background save/restore через DSS page memory и fallback mode без сохранения.
   - Документировать требования к буферу, размер окна, вложенные окна и ошибки allocation.
-  - Статус: добавлен optional save/restore API `ui_window_save_under`/`ui_window_restore_under` через DSS `WinCopy`/`WinRest` и страницу, выделяемую `ui_init` при `UI_USE_DSS_WINDOW_BUFFER=1`; `ui_dialog_run` автоматически сохраняет и восстанавливает область диалога с тенью. Буфер теперь работает как LIFO-стек в одной DSS-странице (`UI_WINDOW_SAVE_DEPTH`, по умолчанию 4) и возвращает `CF=1`, если глубина или суммарный размер сохраненных областей превышены.
+  - Статус: закрыт. Добавлен optional save/restore API `ui_window_save_under`/`ui_window_restore_under` через DSS `WinCopy`/`WinRest` и страницу, выделяемую `ui_init` при `UI_USE_DSS_WINDOW_BUFFER=1`; `ui_dialog_run` автоматически сохраняет и восстанавливает область диалога с тенью. Буфер работает как LIFO-стек в одной DSS-странице (`UI_WINDOW_SAVE_DEPTH`, по умолчанию 4) и возвращает `CF=1`, если глубина или суммарный размер сохраненных областей превышены.
 
 - [ ] Этап 8. Документация и примеры
   - Написать docs на русском и английском: API, descriptors, memory model, examples, integration guide.
   - Добавить demo-приложение, показывающее меню, подсказки, диалог, все базовые виджеты и mouse/hotkeys.
   - Добавить minimal-link examples: only button, only dialog, only menu.
-  - Статус: добавлен `examples/button_only/button_only.asm` и `run/make_examples.sh`; пример подключает только core/theme/events, draw/text, window, button и button_events, чтобы проверить модульное подключение без остальных виджетов. `run/make.sh` собирает пример вместе с основным demo, а дефолтный `run/create_floppy_image.sh` кладет в `build/demo/ui_demo.img` оба файла: `UI_DEMO.EXE` и `BUTTON.EXE`.
+  - Статус: добавлены `examples/button_only/button_only.asm`, `examples/menu_only/menu_only.asm` и `run/make_examples.sh`; button-only подключает только core/theme/events, draw/text, window, button и button_events, а menu-only подключает только core/theme/events/hint, draw/text и menu_bar, чтобы проверить модульное подключение без остальных виджетов. `run/make.sh` собирает примеры вместе с основным demo, а дефолтный `run/create_floppy_image.sh` кладет в `build/demo/ui_demo.img` три файла: `UI_DEMO.EXE`, `BUTTON.EXE` и `MENU.EXE`.
 
 - [ ] Этап 9. Оптимизация и приемка
   - Измерить размер кода и RAM по модулям, убрать лишние зависимости.

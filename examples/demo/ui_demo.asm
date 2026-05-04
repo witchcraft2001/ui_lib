@@ -7,6 +7,12 @@
 DEMO_LOAD_ADDR  equ     4200h
 DEMO_STACK      equ     7F00h
 
+DEMO_CMD_LOAD   equ     10h
+DEMO_CMD_THEME  equ     11h
+DEMO_CMD_DRIVE  equ     12h
+DEMO_CMD_MOUSE  equ     13h
+DEMO_CMD_ABOUT  equ     14h
+
         org     DEMO_LOAD_ADDR - 512
 
 exe_header:
@@ -49,6 +55,7 @@ demo_main:
         ld      hl, demo_theme
         call    ui_set_theme
 
+demo_main_menu:
         ld      a, " "
         push    af
         ld      a, (ui_theme_desktop)
@@ -59,6 +66,10 @@ demo_main:
         call    ui_menu_bar_run
         cp      UI_CMD_CANCEL
         jp      z, demo_exit
+        cp      UI_CMD_NONE
+        jr      z, demo_main_menu
+        call    demo_menu_placeholder_command
+        jr      c, demo_main_menu
 
         IF UI_USE_DSS_WINDOW_BUFFER
         call    demo_draw_restore_backdrop
@@ -161,6 +172,30 @@ demo_exit:
         ld      b, 0
         ld      c, Dss.Exit
         rst     10h
+
+demo_menu_placeholder_command:
+        cp      DEMO_CMD_LOAD
+        jr      z, .show
+        cp      DEMO_CMD_THEME
+        jr      z, .show
+        cp      DEMO_CMD_DRIVE
+        jr      z, .show
+        cp      DEMO_CMD_MOUSE
+        jr      z, .show
+        cp      DEMO_CMD_ABOUT
+        jr      z, .show
+        or      a
+        ret
+.show:
+        ld      hl, demo_menu_placeholder_text
+        ld      a, (ui_theme_hint)
+        ld      d, UI_HINT_LINE_ROW
+        ld      e, 1
+        call    ui_print_z
+        ld      c, Dss.WaitKey
+        rst     10h
+        scf
+        ret
 
 ; demo_put_hex
 ; In:  A=byte, HL=destination
@@ -346,7 +381,7 @@ demo_menu_file_popup:
         db      UI_FLAG_DISABLED, "s", UI_HOTKEY_MOD_NONE, UI_CMD_NONE
         dw      demo_menu_save_label
         dw      demo_menu_save_hint
-        db      0, "l", UI_HOTKEY_MOD_NONE, UI_CMD_NONE
+        db      0, "l", UI_HOTKEY_MOD_NONE, DEMO_CMD_LOAD
         dw      demo_menu_load_label
         dw      demo_menu_load_hint
         db      0, UI_SCAN_F3, UI_HOTKEY_USE_SCAN | UI_HOTKEY_NO_MNEMONIC
@@ -362,16 +397,16 @@ demo_menu_file_popup:
         db      UI_MENU_POPUP_END
 
 demo_menu_options_popup:
-        db      0, "t", UI_HOTKEY_MOD_NONE, UI_CMD_NONE
+        db      0, "t", UI_HOTKEY_MOD_NONE, DEMO_CMD_THEME
         dw      demo_menu_theme_label
         dw      demo_menu_theme_hint
-        db      0, "d", UI_HOTKEY_MOD_NONE, UI_CMD_NONE
+        db      0, "d", UI_HOTKEY_MOD_NONE, DEMO_CMD_DRIVE
         dw      demo_menu_drive_label
         dw      demo_menu_drive_hint
         db      UI_FLAG_DISABLED, "s", UI_HOTKEY_MOD_NONE, UI_CMD_NONE
         dw      demo_menu_sound_label
         dw      demo_menu_sound_hint
-        db      0, "m", UI_HOTKEY_MOD_NONE, UI_CMD_NONE
+        db      0, "m", UI_HOTKEY_MOD_NONE, DEMO_CMD_MOUSE
         dw      demo_menu_mouse_label
         dw      demo_menu_mouse_hint
         db      UI_FLAG_SEPARATOR, 0, UI_HOTKEY_MOD_NONE, 0
@@ -382,7 +417,7 @@ demo_menu_options_popup:
         db      UI_MENU_POPUP_END
 
 demo_menu_help_popup:
-        db      0, "a", UI_HOTKEY_MOD_NONE, UI_CMD_NONE
+        db      0, "a", UI_HOTKEY_MOD_NONE, DEMO_CMD_ABOUT
         dw      demo_menu_about_label
         dw      demo_menu_about_hint
         db      UI_MENU_POPUP_END
@@ -544,6 +579,8 @@ demo_menu_advanced_hint:
         db      "Advanced options are disabled in this demo.", 0
 demo_menu_about_hint:
         db      "About this demo.", 0
+demo_menu_placeholder_text:
+        db      "Placeholder menu command. Press any key.", 0
 demo_input_title:
         db      " Input ", 0
 demo_options_title:

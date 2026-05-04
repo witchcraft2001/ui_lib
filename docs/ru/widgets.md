@@ -2,7 +2,7 @@
 
 ## Минимальное подключение
 
-Приложение подключает только те `.asm` модули, которые реально использует. Пример `examples/button_only/button_only.asm` собирает окно с одной кнопкой без `Dialog`, `MenuBar`, `TextField`, `CheckBox`, `RadioButton`, `ItemSelector` и `ComboBox`.
+Приложение подключает только те `.asm` модули, которые реально использует. Пример `examples/button_only/button_only.asm` собирает окно с одной кнопкой без `Dialog`, `MenuBar`, `TextField`, `CheckBox`, `RadioButton`, `ItemSelector` и `ComboBox`. Пример `examples/menu_only/menu_only.asm` собирает верхнее меню с dropdown, hints, disabled items и hotkeys без `Dialog` и остальных виджетов.
 
 ```asm
         include "include/ui.inc"
@@ -22,7 +22,7 @@ run/make.sh
 run/create_floppy_image.sh
 ```
 
-Дефолтный образ `build/demo/ui_demo.img` содержит `UI_DEMO.EXE` и `BUTTON.EXE`. Отдельный образ только с button-only примером можно создать командой `run/create_floppy_image.sh build/examples/BUTTON_ONLY.EXE build/examples/button_only.img BUTTON.EXE`.
+Дефолтный образ `build/demo/ui_demo.img` содержит `UI_DEMO.EXE`, `BUTTON.EXE` и `MENU.EXE`. Отдельный образ только с button-only примером можно создать командой `run/create_floppy_image.sh build/examples/BUTTON_ONLY.EXE build/examples/button_only.img BUTTON.EXE`; только с menu-only примером: `run/create_floppy_image.sh build/examples/MENU_ONLY.EXE build/examples/menu_only.img MENU.EXE`.
 
 Такой подход оставляет выбор за целевой программой: подключить виджет inline в основной код, собрать библиотечный блок под отдельный адрес или вызывать код из отдельной страницы памяти.
 

@@ -2,7 +2,7 @@
 
 ## Minimal Linking
 
-Applications include only the `.asm` modules they use. `examples/button_only/button_only.asm` builds a window with one button without linking `Dialog`, `MenuBar`, `TextField`, `CheckBox`, `RadioButton`, `ItemSelector`, or `ComboBox`.
+Applications include only the `.asm` modules they use. `examples/button_only/button_only.asm` builds a window with one button without linking `Dialog`, `MenuBar`, `TextField`, `CheckBox`, `RadioButton`, `ItemSelector`, or `ComboBox`. `examples/menu_only/menu_only.asm` builds a top menu with dropdowns, hints, disabled items, and hotkeys without linking `Dialog` or other widgets.
 
 ```asm
         include "include/ui.inc"
@@ -22,7 +22,7 @@ run/make.sh
 run/create_floppy_image.sh
 ```
 
-The default `build/demo/ui_demo.img` image contains both `UI_DEMO.EXE` and `BUTTON.EXE`. To create a separate button-only image, run `run/create_floppy_image.sh build/examples/BUTTON_ONLY.EXE build/examples/button_only.img BUTTON.EXE`.
+The default `build/demo/ui_demo.img` image contains `UI_DEMO.EXE`, `BUTTON.EXE`, and `MENU.EXE`. To create a separate button-only image, run `run/create_floppy_image.sh build/examples/BUTTON_ONLY.EXE build/examples/button_only.img BUTTON.EXE`; for menu-only, run `run/create_floppy_image.sh build/examples/MENU_ONLY.EXE build/examples/menu_only.img MENU.EXE`.
 
 This keeps placement policy in the target program: inline the widget code, build a library block at a chosen address, or call it from a separate memory page.
 
