@@ -286,19 +286,12 @@ ui_draw_menu_dropdown:
         ld      d, a
         ld      a, (iy + UI_MENU_ITEM_POPUP_W)
         sub     2
-        ld      c, a
-.sep_loop:
+        ld      l, a
+        ld      h, 1
         ld      a, (ui_theme_window)
         ld      b, a
         ld      a, 0C4h
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        inc     e
-        dec     c
-        jr      nz, .sep_loop
+        call    ui_fill_rect
 .next:
         pop     hl
         ld      de, UI_MENU_POPUP_SIZE

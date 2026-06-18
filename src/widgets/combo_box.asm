@@ -649,22 +649,24 @@ ui_draw_combo_popup_frame:
         push    de
         call    ui_put_cell
         pop     de
+        ; top edge as one horizontal run
+        inc     e
         ld      a, (iy + UI_COMBO_W)
         sub     2
-        ld      c, a
-.top:
-        inc     e
+        ld      l, a
+        ld      h, 1
         ld      a, (ui_theme_text_field_focus)
         ld      b, a
         ld      a, 0C4h
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        dec     c
-        jr      nz, .top
-        inc     e
+        call    ui_fill_rect
+
+        ; top-right corner
+        ld      a, (ui_combo_popup_y)
+        ld      d, a
+        ld      a, (ui_combo_popup_x)
+        add     a, (iy + UI_COMBO_W)
+        dec     a
+        ld      e, a
         ld      a, (ui_theme_text_field_focus)
         ld      b, a
         ld      a, 0BFh
@@ -720,22 +722,28 @@ ui_draw_combo_popup_frame:
         push    de
         call    ui_put_cell
         pop     de
+        ; bottom edge as one horizontal run
+        inc     e
         ld      a, (iy + UI_COMBO_W)
         sub     2
-        ld      c, a
-.bottom:
-        inc     e
+        ld      l, a
+        ld      h, 1
         ld      a, (ui_theme_text_field_focus)
         ld      b, a
         ld      a, 0C4h
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        dec     c
-        jr      nz, .bottom
-        inc     e
+        call    ui_fill_rect
+
+        ; bottom-right corner
+        ld      a, (ui_combo_popup_y)
+        ld      d, a
+        ld      a, (ui_combo_popup_h)
+        inc     a
+        add     a, d
+        ld      d, a
+        ld      a, (ui_combo_popup_x)
+        add     a, (iy + UI_COMBO_W)
+        dec     a
+        ld      e, a
         ld      a, (ui_theme_text_field_focus)
         ld      b, a
         ld      a, 0D9h

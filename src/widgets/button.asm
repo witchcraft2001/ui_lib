@@ -177,20 +177,12 @@ ui_draw_button_shadow:
         ret     nc
         ld      e, a
         ld      a, (ui_button_width)
-        ld      c, a
-.bottom_loop:
+        ld      l, a
+        ld      h, 1
         ld      a, (ui_theme_button_shadow)
         ld      b, a
         ld      a, 0DFh
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        inc     e
-        dec     c
-        jr      nz, .bottom_loop
-        ret
+        jp      ui_fill_rect
 
 ; ui_button_press_key_feedback
 ; In:  IX=parent window descriptor, IY=button descriptor

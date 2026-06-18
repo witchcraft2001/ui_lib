@@ -29,29 +29,30 @@ ui_draw_group_frame:
         call    ui_put_cell
         pop     de
 
+        ; top edge as one horizontal run
+        inc     e
         ld      a, (iy + UI_GROUP_W)
         sub     2
-        ld      c, a
-.top:
-        inc     e
+        ld      l, a
+        ld      h, 1
         ld      a, (ui_theme_window)
         ld      b, a
         ld      a, 0C4h
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        dec     c
-        jr      nz, .top
+        call    ui_fill_rect
 
-        inc     e
+        ; top-right corner
+        ld      a, (ix + UI_WINDOW_Y)
+        add     a, (iy + UI_GROUP_Y)
+        ld      d, a
+        ld      a, (ix + UI_WINDOW_X)
+        add     a, (iy + UI_GROUP_X)
+        add     a, (iy + UI_GROUP_W)
+        dec     a
+        ld      e, a
         ld      a, (ui_theme_window)
         ld      b, a
         ld      a, 0BFh
-        push    de
         call    ui_put_cell
-        pop     de
 
         ld      a, (iy + UI_GROUP_H)
         sub     2
@@ -99,23 +100,28 @@ ui_draw_group_frame:
         call    ui_put_cell
         pop     de
 
+        ; bottom edge as one horizontal run
+        inc     e
         ld      a, (iy + UI_GROUP_W)
         sub     2
-        ld      c, a
-.bottom:
-        inc     e
+        ld      l, a
+        ld      h, 1
         ld      a, (ui_theme_window)
         ld      b, a
         ld      a, 0C4h
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        dec     c
-        jr      nz, .bottom
+        call    ui_fill_rect
 
-        inc     e
+        ; bottom-right corner
+        ld      a, (ix + UI_WINDOW_Y)
+        add     a, (iy + UI_GROUP_Y)
+        add     a, (iy + UI_GROUP_H)
+        dec     a
+        ld      d, a
+        ld      a, (ix + UI_WINDOW_X)
+        add     a, (iy + UI_GROUP_X)
+        add     a, (iy + UI_GROUP_W)
+        dec     a
+        ld      e, a
         ld      a, (ui_theme_window)
         ld      b, a
         ld      a, 0D9h
