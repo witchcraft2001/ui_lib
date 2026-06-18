@@ -114,6 +114,9 @@ separator_example:
 
 Format: `x, y, width`.
 
+Set `width` to `0` for a full-width separator connected to the parent window frame.
+In that mode `x` is ignored and `y` is still relative to the parent window.
+
 ## CheckBox
 
 `CheckBox` stores its state in `flags`: `UI_FLAG_CHECKED` marks the checked state. Keep the descriptor in RAM if the application calls `ui_toggle_checkbox`.
@@ -187,6 +190,31 @@ combo_items:
 ```
 
 Format: `x, y, width, flags, hotkey, items_ptr, count, selected, popup_height`.
+
+## ProgressBar
+
+`ProgressBar` is draw-only and can be linked without dialog/menu modules.
+The empty part is drawn with a patterned pseudographic cell, and the filled
+part uses `ui_theme_progress_fill`.
+Determinate mode uses `value/max`; indeterminate mode uses `UI_FLAG_INDETERMINATE`
+and stores the animation phase in the descriptor.
+
+```asm
+progress_done:
+        db      8, 7, 28, 0, 0, 10, 0
+progress_busy:
+        db      8, 9, 28, UI_FLAG_INDETERMINATE, 0, 0, 0
+
+        ld      ix, window_desc
+        ld      iy, progress_done
+        call    ui_draw_progress_bar
+
+        ld      iy, progress_busy
+        call    ui_progress_bar_tick
+        call    ui_draw_progress_bar
+```
+
+Format: `x, y, width, flags, value, max, phase`.
 
 ## Window Background Save/Restore
 

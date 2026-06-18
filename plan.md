@@ -18,10 +18,11 @@
 ## Архитектурные решения
 
 - Публичный API строить вокруг контекста `ui_context`, descriptor tables и единых событий: key, hotkey, mouse, command, message.
-- Виджеты разделить на независимые модули: core, draw, input, focus, menu, dialog, button, text_field, checkbox, radio_button, item_selector, combobox, group_box, separator, status_hint.
+- Виджеты разделить на независимые модули: core, draw, input, focus, menu, dialog, button, text_field, checkbox, radio_button, item_selector, list_box, combobox, progress_bar, group_box, separator, status_hint.
 - Каждый модуль должен иметь отдельный `.asm` и `.inc`; подключение одного виджета не должно тянуть остальные.
 - Описатели виджетов должны быть relocatable: координаты относительны окну, адреса буферов задает пользователь, callbacks/commands задаются через таблицу.
 - Сохранение фона под окнами сделать опциональным: либо DSS page buffer через `ui_init`/`ui_shutdown`, либо пользовательский repaint без выделения памяти.
+- Для экономии размера использовать модульное подключение и, где sjasmplus это позволяет, условную сборку процедур через `IFUSED`/аналогичные guards: редко используемые helper-процедуры не должны попадать в целевой EXE без вызовов.
 
 ## Этапы
 
@@ -40,11 +41,13 @@
   - Сделать адаптеры DSS/BIOS: keyboard, mouse, window copy/restore, page allocation.
   - Статус: начаты `ui_init`, `ui_shutdown`, `ui_poll_event`, DSS keyboard polling, BIOS mouse polling и runtime theme API `ui_set_theme`; полная документация contract еще не готова.
 
-- [x] Этап 3. Отрисовка и тема Borland Pascal 7
+- [ ] Этап 3. Отрисовка и тема Borland Pascal 7
   - Реализовать draw primitives: char/attr write, fill rect, frame, shadow, invert range, hotkey highlight.
   - Добавить стандартную палитру BP7-style и возможность пользовательской палитры.
   - Добавить separator: горизонтальная линия для меню и диалогов.
-  - Статус: закрыт. Реализованы базовые char/attr write, fill rect, window frame, window/button shadow, hotkey highlight, `GroupBox`, `Separator`, `ui_print_wrapped_z` с ограничением ширины/строк и принудительным `0Ah` newline, `ui_invert_range` для однострочной инверсии атрибутов, цвета `TextField` и настраиваемая global theme.
+  - Добавить frame style в descriptor/theme: double frame для BP/TASM style, single frame для dropdown/dialog/list popup, без дублирования кода отрисовки.
+  - Улучшить `Separator`: режим full-width от внутреннего края до внутреннего края окна и стыковка с рамкой через специальные junction-символы псевдографики, чтобы разделитель визуально сливался с рамкой.
+  - Статус: реализованы базовые char/attr write, fill rect, window frame, window/button shadow, hotkey highlight, `GroupBox`, `Separator`, `ui_print_wrapped_z` с ограничением ширины/строк и принудительным `0Ah` newline, `ui_invert_range` для однострочной инверсии атрибутов, цвета `TextField` и настраиваемая global theme. `Separator` поддерживает режим `width=0` для линии от рамки до рамки с junction-символами. Single/double frame style еще не готов.
 
 - [ ] Этап 4. Focus, events и подсказки
   - Реализовать Tab/Shift+Tab, arrows, Enter, Esc, F10, Alt/hotkeys, mouse click/release.
@@ -52,14 +55,17 @@
   - Реализовать status hint line в нижней строке, опционально отключаемую.
   - Статус: реализована базовая dialog-навигация `Tab`, `Shift+Tab`/`Alt+Tab`, `Space`, `Enter`, `Esc`, hotkeys и mouse click для `Button`, `CheckBox`, `RadioButton`; `Left`/`Right`/`Home`/`End` и `Delete` работают для `TextField`; добавлен optional `UI_ENABLE_HINTS` status hint line с таблицей подсказок по focus index; `F10` открывает/закрывает dropdown в `MenuBar`. Общий app-level dispatcher для вызова меню из любого состояния еще не готов.
 
-- [x] Этап 5. Базовые виджеты
+- [ ] Этап 5. Базовые виджеты
   - Реализовать `Button`, `TextField` с password mask, `CheckBox`, `RadioButton`, `GroupBox`.
+  - Добавить `ProgressBar`: determinate mode с заданным value/max и indeterminate/busy mode для бесконечного прогресса, с отдельными theme attributes.
+  - Добавить `ListBox`/`ItemList` как scrollable selector по аналогии с TASM color/dialog lists: fixed viewport, scrollbar, selected row, disabled rows, mouse/key navigation, command on Enter/double click. Существующий `ItemSelector` оставить компактным inline-переключателем значений (`< value >`) без popup.
   - Для каждого виджета сделать draw/event module, descriptor format, command output и demo case.
-  - Статус: закрыт. Реализованы `Button`, draw-only `GroupBox`, dialog-integrated `CheckBox`, `RadioButton`, базовый `TextField` с RAM-буфером, password-mask flag, hotkey-фокусом, mouse focus, мигающим курсором, вводом, Backspace/Delete, Left/Right/Home/End и descriptor-owned горизонтальным скроллингом при `max_len > width`; добавлен `ItemSelector` без dropdown popup, с фокусом, hotkey, mouse click, циклическим выбором и обратным переключением через `Left`. Text selection не входит в минимальный набор этапа и остается отдельным future enhancement.
+  - Статус: реализованы `Button`, draw-only `GroupBox`, dialog-integrated `CheckBox`, `RadioButton`, базовый `TextField` с RAM-буфером, password-mask flag, hotkey-фокусом, mouse focus, мигающим курсором, вводом, Backspace/Delete, Left/Right/Home/End и descriptor-owned горизонтальным скроллингом при `max_len > width`; добавлен `ItemSelector` без dropdown popup, с фокусом, hotkey, mouse click, циклическим выбором и обратным переключением через `Left`; добавлен draw-only `ProgressBar` с determinate и indeterminate режимами. TASM-style scrollable `ListBox`/`ItemList` еще не готов.
 
 - [ ] Этап 6. Menu и ComboBox/dropdown
   - Реализовать menu bar с dropdown-окнами, hotkeys, mouse support, separators и optional hints.
   - Реализовать полноценный `ComboBox` на базе универсального list popup.
+  - Вынести общий scrollable list popup/list viewport API, чтобы `ComboBox`, dropdown menu и будущий `ListBox` переиспользовали одну навигацию, scrollbar, partial redraw и DSS scroll/copy primitives.
   - Проверить UX на уровне `fm`/`TASM`: навигация клавиатурой, мышью, закрытие по Esc/клику вне меню.
   - Статус: компактный `ItemSelector` выделен отдельно; добавлен первый настоящий `ComboBox` с framed dropdown popup, mouse/key выбором, `Up`/`Down`/`Home`/`End`, `Enter` commit и `Esc` cancel. ComboBox обновляет только изменившиеся строки при перемещении фокуса внутри видимой области, а при прокрутке на одну строку использует `Dss.Scroll #55` через `ui_call_dss` для внутренней области dropdown и дорисовывает только новую строку; для длинных списков добавлен scrollbar со стрелками, patterned track, thumb и mouse-scroll по стрелкам. Начат `MenuBar` с descriptor tables, hotkey labels, separator/disabled descriptors, per-item hints, draw/dropdown primitives и отдельным `ui_menu_bar_run`: верхнее меню и dropdown разделены как `CurMenu`/`CurMBox` в TASM/FM, popup скрыт по умолчанию, `Enter`/`F10` открывают dropdown, `F10`/`Esc` закрывают. Цвета фокуса horizontal/dropdown menu разделены в теме; menu hotkey рисует только цвет символа поверх текущего фона; descriptor поддерживает ASCII shortcuts, глобальный поиск dropdown accelerators, `Alt+key`, DSS/TASM scan-code shortcuts вроде `F3` и режим без видимой mnemonic-подсветки. Универсальный list popup API и интеграция MenuBar в общий app/dialog dispatcher еще не готовы.
 
@@ -77,5 +83,6 @@
 
 - [ ] Этап 9. Оптимизация и приемка
   - Измерить размер кода и RAM по модулям, убрать лишние зависимости.
+  - Проверить поддержку `IFUSED`/условной сборки sjasmplus и обернуть редко используемые helper routines так, чтобы неиспользуемые процедуры не попадали в EXE.
   - Проверить сборку demo после каждой итерации и подготовку disk image.
   - Сравнить поведение с `fformat`, `fm`, `TASM`; закрыть UX gaps перед первой версией API.

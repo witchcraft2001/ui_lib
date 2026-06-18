@@ -466,7 +466,7 @@ demo_group_options:
 
 demo_separators:
 demo_separator:
-        db      3, 9, 44
+        db      0, 9, 0
         db      UI_SEPARATORS_END
 
 demo_checks:
@@ -681,7 +681,7 @@ demo_theme:
         db      17h, 70h, 7Fh, 7Eh, 20h, 2Fh
         db      78h, 08h, 1Eh, 70h, 2Eh, 2Eh
         db      17h, 1Fh, 2Fh, 0Fh, 78h
-        db      0Eh, 2Eh, 0Eh
+        db      0Eh, 2Eh, 0Eh, 17h, 20h
 demo_last_command:
         db      0
 demo_diag_buf:

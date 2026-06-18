@@ -43,6 +43,8 @@ ui_default_theme:
         db      UI_COLOR_MENU_HOTKEY
         db      UI_COLOR_MENU_BAR_FOCUS_HOTKEY
         db      UI_COLOR_MENU_POPUP_FOCUS_HOTKEY
+        db      UI_COLOR_PROGRESS
+        db      UI_COLOR_PROGRESS_FILL
 
 ui_theme:
 ui_theme_desktop:
@@ -85,3 +87,7 @@ ui_theme_menu_bar_focus_hotkey:
         db      UI_COLOR_MENU_BAR_FOCUS_HOTKEY
 ui_theme_menu_popup_focus_hotkey:
         db      UI_COLOR_MENU_POPUP_FOCUS_HOTKEY
+ui_theme_progress:
+        db      UI_COLOR_PROGRESS
+ui_theme_progress_fill:
+        db      UI_COLOR_PROGRESS_FILL

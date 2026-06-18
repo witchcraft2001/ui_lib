@@ -34,6 +34,8 @@ my_theme:
         db      0Eh     ; menu hotkey
         db      2Eh     ; focused horizontal menu hotkey
         db      0Eh     ; focused dropdown menu hotkey
+        db      17h     ; progress background
+        db      20h     ; progress fill
 
         ld      hl, my_theme
         call    ui_set_theme

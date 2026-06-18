@@ -25,6 +25,8 @@ UI_COLOR_MENU_DISABLED  equ     78h
 UI_COLOR_MENU_HOTKEY    equ     0Eh
 UI_COLOR_MENU_BAR_FOCUS_HOTKEY equ 2Eh
 UI_COLOR_MENU_POPUP_FOCUS_HOTKEY equ 0Eh
+UI_COLOR_PROGRESS       equ     17h
+UI_COLOR_PROGRESS_FILL  equ     20h
 
 UI_THEME_DESKTOP        equ     0
 UI_THEME_WINDOW         equ     1
@@ -46,7 +48,9 @@ UI_THEME_MENU_DISABLED  equ     16
 UI_THEME_MENU_HOTKEY    equ     17
 UI_THEME_MENU_BAR_FOCUS_HOTKEY equ 18
 UI_THEME_MENU_POPUP_FOCUS_HOTKEY equ 19
-UI_THEME_SIZE           equ     20
+UI_THEME_PROGRESS       equ     20
+UI_THEME_PROGRESS_FILL  equ     21
+UI_THEME_SIZE           equ     22
 
 UI_FLAG_DISABLED        equ     80h
 UI_FLAG_FOCUSED         equ     40h
@@ -54,6 +58,7 @@ UI_FLAG_PRESSED         equ     20h
 UI_FLAG_SEPARATOR       equ     04h
 UI_FLAG_CHECKED         equ     01h
 UI_FLAG_PASSWORD        equ     02h
+UI_FLAG_INDETERMINATE   equ     08h
 
 UI_CMD_NONE             equ     00h
 UI_CMD_OK               equ     01h
@@ -103,6 +108,7 @@ UI_MENU_POPUP_END      equ     0FFh
 UI_TEXT_FIELDS_END     equ     0FFh
 UI_ITEM_SELECTORS_END          equ     0FFh
 UI_COMBOS_END          equ     0FFh
+UI_PROGRESS_END        equ     0FFh
 UI_CHECKS_END          equ     0FFh
 UI_RADIOS_END          equ     0FFh
 UI_GROUPS_END          equ     0FFh

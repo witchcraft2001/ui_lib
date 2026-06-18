@@ -191,6 +191,24 @@ UI_ITEM_SELECTOR_COUNT          equ     7
 UI_ITEM_SELECTOR_SELECTED       equ     8
 UI_ITEM_SELECTOR_SIZE           equ     9
 
+; ProgressBar descriptor:
+;   +0 x relative to parent window
+;   +1 y relative to parent window
+;   +2 width
+;   +3 flags, bit UI_FLAG_INDETERMINATE = busy/unknown progress
+;   +4 value for determinate mode
+;   +5 max value for determinate mode
+;   +6 phase for indeterminate mode, stored in RAM when animated
+
+UI_PROGRESS_X           equ     0
+UI_PROGRESS_Y           equ     1
+UI_PROGRESS_W           equ     2
+UI_PROGRESS_FLAGS       equ     3
+UI_PROGRESS_VALUE       equ     4
+UI_PROGRESS_MAX         equ     5
+UI_PROGRESS_PHASE       equ     6
+UI_PROGRESS_SIZE        equ     7
+
 ; ComboBox descriptor:
 ;   +0 x relative to parent window
 ;   +1 y relative to parent window
@@ -245,3 +263,8 @@ UI_RADIO_SIZE           equ     6
 ;   +14 focused horizontal menu item
 ;   +15 focused vertical/dropdown menu item
 ;   +16 disabled menu item
+;   +17 menu hotkey
+;   +18 focused horizontal menu hotkey
+;   +19 focused vertical/dropdown menu hotkey
+;   +20 progress background
+;   +21 progress fill

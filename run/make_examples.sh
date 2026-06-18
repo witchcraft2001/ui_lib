@@ -28,3 +28,12 @@ sjasmplus \
   "$repo_root/examples/menu_only/menu_only.asm"
 
 echo "Built $repo_root/build/examples/MENU_ONLY.EXE"
+
+sjasmplus \
+  --nologo \
+  --syntax=f \
+  --fullpath \
+  --lst="$repo_root/build/examples/PROGRESS_ONLY.LST" \
+  "$repo_root/examples/progress_only/progress_only.asm"
+
+echo "Built $repo_root/build/examples/PROGRESS_ONLY.EXE"

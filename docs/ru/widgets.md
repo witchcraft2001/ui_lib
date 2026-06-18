@@ -114,6 +114,10 @@ separator_example:
 
 Формат: `x, y, width`.
 
+Если `width` равен `0`, разделитель рисуется на всю ширину родительского окна
+и стыкуется с рамкой. В этом режиме `x` игнорируется, `y` остается относительным
+координате окна.
+
 ## CheckBox
 
 `CheckBox` хранит состояние в `flags`: бит `UI_FLAG_CHECKED` означает выбранное состояние. Дескриптор должен быть в RAM, если приложение вызывает `ui_toggle_checkbox`.
@@ -187,6 +191,31 @@ combo_items:
 ```
 
 Формат: `x, y, width, flags, hotkey, items_ptr, count, selected, popup_height`.
+
+## ProgressBar
+
+`ProgressBar` работает как draw-only виджет и может подключаться без модулей dialog/menu.
+Пустая часть рисуется фактурным псевдографическим символом, заполненная часть
+использует `ui_theme_progress_fill`.
+Determinate-режим использует `value/max`; indeterminate-режим включает
+`UI_FLAG_INDETERMINATE` и хранит фазу анимации в descriptor.
+
+```asm
+progress_done:
+        db      8, 7, 28, 0, 0, 10, 0
+progress_busy:
+        db      8, 9, 28, UI_FLAG_INDETERMINATE, 0, 0, 0
+
+        ld      ix, window_desc
+        ld      iy, progress_done
+        call    ui_draw_progress_bar
+
+        ld      iy, progress_busy
+        call    ui_progress_bar_tick
+        call    ui_draw_progress_bar
+```
+
+Формат: `x, y, width, flags, value, max, phase`.
 
 ## Window Background Save/Restore
 

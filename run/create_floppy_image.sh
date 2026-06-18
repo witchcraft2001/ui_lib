@@ -37,6 +37,10 @@ if [ "$include_default_examples" -eq 1 ] && [ -f "$repo_root/build/examples/MENU
   mcopy -i "$image_path" -o "$repo_root/build/examples/MENU_ONLY.EXE" ::MENU.EXE
 fi
 
+if [ "$include_default_examples" -eq 1 ] && [ -f "$repo_root/build/examples/PROGRESS_ONLY.EXE" ]; then
+  mcopy -i "$image_path" -o "$repo_root/build/examples/PROGRESS_ONLY.EXE" ::PROGRESS.EXE
+fi
+
 echo "Created FAT12 floppy image: $image_path"
 echo "Copied file: $exe_path -> ::$image_exe_name"
 if [ "$include_default_examples" -eq 1 ] && [ -f "$repo_root/build/examples/BUTTON_ONLY.EXE" ]; then
@@ -44,4 +48,7 @@ if [ "$include_default_examples" -eq 1 ] && [ -f "$repo_root/build/examples/BUTT
 fi
 if [ "$include_default_examples" -eq 1 ] && [ -f "$repo_root/build/examples/MENU_ONLY.EXE" ]; then
   echo "Copied file: $repo_root/build/examples/MENU_ONLY.EXE -> ::MENU.EXE"
+fi
+if [ "$include_default_examples" -eq 1 ] && [ -f "$repo_root/build/examples/PROGRESS_ONLY.EXE" ]; then
+  echo "Copied file: $repo_root/build/examples/PROGRESS_ONLY.EXE -> ::PROGRESS.EXE"
 fi
