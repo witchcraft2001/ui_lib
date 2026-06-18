@@ -60,9 +60,12 @@ ui_window_save_under:
         ld      a, (ui_window_buffer_page)
         ld      b, a
         ld      c, Dss.WinCopy
+        call    ui_window_save_iff
         di
         call    ui_call_dss
-        ei
+        push    af
+        call    ui_window_restore_iff
+        pop     af
         jr      c, .copy_error
         call    ui_window_push_save_slot
         ret
@@ -97,12 +100,42 @@ ui_window_restore_under:
         ld      a, (ui_window_buffer_page)
         ld      b, a
         ld      c, Dss.WinRest
+        call    ui_window_save_iff
         di
         call    ui_call_dss
-        ei
+        push    af
+        call    ui_window_restore_iff
+        pop     af
         ret     c
         call    ui_window_commit_restore_slot
         ret
+
+; Capture the caller's interrupt-enable state, then re-enable it only if it
+; was on. Keeps DI/EI balanced around DSS window-buffer calls instead of
+; force-enabling interrupts the caller may have intentionally masked.
+ui_window_save_iff:
+        push    af
+        ld      a, i            ; P/V = IFF2
+        ld      a, 0
+        jp      po, .masked
+        inc     a
+.masked:
+        ld      (ui_window_saved_iff), a
+        pop     af
+        ret
+
+ui_window_restore_iff:
+        push    af
+        ld      a, (ui_window_saved_iff)
+        or      a
+        jr      z, .done
+        ei
+.done:
+        pop     af
+        ret
+
+ui_window_saved_iff:
+        db      0
         ELSE
         or      a
         ret
@@ -360,39 +393,40 @@ ui_draw_window_shadow:
         ret
 
 ui_draw_window_frame:
+        ; top-left corner
         ld      d, (ix + UI_WINDOW_Y)
         ld      e, (ix + UI_WINDOW_X)
         ld      a, (ui_theme_window_title)
         ld      b, a
         ld      a, 0C9h
-        push    de
         call    ui_put_cell
-        pop     de
 
+        ; top edge as one horizontal run
+        ld      d, (ix + UI_WINDOW_Y)
+        ld      a, (ix + UI_WINDOW_X)
+        inc     a
+        ld      e, a
         ld      a, (ix + UI_WINDOW_W)
         sub     2
-        ld      c, a
-.top:
-        inc     e
+        ld      l, a
+        ld      h, 1
         ld      a, (ui_theme_window_title)
         ld      b, a
         ld      a, 0CDh
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        dec     c
-        jr      nz, .top
+        call    ui_fill_rect
 
-        inc     e
+        ; top-right corner
+        ld      d, (ix + UI_WINDOW_Y)
+        ld      a, (ix + UI_WINDOW_X)
+        add     a, (ix + UI_WINDOW_W)
+        dec     a
+        ld      e, a
         ld      a, (ui_theme_window_title)
         ld      b, a
         ld      a, 0BBh
-        push    de
         call    ui_put_cell
-        pop     de
 
+        ld      d, (ix + UI_WINDOW_Y)
         ld      a, (ix + UI_WINDOW_H)
         sub     2
         ld      c, a
@@ -423,32 +457,43 @@ ui_draw_window_frame:
         dec     c
         jr      nz, .sides
 
-        inc     d
+        ; bottom-left corner
+        ld      a, (ix + UI_WINDOW_Y)
+        add     a, (ix + UI_WINDOW_H)
+        dec     a
+        ld      d, a
         ld      e, (ix + UI_WINDOW_X)
         ld      a, (ui_theme_window_title)
         ld      b, a
         ld      a, 0C8h
-        push    de
         call    ui_put_cell
-        pop     de
 
+        ; bottom edge as one horizontal run
+        ld      a, (ix + UI_WINDOW_Y)
+        add     a, (ix + UI_WINDOW_H)
+        dec     a
+        ld      d, a
+        ld      a, (ix + UI_WINDOW_X)
+        inc     a
+        ld      e, a
         ld      a, (ix + UI_WINDOW_W)
         sub     2
-        ld      c, a
-.bottom:
-        inc     e
+        ld      l, a
+        ld      h, 1
         ld      a, (ui_theme_window_title)
         ld      b, a
         ld      a, 0CDh
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        dec     c
-        jr      nz, .bottom
+        call    ui_fill_rect
 
-        inc     e
+        ; bottom-right corner
+        ld      a, (ix + UI_WINDOW_Y)
+        add     a, (ix + UI_WINDOW_H)
+        dec     a
+        ld      d, a
+        ld      a, (ix + UI_WINDOW_X)
+        add     a, (ix + UI_WINDOW_W)
+        dec     a
+        ld      e, a
         ld      a, (ui_theme_window_title)
         ld      b, a
         ld      a, 0BCh

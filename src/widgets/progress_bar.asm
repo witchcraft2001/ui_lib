@@ -20,21 +20,15 @@ ui_draw_progress_bar:
         or      a
         ret     z
 
-        ld      h, 1
-        ld      l, a
-        ld      a, UI_PROGRESS_EMPTY_CHAR
-        push    af
-        ld      a, (ui_theme_progress)
-        ld      b, a
-        pop     af
-        call    ui_fill_rect
-
         ld      a, (iy + UI_PROGRESS_FLAGS)
         bit     3, a
-        jr      nz, ui_draw_progress_indeterminate
+        jr      nz, .indeterminate_bg
+
+        ; Determinate: draw the filled run, then only the empty tail. This avoids
+        ; painting every cell twice (empty background then fill) and the flicker
+        ; that comes with it.
         call    ui_progress_fill_count
-        or      a
-        ret     z
+        ld      (ui_progress_fill_w), a
         ld      l, a
         ld      h, 1
         ld      a, (ui_progress_base_x)
@@ -46,7 +40,42 @@ ui_draw_progress_bar:
         ld      a, (ui_theme_progress_fill)
         ld      b, a
         pop     af
+        call    ui_fill_rect
+
+        ld      a, (ui_progress_width)
+        ld      hl, ui_progress_fill_w
+        sub     (hl)
+        ret     z
+        ld      c, a
+        ld      a, (ui_progress_base_x)
+        add     a, (hl)
+        ld      e, a
+        ld      a, (ui_progress_base_y)
+        ld      d, a
+        ld      l, c
+        ld      h, 1
+        ld      a, UI_PROGRESS_EMPTY_CHAR
+        push    af
+        ld      a, (ui_theme_progress)
+        ld      b, a
+        pop     af
         jp      ui_fill_rect
+
+.indeterminate_bg:
+        ld      a, (ui_progress_width)
+        ld      l, a
+        ld      h, 1
+        ld      a, (ui_progress_base_y)
+        ld      d, a
+        ld      a, (ui_progress_base_x)
+        ld      e, a
+        ld      a, UI_PROGRESS_EMPTY_CHAR
+        push    af
+        ld      a, (ui_theme_progress)
+        ld      b, a
+        pop     af
+        call    ui_fill_rect
+        jp      ui_draw_progress_indeterminate
 
 ui_draw_progress_indeterminate:
         ld      a, (ui_progress_width)
@@ -120,7 +149,10 @@ ui_progress_fill_count:
         cp      e
         jr      nc, .full
         ld      c, (iy + UI_PROGRESS_W)
-        call    ui_progress_mul_a_c
+        call    ui_progress_mul_a_c     ; HL = value * width, clobbers DE
+        ld      a, (iy + UI_PROGRESS_MAX)
+        ld      e, a                    ; reload divisor = max (DE was clobbered)
+        ld      d, 0
         ld      c, 0
 .div_loop:
         ld      a, h
@@ -163,4 +195,6 @@ ui_progress_base_x:
 ui_progress_base_y:
         db      0
 ui_progress_width:
+        db      0
+ui_progress_fill_w:
         db      0

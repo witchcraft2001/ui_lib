@@ -66,28 +66,39 @@ ui_put_cell:
 ; In:  HL=ASCIIZ text, A=attribute, D=row, E=column
 ; Out: none
 ; Clobbers: AF, BC, DE, HL
+; Notes: sets the cursor once and prints each cell with Lp_Print_All (B=1),
+; relying on the BIOS line-printer cursor auto-advance. This replaces the old
+; per-character Lp_Set_Place + ui_put_cell round-trip, halving BIOS calls and
+; dropping a page swap per character. IX/IY are preserved (BIOS clobbers them).
 ui_print_z:
         ld      (ui_print_attr), a
-.loop:
         ld      a, (hl)
         or      a
         ret     z
+        push    ix
+        push    iy
+        ld      c, Bios.Lp_Set_Place
+        call    ui_call_bios
+.loop:
+        ld      a, (hl)
+        or      a
+        jr      z, .done
         push    hl
-        push    de
-        ld      (ui_print_char), a
         ld      a, (ui_print_attr)
-        ld      b, a
-        ld      a, (ui_print_char)
-        call    ui_put_cell
-        pop     de
+        ld      e, a
+        ld      a, (hl)
+        ld      b, 1
+        ld      c, Bios.Lp_Print_All
+        call    ui_call_bios
         pop     hl
         inc     hl
-        inc     e
         jr      .loop
+.done:
+        pop     iy
+        pop     ix
+        ret
 
 ui_print_attr:
-        db      0
-ui_print_char:
         db      0
 
 ; ui_print_wrapped_z

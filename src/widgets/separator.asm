@@ -8,26 +8,18 @@ ui_draw_separator:
         ld      a, (iy + UI_SEPARATOR_W)
         or      a
         jr      z, ui_draw_full_width_separator
-        ld      c, a
+        ld      l, a
         ld      a, (ix + UI_WINDOW_X)
         add     a, (iy + UI_SEPARATOR_X)
         ld      e, a
         ld      a, (ix + UI_WINDOW_Y)
         add     a, (iy + UI_SEPARATOR_Y)
         ld      d, a
-.loop:
+        ld      h, 1
         ld      a, (ui_theme_window)
         ld      b, a
         ld      a, 0C4h
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        inc     e
-        dec     c
-        jr      nz, .loop
-        ret
+        jp      ui_fill_rect
 
 ; Draw a separator connected to the parent window frame.
 ; UI_SEPARATOR_W=0 means: ignore UI_SEPARATOR_X and span from the left border
@@ -36,41 +28,43 @@ ui_draw_full_width_separator:
         ld      a, (ix + UI_WINDOW_W)
         cp      3
         ret     c
-        ld      c, a
-        ld      a, (ix + UI_WINDOW_X)
-        ld      e, a
+        sub     2
+        ld      (ui_sep_mid_w), a
         ld      a, (ix + UI_WINDOW_Y)
         add     a, (iy + UI_SEPARATOR_Y)
         ld      d, a
+        ld      e, (ix + UI_WINDOW_X)
 
+        ; left junction
         ld      a, (ui_theme_window_title)
         ld      b, a
         ld      a, 0C7h
-        push    bc
-        push    de
         call    ui_put_cell
-        pop     de
-        pop     bc
 
-        ld      a, c
-        sub     2
-        ld      c, a
-.middle:
+        ; middle as one horizontal run
         inc     e
+        ld      a, (ui_sep_mid_w)
+        ld      l, a
+        ld      h, 1
         ld      a, (ui_theme_window_title)
         ld      b, a
         ld      a, 0C4h
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        dec     c
-        jr      nz, .middle
+        call    ui_fill_rect
 
-        inc     e
+        ; right junction
+        ld      a, (ix + UI_WINDOW_Y)
+        add     a, (iy + UI_SEPARATOR_Y)
+        ld      d, a
+        ld      a, (ix + UI_WINDOW_X)
+        inc     a
+        ld      hl, ui_sep_mid_w
+        add     a, (hl)
+        ld      e, a
         ld      a, (ui_theme_window_title)
         ld      b, a
         ld      a, 0B6h
         call    ui_put_cell
         ret
+
+ui_sep_mid_w:
+        db      0
