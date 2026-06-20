@@ -1,6 +1,23 @@
 ; Public constants for the Sprinter text-mode UI library.
 ; Comments in source files are intentionally English.
 
+; Build-time configuration. Override with DEFINE before including this file.
+;
+; UI_SYSCALL_PLAIN_RST selects the DSS/BIOS calling convention used by
+; ui_call_dss / ui_call_bios:
+;   0 = legacy WIN2-borrow over a temporary stack (default). Assumes the app
+;       lives in WIN1 and WIN2 is free scratch, as in the bundled examples.
+;   1 = plain "rst 10h/08h + ret". For apps that own WIN0 and route every RST
+;       through their own trampolines; ui_lib adds no window borrow or stack.
+; UI_SAFE_STACK is the scratch stack used only by the legacy path; relocate it
+; if WIN2 0x8000..0x8040 is not free in your memory model.
+        IFNDEF UI_SYSCALL_PLAIN_RST
+UI_SYSCALL_PLAIN_RST    equ     0
+        ENDIF
+        IFNDEF UI_SAFE_STACK
+UI_SAFE_STACK           equ     8040h
+        ENDIF
+
 UI_SCREEN_COLS          equ     80
 UI_SCREEN_ROWS          equ     32
 UI_HINT_LINE_ROW        equ     31

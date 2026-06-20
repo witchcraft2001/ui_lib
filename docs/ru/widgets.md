@@ -245,6 +245,13 @@ progress_busy:
 
 Для прямого использования окна доступны `ui_window_save_under` и `ui_window_restore_under`. `IX` должен указывать на window descriptor при сохранении; восстановление работает как LIFO: последним закрывается последнее сохраненное окно. По умолчанию стек хранит до `UI_WINDOW_SAVE_DEPTH=4` областей в одной DSS-странице; глубину можно переопределить до подключения `window.asm`. Если суммарный размер сохраненных областей превышает 16 КБ, `ui_window_save_under` вернет `CF=1`, и приложение должно перерисовать фон самостоятельно.
 
+## Соглашение о вызовах DSS/BIOS
+
+Все обращения к прошивке идут через `ui_call_dss` (`src/core/init.asm`) и `ui_call_bios` (`src/draw/text.asm`). Соглашение выбирается на этапе сборки флагом `UI_SYSCALL_PLAIN_RST` (по умолчанию `0`), объявленным в `include/ui_defs.inc`:
+
+- `0` — legacy-соглашение: на время вызова берётся WIN2 (`P2 := P1`) и временный стек по адресу `UI_SAFE_STACK` (по умолчанию `0x8040`), затем WIN2 восстанавливается. Соответствует коду в стиле texteditor/fformat и предполагает, что приложение живёт в WIN1, а WIN2 свободен под scratch (как в примерах из комплекта). Если WIN2 `0x8000..0x8040` не свободен в вашей модели памяти, переопределите `UI_SAFE_STACK` через `DEFINE`.
+- `1` — plain RST: врапперы становятся голым `rst 10h`/`rst 08h` плюс `ret`, без захвата окна и без временного стека. Используйте для приложений, которые владеют WIN0 и пропускают каждый `rst 08/10/30/38` через собственные RST-трамплины (трамплин делает swap WIN0 и не трогает WIN1/WIN2/WIN3). Включается через `DEFINE UI_SYSCALL_PLAIN_RST 1` до подключения библиотеки.
+
 ## Dialog Navigation
 
 `ui_dialog_run` поддерживает фокус для `TextField`, `CheckBox`, `RadioButton`, `ItemSelector`, `ComboBox` и `Button`. Порядок обхода: text field table, checkbox table, radio table, item selector table, combo box table, button table.

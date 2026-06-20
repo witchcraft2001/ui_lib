@@ -244,6 +244,13 @@ By default, windows do not save anything: the application repaints the backgroun
 
 For direct window use, call `ui_window_save_under` and `ui_window_restore_under`. `IX` must point to the window descriptor when saving; restore is LIFO, so the last saved window must be closed first. By default, the stack stores up to `UI_WINDOW_SAVE_DEPTH=4` areas in one DSS page; override the depth before including `window.asm`. If the total saved area exceeds 16 KB, `ui_window_save_under` returns `CF=1`, and the application must repaint the background itself.
 
+## DSS/BIOS Syscall Convention
+
+All firmware calls go through `ui_call_dss` (`src/core/init.asm`) and `ui_call_bios` (`src/draw/text.asm`). The convention is selected at build time with `UI_SYSCALL_PLAIN_RST` (default `0`), declared in `include/ui_defs.inc`:
+
+- `0` — legacy convention: borrow WIN2 (`P2 := P1`) and run a temporary stack at `UI_SAFE_STACK` (default `0x8040`) for the duration of the call, then restore WIN2. This matches texteditor/fformat-style code and assumes the app lives in WIN1 with WIN2 free as scratch, as in the bundled examples. Override `UI_SAFE_STACK` with `DEFINE` if WIN2 `0x8000..0x8040` is not free in your memory model.
+- `1` — plain RST: the wrappers become a bare `rst 10h`/`rst 08h` plus `ret`, with no window borrow and no scratch stack. Use this for apps that own WIN0 and route every `rst 08/10/30/38` through their own RST trampolines (the trampoline performs the WIN0 swap and leaves WIN1/WIN2/WIN3 untouched). Set it with `DEFINE UI_SYSCALL_PLAIN_RST 1` before including the library.
+
 ## Dialog Navigation
 
 `ui_dialog_run` supports focus for `TextField`, `CheckBox`, `RadioButton`, `ItemSelector`, `ComboBox`, and `Button`. Traversal order is text field table, checkbox table, radio table, item selector table, combo box table, then button table.

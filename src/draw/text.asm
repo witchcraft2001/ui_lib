@@ -1,8 +1,5 @@
 ; Text-mode drawing helpers.
-
-        IFNDEF UI_SAFE_STACK
-UI_SAFE_STACK equ 8040h
-        ENDIF
+; UI_SAFE_STACK and UI_SYSCALL_PLAIN_RST defaults live in include/ui_defs.inc.
 
 ; ui_clear_screen
 ; In:  A=fill char, B=attribute
@@ -315,12 +312,18 @@ ui_invert_w:
         db      0
 
 ; ui_call_bios
-; Calls Sprinter BIOS with P2 mapped to P1 and a temporary stack.
-; This follows the pattern used by texteditor/fformat-style UI code to
-; avoid video memory corruption during low-level BIOS text output.
+; Calls Sprinter BIOS. With UI_SYSCALL_PLAIN_RST=0 (default) P2 is mapped to P1
+; over a temporary stack, following texteditor/fformat-style UI code to avoid
+; video memory corruption during low-level BIOS text output. With
+; UI_SYSCALL_PLAIN_RST=1 it is a bare "rst 08h" for WIN0-ownership apps that
+; install their own RST trampolines.
 ; In:  C=function, other registers as required by BIOS
 ; Out: BIOS result
 ui_call_bios:
+        IF UI_SYSCALL_PLAIN_RST
+        rst     08h
+        ret
+        ELSE
         ld      (.a_value), a
         in      a, (EmmWin.P2)
         ld      (.page), a
@@ -339,3 +342,4 @@ ui_call_bios:
         out     (EmmWin.P2), a
         pop     af
         ret
+        ENDIF
