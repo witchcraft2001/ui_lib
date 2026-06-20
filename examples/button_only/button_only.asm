@@ -127,6 +127,7 @@ button_only_exit_raw:
 button_only_window:
         db      18, 8, 44, 13
         dw      button_only_title
+        db      UI_FRAME_DOUBLE
 
 button_only_ok:
         db      18, 9, 0, UI_CMD_OK, "o"

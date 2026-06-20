@@ -5,6 +5,10 @@ UI_SCREEN_COLS          equ     80
 UI_SCREEN_ROWS          equ     32
 UI_HINT_LINE_ROW        equ     31
 
+; Window frame styles, stored in the window descriptor at UI_WINDOW_FRAME.
+UI_FRAME_DOUBLE         equ     0       ; CP866 double-line box drawing
+UI_FRAME_SINGLE         equ     1       ; CP866 single-line box drawing
+
 UI_COLOR_DESKTOP        equ     17h     ; blue background, white text
 UI_COLOR_WINDOW         equ     70h     ; gray background, black text
 UI_COLOR_WINDOW_TITLE   equ     7Fh

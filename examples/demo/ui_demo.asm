@@ -339,14 +339,17 @@ demo_no_memory:
 demo_window:
         db      15, 4, 50, 20
         dw      demo_title
+        db      UI_FRAME_DOUBLE
 
         IF UI_USE_DSS_WINDOW_BUFFER
 demo_nested_outer_window:
         db      18, 6, 44, 14
         dw      demo_nested_outer_title
+        db      UI_FRAME_DOUBLE
 demo_nested_inner_window:
         db      27, 10, 26, 8
         dw      demo_nested_inner_title
+        db      UI_FRAME_SINGLE
         ENDIF
 
 demo_menu_bar:

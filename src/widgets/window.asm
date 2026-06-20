@@ -37,6 +37,21 @@ ui_window_save_off_lo_stack:
 ui_window_save_off_hi_stack:
         ds      UI_WINDOW_SAVE_DEPTH, 0
 
+; Active glyph set copied from the style table at draw time:
+; top-left, horizontal, top-right, vertical, bottom-left, bottom-right.
+ui_frame_tl:
+        db      0
+ui_frame_h:
+        db      0
+ui_frame_tr:
+        db      0
+ui_frame_v:
+        db      0
+ui_frame_bl:
+        db      0
+ui_frame_br:
+        db      0
+
 ; ui_window_save_under
 ; In:  IX=window descriptor
 ; Out: CF=0 on success, CF=1 when DSS buffer is enabled but unavailable
@@ -392,13 +407,38 @@ ui_draw_window_shadow:
         call    ui_fill_rect
         ret
 
+; ui_window_load_frame_glyphs
+; Copies the six glyphs for the descriptor's frame style into the active set.
+; In:  IX = window descriptor (UI_WINDOW_FRAME selects the style)
+; Clobbers: AF, BC, DE, HL
+ui_window_load_frame_glyphs:
+        ld      a, (ix + UI_WINDOW_FRAME)
+        dec     a                       ; UI_FRAME_SINGLE -> 0
+        ld      hl, ui_frame_glyphs_single
+        jr      z, .copy
+        ld      hl, ui_frame_glyphs_double
+.copy:
+        ld      de, ui_frame_tl
+        ld      bc, 6
+        ldir
+        ret
+
+; Glyph order: top-left, horizontal, top-right, vertical, bottom-left,
+; bottom-right. CP866 box-drawing characters.
+ui_frame_glyphs_double:
+        db      0C9h, 0CDh, 0BBh, 0BAh, 0C8h, 0BCh
+ui_frame_glyphs_single:
+        db      0DAh, 0C4h, 0BFh, 0B3h, 0C0h, 0D9h
+
 ui_draw_window_frame:
+        call    ui_window_load_frame_glyphs
+
         ; top-left corner
         ld      d, (ix + UI_WINDOW_Y)
         ld      e, (ix + UI_WINDOW_X)
         ld      a, (ui_theme_window_title)
         ld      b, a
-        ld      a, 0C9h
+        ld      a, (ui_frame_tl)
         call    ui_put_cell
 
         ; top edge as one horizontal run
@@ -412,7 +452,7 @@ ui_draw_window_frame:
         ld      h, 1
         ld      a, (ui_theme_window_title)
         ld      b, a
-        ld      a, 0CDh
+        ld      a, (ui_frame_h)
         call    ui_fill_rect
 
         ; top-right corner
@@ -423,7 +463,7 @@ ui_draw_window_frame:
         ld      e, a
         ld      a, (ui_theme_window_title)
         ld      b, a
-        ld      a, 0BBh
+        ld      a, (ui_frame_tr)
         call    ui_put_cell
 
         ld      d, (ix + UI_WINDOW_Y)
@@ -435,7 +475,7 @@ ui_draw_window_frame:
         ld      e, (ix + UI_WINDOW_X)
         ld      a, (ui_theme_window_title)
         ld      b, a
-        ld      a, 0BAh
+        ld      a, (ui_frame_v)
         push    bc
         push    de
         call    ui_put_cell
@@ -448,7 +488,7 @@ ui_draw_window_frame:
         ld      e, a
         ld      a, (ui_theme_window_title)
         ld      b, a
-        ld      a, 0BAh
+        ld      a, (ui_frame_v)
         push    bc
         push    de
         call    ui_put_cell
@@ -465,7 +505,7 @@ ui_draw_window_frame:
         ld      e, (ix + UI_WINDOW_X)
         ld      a, (ui_theme_window_title)
         ld      b, a
-        ld      a, 0C8h
+        ld      a, (ui_frame_bl)
         call    ui_put_cell
 
         ; bottom edge as one horizontal run
@@ -482,7 +522,7 @@ ui_draw_window_frame:
         ld      h, 1
         ld      a, (ui_theme_window_title)
         ld      b, a
-        ld      a, 0CDh
+        ld      a, (ui_frame_h)
         call    ui_fill_rect
 
         ; bottom-right corner
@@ -496,7 +536,7 @@ ui_draw_window_frame:
         ld      e, a
         ld      a, (ui_theme_window_title)
         ld      b, a
-        ld      a, 0BCh
+        ld      a, (ui_frame_br)
         call    ui_put_cell
         ret
 

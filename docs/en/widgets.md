@@ -28,6 +28,28 @@ This keeps placement policy in the target program: inline the widget code, build
 
 For simple text without a widget, use `ui_print_wrapped_z`: `HL` is ASCIIZ text, `A` is the attribute, `D/E` is row/column, `B` is width, and `C` is max rows. Byte `0Ah` inside the string forces a new line. To invert an already drawn one-line region without reprinting text, call `ui_invert_range` with `D/E` as row/column and `B` as width.
 
+## Window
+
+`ui_draw_window` draws a static window: black shadow, gray body fill, the outer frame, and an optional title. `IX` points to the window descriptor:
+
+- `+0` x, `+1` y, `+2` width, `+3` height in cells (`UI_WINDOW_X/Y/W/H`);
+- `+4` word title (`UI_WINDOW_TITLE`): pointer to the ASCIIZ title, or `0` for no title;
+- `+6` frame style (`UI_WINDOW_FRAME`): `UI_FRAME_DOUBLE` (`0`, double-line frame) or `UI_FRAME_SINGLE` (`1`, single-line frame).
+
+`UI_WINDOW_SIZE` is the descriptor length (7 bytes). The frame byte is mandatory: `ui_draw_window` and `ui_draw_window_frame` always read `+6`, so every descriptor must include it. `UI_FRAME_DOUBLE` is the default double outer frame from the style guide.
+
+```asm
+        ld      ix, window_desc
+        call    ui_draw_window
+; ...
+window_desc:
+        db      15, 4, 50, 20
+        dw      window_title
+        db      UI_FRAME_DOUBLE
+```
+
+`ui_draw_window_shadow` and `ui_draw_window_frame` are also callable on their own; `ui_draw_window_frame` selects the glyph set from the descriptor's frame style.
+
 ## MenuBar
 
 `MenuBar` draws the top menu row and dropdown windows from descriptor tables. Coordinates are explicit, so the module does not require a fixed address and can be used separately from `Dialog`. `ui_menu_bar_run` keeps focus on the top row, `Left`/`Right` move across menu items, `Enter`, `F10`, or mouse click opens the dropdown, `F10` closes an open dropdown, `Up`/`Down` moves inside an open dropdown, and `Esc` closes the dropdown or exits the menu. Menu item shortcuts are searched across all dropdown tables, so `Alt+X` or a shortcut from another opened menu works as an accelerator.

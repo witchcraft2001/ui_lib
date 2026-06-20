@@ -16,12 +16,15 @@
 ;   +2 width
 ;   +3 height
 ;   +4 word title ASCIIZ
+;   +6 frame style, see UI_FRAME_* constants (0 = double)
 
 UI_WINDOW_X             equ     0
 UI_WINDOW_Y             equ     1
 UI_WINDOW_W             equ     2
 UI_WINDOW_H             equ     3
 UI_WINDOW_TITLE         equ     4
+UI_WINDOW_FRAME         equ     6
+UI_WINDOW_SIZE          equ     7
 
 ; Button descriptor:
 ;   +0 x relative to parent

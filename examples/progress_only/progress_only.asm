@@ -148,6 +148,7 @@ progress_only_exit_raw:
 progress_only_window:
         db      18, 8, 44, 13
         dw      progress_only_title
+        db      UI_FRAME_DOUBLE
 
 progress_only_done:
         db      15, 6, 22, 0, 0, 10, 0
