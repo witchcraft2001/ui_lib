@@ -86,7 +86,7 @@ file_popup:
 - `x` is the item column relative to the menu bar origin.
 - `flags`: `UI_FLAG_DISABLED` prevents selection.
 - `hotkey` is an ASCII shortcut key or scan code.
-- `hotkey_mods` uses `UI_HOTKEY_MOD_NONE`, `UI_HOTKEY_MOD_ALT`, `UI_HOTKEY_USE_SCAN`, and `UI_HOTKEY_NO_MNEMONIC`.
+- `hotkey_mods` uses `UI_HOTKEY_MOD_NONE`, `UI_HOTKEY_MOD_ALT`, `UI_HOTKEY_MOD_CTRL`, `UI_HOTKEY_USE_SCAN`, and `UI_HOTKEY_NO_MNEMONIC`.
 - `label_ptr` is an ASCIIZ label; `&` explicitly marks the highlighted hot character. Without `&`, the renderer highlights the first character matching `hotkey`.
 - `popup_ptr` points to dropdown items, or `0` when no popup is attached.
 - `popup_width` is the dropdown width including the frame.
@@ -96,12 +96,20 @@ file_popup:
 
 - `flags`: `UI_FLAG_SEPARATOR` draws a separator, `UI_FLAG_DISABLED` disables the row.
 - `hotkey` is the ASCII key or scan code used while the dropdown is open.
-- `hotkey_mods` contains shortcut modifiers/flags. For `Alt+X`, use `hotkey="x"` and `hotkey_mods=UI_HOTKEY_MOD_ALT | UI_HOTKEY_NO_MNEMONIC`. For `F3`, use `hotkey=UI_SCAN_F3` and `hotkey_mods=UI_HOTKEY_USE_SCAN | UI_HOTKEY_NO_MNEMONIC`. `UI_SCAN_F*` uses DSS/TASM-style scan codes (`F3 = #3D`), not raw AT scancodes.
+- `hotkey_mods` contains shortcut modifiers/flags. For `Alt+X`, use `hotkey="x"` and `hotkey_mods=UI_HOTKEY_MOD_ALT | UI_HOTKEY_NO_MNEMONIC`. For `Ctrl+P`, use `hotkey="p"` and `hotkey_mods=UI_HOTKEY_MOD_CTRL` (highlighting still works, so `UI_HOTKEY_NO_MNEMONIC` is optional). For `F3`, use `hotkey=UI_SCAN_F3` and `hotkey_mods=UI_HOTKEY_USE_SCAN | UI_HOTKEY_NO_MNEMONIC`. `UI_SCAN_F*` uses DSS/TASM-style scan codes (`F3 = #3D`), not raw AT scancodes.
 - `command` is the byte returned by `ui_menu_bar_run`.
 - `label_ptr` is an ASCIIZ label with an optional `&` marker for the visible mnemonic. For shortcuts without highlighted letters (`F3`, `Alt+X`), omit `&` and set `UI_HOTKEY_NO_MNEMONIC`.
 - `hint_ptr` points to the status-line hint.
 
 Horizontal and vertical focus colors are separate theme fields: `UI_THEME_MENU_BAR_FOCUS` and `UI_THEME_MENU_POPUP_FOCUS`. Disabled menu rows use `UI_THEME_MENU_DISABLED`.
+
+### Keyboard Modifiers
+
+`ui_poll_event` stores the DSS `ScanKey` shift state (register `B`) verbatim in `ui_event_mods`. Bit layout (per the DSS manual / `sprinter_dss` KEYINTER): `bit7` Left Shift, `bit6` Right Shift, `bit5` Ctrl (any), `bit4` Alt (any), `bit3` Left Ctrl, `bit2` Left Alt, `bit1` Right Ctrl, `bit0` Right Alt. Use the masks `UI_KEYMOD_ALT_ANY` (`0x15`), `UI_KEYMOD_CTRL_ANY` (`0x2A`), and `UI_KEYMOD_SHIFT_ANY` (`0xC0`) — each covers the generic bit plus both side keys, so one `AND` detects the modifier regardless of which physical key was pressed.
+
+`Ctrl+letter` matters because DSS reports ASCII `0` for it (no control-code folding), so an app cannot detect `Ctrl+S`/`Ctrl+P`/`Ctrl+K` from `ui_event_key` alone. `UI_HOTKEY_MOD_CTRL` makes the menu accelerator matcher compare the DSS scan code instead, exactly as `UI_HOTKEY_MOD_ALT` does, so `db 0, "p", UI_HOTKEY_MOD_CTRL` fires on `Ctrl+P`. DSS sets bit7 on the positional code for modifier combinations, so the matcher masks it (`and 7Fh`) before comparing; custom scan-code handling should do the same.
+
+For custom key handling, `ui_event_is_ctrl`, `ui_event_is_alt`, and `ui_event_is_shift` test `ui_event_mods` and return `ZF=0` (NZ) when the modifier was held (`AF` clobbered, all other registers preserved).
 
 ## GroupBox
 
@@ -246,10 +254,28 @@ For direct window use, call `ui_window_save_under` and `ui_window_restore_under`
 
 ## DSS/BIOS Syscall Convention
 
-All firmware calls go through `ui_call_dss` (`src/core/init.asm`) and `ui_call_bios` (`src/draw/text.asm`). The convention is selected at build time with `UI_SYSCALL_PLAIN_RST` (default `0`), declared in `include/ui_defs.inc`:
+All firmware calls go through `ui_call_dss` (`src/core/init.asm`) and `ui_call_bios` (`src/draw/text.asm`). The convention is selected at build time so the library does not impose one memory model. Options are listed in priority order; defaults live in `include/ui_defs.inc` and keep the legacy behaviour, so existing consumers are unaffected.
 
-- `0` — legacy convention: borrow WIN2 (`P2 := P1`) and run a temporary stack at `UI_SAFE_STACK` (default `0x8040`) for the duration of the call, then restore WIN2. This matches texteditor/fformat-style code and assumes the app lives in WIN1 with WIN2 free as scratch, as in the bundled examples. Override `UI_SAFE_STACK` with `DEFINE` if WIN2 `0x8000..0x8040` is not free in your memory model.
-- `1` — plain RST: the wrappers become a bare `rst 10h`/`rst 08h` plus `ret`, with no window borrow and no scratch stack. Use this for apps that own WIN0 and route every `rst 08/10/30/38` through their own RST trampolines (the trampoline performs the WIN0 swap and leaves WIN1/WIN2/WIN3 untouched). Set it with `DEFINE UI_SYSCALL_PLAIN_RST 1` before including the library.
+**1. Application hook (most flexible).** Define `UI_CALL_DSS_HOOK` and/or `UI_CALL_BIOS_HOOK` to the label of your own routine. The wrapper becomes a single `jp` into it, so ui_lib imposes no window or stack convention at all — your routine owns paging and the stack for the call. Registers and flags pass through unchanged, and the hook must return them exactly as the wrapper would (`C` = function on entry, firmware result on exit). The two hooks are independent, so you may override only DSS or only BIOS.
+
+```asm
+        DEFINE UI_CALL_DSS_HOOK  my_dss
+        DEFINE UI_CALL_BIOS_HOOK my_bios
+        include "include/ui.inc"
+; ...
+my_dss:                 ; In: C=function, ... ; Out: DSS result and flags
+        rst     10h     ; routed through the app's own RST trampoline
+        ret
+my_bios:
+        rst     08h
+        ret
+```
+
+**2. Plain RST.** `DEFINE UI_SYSCALL_PLAIN_RST 1` makes the wrappers a bare `rst 10h`/`rst 08h` plus `ret`, with no window borrow and no scratch stack. Use this for apps that own WIN0 and route every `rst 08/10/30/38` through their own RST trampolines (the trampoline performs the WIN0 swap and leaves WIN1/WIN2/WIN3 untouched).
+
+**3. Legacy WIN2-borrow (default, `UI_SYSCALL_PLAIN_RST 0`).** The wrapper borrows WIN2 (`P2 := P1`) and runs a temporary stack at `UI_SAFE_STACK` (default `0x8040`) for the duration of the call, then restores WIN2. This matches texteditor/fformat-style code and assumes the app lives in WIN1 with WIN2 free as scratch, as in the bundled examples. It exists because some DSS/BIOS functions repage memory windows mid-call, which would corrupt a stack left in the disturbed window. Override `UI_SAFE_STACK` with `DEFINE` if WIN2 `0x8000..0x8040` is not free in your memory model.
+
+A hook takes precedence over `UI_SYSCALL_PLAIN_RST`.
 
 ## Dialog Navigation
 

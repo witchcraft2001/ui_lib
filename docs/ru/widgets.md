@@ -86,7 +86,7 @@ file_popup:
 - `x` - колонка пункта относительно начала menu bar.
 - `flags` - `UI_FLAG_DISABLED` запрещает выбор пункта.
 - `hotkey` - ASCII-клавиша или scan-код быстрого доступа.
-- `hotkey_mods` - `UI_HOTKEY_MOD_NONE`, `UI_HOTKEY_MOD_ALT`, `UI_HOTKEY_USE_SCAN`, `UI_HOTKEY_NO_MNEMONIC`.
+- `hotkey_mods` - `UI_HOTKEY_MOD_NONE`, `UI_HOTKEY_MOD_ALT`, `UI_HOTKEY_MOD_CTRL`, `UI_HOTKEY_USE_SCAN`, `UI_HOTKEY_NO_MNEMONIC`.
 - `label_ptr` - ASCIIZ-строка; `&` явно задает подсвеченную букву. Если `&` нет, renderer подсветит первый символ, совпадающий с `hotkey`.
 - `popup_ptr` - таблица пунктов dropdown, `0` если popup нет.
 - `popup_width` - ширина dropdown вместе с рамкой.
@@ -96,12 +96,20 @@ file_popup:
 
 - `flags` - `UI_FLAG_SEPARATOR` рисует разделитель, `UI_FLAG_DISABLED` делает пункт неактивным.
 - `hotkey` - ASCII-клавиша или scan-код внутри открытого dropdown.
-- `hotkey_mods` - модификаторы/флаги shortcut. Для `Alt+X`: `hotkey="x"`, `hotkey_mods=UI_HOTKEY_MOD_ALT | UI_HOTKEY_NO_MNEMONIC`. Для `F3`: `hotkey=UI_SCAN_F3`, `hotkey_mods=UI_HOTKEY_USE_SCAN | UI_HOTKEY_NO_MNEMONIC`. `UI_SCAN_F*` использует DSS/TASM-style scan-коды (`F3 = #3D`), а не raw AT scancode.
+- `hotkey_mods` - модификаторы/флаги shortcut. Для `Alt+X`: `hotkey="x"`, `hotkey_mods=UI_HOTKEY_MOD_ALT | UI_HOTKEY_NO_MNEMONIC`. Для `Ctrl+P`: `hotkey="p"`, `hotkey_mods=UI_HOTKEY_MOD_CTRL` (подсветка буквы продолжает работать, поэтому `UI_HOTKEY_NO_MNEMONIC` необязателен). Для `F3`: `hotkey=UI_SCAN_F3`, `hotkey_mods=UI_HOTKEY_USE_SCAN | UI_HOTKEY_NO_MNEMONIC`. `UI_SCAN_F*` использует DSS/TASM-style scan-коды (`F3 = #3D`), а не raw AT scancode.
 - `command` - байт команды, который вернет `ui_menu_bar_run`.
 - `label_ptr` - ASCIIZ-строка с опциональным `&` для явной позиции mnemonic. Если нужен shortcut без подсветки буквы (`F3`, `Alt+X`), не ставьте `&` и используйте `UI_HOTKEY_NO_MNEMONIC`.
 - `hint_ptr` - ASCIIZ-подсказка для status line.
 
 Цвета горизонтального и вертикального фокуса разделены в теме: `UI_THEME_MENU_BAR_FOCUS` и `UI_THEME_MENU_POPUP_FOCUS`. Disabled-пункты меню используют `UI_THEME_MENU_DISABLED`.
+
+### Модификаторы клавиатуры
+
+`ui_poll_event` сохраняет состояние shift'ов из DSS `ScanKey` (регистр `B`) как есть в `ui_event_mods`. Раскладка бит (по DSS-мануалу / `sprinter_dss` KEYINTER): `bit7` Left Shift, `bit6` Right Shift, `bit5` Ctrl (any), `bit4` Alt (any), `bit3` Left Ctrl, `bit2` Left Alt, `bit1` Right Ctrl, `bit0` Right Alt. Используйте маски `UI_KEYMOD_ALT_ANY` (`0x15`), `UI_KEYMOD_CTRL_ANY` (`0x2A`) и `UI_KEYMOD_SHIFT_ANY` (`0xC0`) — каждая покрывает обобщённый бит плюс оба боковых, поэтому один `AND` ловит модификатор независимо от того, какая физическая клавиша нажата.
+
+`Ctrl+буква` важен потому, что DSS возвращает для него ASCII `0` (не сворачивает в управляющий код), и приложение не может поймать `Ctrl+S`/`Ctrl+P`/`Ctrl+K` по одному `ui_event_key`. `UI_HOTKEY_MOD_CTRL` заставляет матчер акселераторов меню сравнивать DSS scan-код, ровно как это делает `UI_HOTKEY_MOD_ALT`, поэтому `db 0, "p", UI_HOTKEY_MOD_CTRL` срабатывает на `Ctrl+P`. DSS выставляет bit7 на позиционном коде для комбинаций с модификатором, поэтому матчер маскирует его (`and 7Fh`) перед сравнением; собственная обработка скан-кодов должна делать так же.
+
+Для собственной обработки клавиш есть `ui_event_is_ctrl`, `ui_event_is_alt` и `ui_event_is_shift`: они проверяют `ui_event_mods` и возвращают `ZF=0` (NZ), если модификатор был зажат (портится `AF`, остальные регистры сохраняются).
 
 ## GroupBox
 
@@ -247,10 +255,28 @@ progress_busy:
 
 ## Соглашение о вызовах DSS/BIOS
 
-Все обращения к прошивке идут через `ui_call_dss` (`src/core/init.asm`) и `ui_call_bios` (`src/draw/text.asm`). Соглашение выбирается на этапе сборки флагом `UI_SYSCALL_PLAIN_RST` (по умолчанию `0`), объявленным в `include/ui_defs.inc`:
+Все обращения к прошивке идут через `ui_call_dss` (`src/core/init.asm`) и `ui_call_bios` (`src/draw/text.asm`). Соглашение выбирается на этапе сборки, поэтому библиотека не навязывает модель памяти. Варианты ниже — в порядке приоритета; значения по умолчанию объявлены в `include/ui_defs.inc` и сохраняют legacy-поведение, так что существующие потребители не затрагиваются.
 
-- `0` — legacy-соглашение: на время вызова берётся WIN2 (`P2 := P1`) и временный стек по адресу `UI_SAFE_STACK` (по умолчанию `0x8040`), затем WIN2 восстанавливается. Соответствует коду в стиле texteditor/fformat и предполагает, что приложение живёт в WIN1, а WIN2 свободен под scratch (как в примерах из комплекта). Если WIN2 `0x8000..0x8040` не свободен в вашей модели памяти, переопределите `UI_SAFE_STACK` через `DEFINE`.
-- `1` — plain RST: врапперы становятся голым `rst 10h`/`rst 08h` плюс `ret`, без захвата окна и без временного стека. Используйте для приложений, которые владеют WIN0 и пропускают каждый `rst 08/10/30/38` через собственные RST-трамплины (трамплин делает swap WIN0 и не трогает WIN1/WIN2/WIN3). Включается через `DEFINE UI_SYSCALL_PLAIN_RST 1` до подключения библиотеки.
+**1. Hook приложения (максимально гибко).** Определите `UI_CALL_DSS_HOOK` и/или `UI_CALL_BIOS_HOOK` как метку собственной процедуры. Враппер превращается в один `jp` в неё, и ui_lib вообще не навязывает соглашение об окнах и стеке — пейджинг и стек на время вызова контролирует ваша процедура. Регистры и флаги проходят насквозь без изменений, и hook должен вернуть их так же, как сделал бы враппер (`C` = функция на входе, результат прошивки на выходе). Хуки независимы, поэтому можно переопределить только DSS или только BIOS.
+
+```asm
+        DEFINE UI_CALL_DSS_HOOK  my_dss
+        DEFINE UI_CALL_BIOS_HOOK my_bios
+        include "include/ui.inc"
+; ...
+my_dss:                 ; In: C=функция, ... ; Out: результат DSS и флаги
+        rst     10h     ; через собственный RST-трамплин приложения
+        ret
+my_bios:
+        rst     08h
+        ret
+```
+
+**2. Plain RST.** `DEFINE UI_SYSCALL_PLAIN_RST 1` делает врапперы голым `rst 10h`/`rst 08h` плюс `ret`, без захвата окна и без временного стека. Для приложений, которые владеют WIN0 и пропускают каждый `rst 08/10/30/38` через собственные RST-трамплины (трамплин делает swap WIN0 и не трогает WIN1/WIN2/WIN3).
+
+**3. Legacy WIN2-borrow (по умолчанию, `UI_SYSCALL_PLAIN_RST 0`).** На время вызова берётся WIN2 (`P2 := P1`) и временный стек по адресу `UI_SAFE_STACK` (по умолчанию `0x8040`), затем WIN2 восстанавливается. Соответствует коду в стиле texteditor/fformat и предполагает, что приложение живёт в WIN1, а WIN2 свободен под scratch (как в примерах из комплекта). Нужен потому, что некоторые функции DSS/BIOS перекладывают страницы в окнах прямо во время вызова, что испортило бы стек, оставленный в задетом окне. Если WIN2 `0x8000..0x8040` не свободен в вашей модели памяти, переопределите `UI_SAFE_STACK` через `DEFINE`.
+
+Hook имеет приоритет над `UI_SYSCALL_PLAIN_RST`.
 
 ## Dialog Navigation
 

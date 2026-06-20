@@ -312,14 +312,21 @@ ui_invert_w:
         db      0
 
 ; ui_call_bios
-; Calls Sprinter BIOS. With UI_SYSCALL_PLAIN_RST=0 (default) P2 is mapped to P1
-; over a temporary stack, following texteditor/fformat-style UI code to avoid
-; video memory corruption during low-level BIOS text output. With
-; UI_SYSCALL_PLAIN_RST=1 it is a bare "rst 08h" for WIN0-ownership apps that
-; install their own RST trampolines.
+; Calls Sprinter BIOS. The calling convention is chosen at build time:
+;   - DEFINE UI_CALL_BIOS_HOOK my_bios : tail-jump into the app's own routine,
+;     ui_lib imposes no convention (most flexible; the app owns paging/stack).
+;   - UI_SYSCALL_PLAIN_RST=1           : bare "rst 08h" for WIN0-ownership apps
+;     that install their own RST trampolines.
+;   - UI_SYSCALL_PLAIN_RST=0 (default) : P2 is mapped to P1 over a temporary
+;     stack, following texteditor/fformat-style UI code to avoid video memory
+;     corruption during low-level BIOS text output.
+; A hook receives and returns registers/flags exactly as ui_call_bios.
 ; In:  C=function, other registers as required by BIOS
 ; Out: BIOS result
 ui_call_bios:
+        IFDEF UI_CALL_BIOS_HOOK
+        jp      UI_CALL_BIOS_HOOK
+        ELSE
         IF UI_SYSCALL_PLAIN_RST
         rst     08h
         ret
@@ -342,4 +349,5 @@ ui_call_bios:
         out     (EmmWin.P2), a
         pop     af
         ret
+        ENDIF
         ENDIF

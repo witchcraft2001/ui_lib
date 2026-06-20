@@ -1135,7 +1135,10 @@ ui_menu_fold_ascii:
 ui_menu_match_hotkey:
         ld      a, (ui_menu_match_key)
         or      a
-        jr      z, .no_match
+        jp      z, .no_match
+        ld      a, (ui_menu_match_mods)
+        and     UI_HOTKEY_MOD_CTRL
+        jp      nz, .ctrl
         ld      a, (ui_menu_match_mods)
         and     UI_HOTKEY_MOD_ALT
         jr      z, .mods_ok
@@ -1173,6 +1176,7 @@ ui_menu_match_hotkey:
         jr      c, .no_match
         ld      b, a
         ld      a, (ui_event_scan)
+        and     7Fh             ; DSS sets bit7 on the positional code for Alt combos
         cp      b
         jr      nz, .no_match
         or      a
@@ -1206,6 +1210,30 @@ ui_menu_match_hotkey:
         ret
 .no_match:
         scf
+        ret
+.ctrl:
+        ; Ctrl accelerator. The event must carry a Ctrl modifier; Ctrl+letter
+        ; reports ASCII 0, so match on the DSS scan code only (symmetric to the
+        ; Alt .ascii_scan path).
+        ld      a, (ui_event_mods)
+        and     UI_KEYMOD_CTRL_ANY
+        jr      z, .no_match
+        ld      a, (ui_menu_match_mods)
+        and     UI_HOTKEY_USE_SCAN
+        jr      nz, .ctrl_scan
+        ld      a, (ui_menu_match_key)
+        call    ui_menu_ascii_to_scan
+        jr      c, .no_match
+        jr      .ctrl_cmp
+.ctrl_scan:
+        ld      a, (ui_menu_match_key)
+.ctrl_cmp:
+        ld      b, a
+        ld      a, (ui_event_scan)
+        and     7Fh             ; DSS sets bit7 on the positional code for Ctrl combos
+        cp      b
+        jr      nz, .no_match
+        or      a
         ret
 
 ; Convert an ASCII letter to the PC-style scan code reported by DSS for

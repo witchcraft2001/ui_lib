@@ -3,14 +3,20 @@
 
 ; Build-time configuration. Override with DEFINE before including this file.
 ;
-; UI_SYSCALL_PLAIN_RST selects the DSS/BIOS calling convention used by
-; ui_call_dss / ui_call_bios:
-;   0 = legacy WIN2-borrow over a temporary stack (default). Assumes the app
-;       lives in WIN1 and WIN2 is free scratch, as in the bundled examples.
-;   1 = plain "rst 10h/08h + ret". For apps that own WIN0 and route every RST
-;       through their own trampolines; ui_lib adds no window borrow or stack.
-; UI_SAFE_STACK is the scratch stack used only by the legacy path; relocate it
-; if WIN2 0x8000..0x8040 is not free in your memory model.
+; DSS/BIOS calling convention used by ui_call_dss / ui_call_bios, in priority
+; order:
+;   1. DEFINE UI_CALL_DSS_HOOK / UI_CALL_BIOS_HOOK = app routine label.
+;      ui_lib tail-jumps into it and imposes no convention at all. Most
+;      flexible: the app owns paging and stack for the firmware call. Each
+;      hook is independent, so you may hook only DSS or only BIOS.
+;   2. UI_SYSCALL_PLAIN_RST=1 : plain "rst 10h/08h + ret". For apps that own
+;      WIN0 and route every RST through their own trampolines.
+;   3. UI_SYSCALL_PLAIN_RST=0 (default) : legacy WIN2-borrow over a temporary
+;      stack. Assumes the app lives in WIN1 and WIN2 is free scratch, as in
+;      the bundled examples.
+; A hook takes precedence over UI_SYSCALL_PLAIN_RST. UI_SAFE_STACK is the
+; scratch stack used only by the legacy path; relocate it if WIN2
+; 0x8000..0x8040 is not free in your memory model.
         IFNDEF UI_SYSCALL_PLAIN_RST
 UI_SYSCALL_PLAIN_RST    equ     0
         ENDIF
@@ -99,10 +105,23 @@ UI_KEY_SPACE           equ     20h
 
 UI_HOTKEY_MOD_NONE     equ     00h
 UI_HOTKEY_MOD_ALT      equ     10h
+UI_HOTKEY_MOD_CTRL     equ     20h
 UI_HOTKEY_USE_SCAN     equ     80h
 UI_HOTKEY_NO_MNEMONIC  equ     40h
 
-UI_KEYMOD_ALT_ANY      equ     15h     ; DSS ScanKey B bits 4, 2, 0
+; Dss.ScanKey returns the keyboard shift state in register B; events.asm stores
+; it verbatim in ui_event_mods. Bit layout (DSS manual / sprinter_dss KEYINTER):
+;   bit7 Left Shift    bit6 Right Shift
+;   bit5 Ctrl (any)    bit4 Alt (any)
+;   bit3 Left Ctrl     bit2 Left Alt
+;   bit1 Right Ctrl    bit0 Right Alt
+; Each _ANY mask covers the generic bit plus both side bits, so a single AND
+; detects the modifier regardless of which physical key was used.
+; Note: DSS sets bit7 on the positional code (D / ui_event_scan) for Alt/Ctrl
+; combinations, so scan-code matching must mask it off (and 7Fh).
+UI_KEYMOD_ALT_ANY      equ     15h     ; bits 4, 2, 0
+UI_KEYMOD_CTRL_ANY     equ     2Ah     ; bits 5, 3, 1
+UI_KEYMOD_SHIFT_ANY    equ     0C0h    ; bits 7, 6
 
 ; DSS ScanKey returns Sprinter keyboard position codes in D.
 UI_SCAN_F1             equ     3Bh

@@ -83,14 +83,21 @@ ui_shutdown:
         ret
 
 ; ui_call_dss
-; Calls Sprinter DSS. With UI_SYSCALL_PLAIN_RST=0 (default) P2 is mapped to P1
-; over a temporary stack, matching texteditor/fformat-style code for DSS calls
-; that can switch memory windows while the app stack is outside WIN2. With
-; UI_SYSCALL_PLAIN_RST=1 it is a bare "rst 10h" for WIN0-ownership apps that
-; install their own RST trampolines.
+; Calls Sprinter DSS. The calling convention is chosen at build time:
+;   - DEFINE UI_CALL_DSS_HOOK my_dss : tail-jump into the app's own routine,
+;     ui_lib imposes no convention (most flexible; the app owns paging/stack).
+;   - UI_SYSCALL_PLAIN_RST=1          : bare "rst 10h" for WIN0-ownership apps
+;     that install their own RST trampolines.
+;   - UI_SYSCALL_PLAIN_RST=0 (default): P2 is mapped to P1 over a temporary
+;     stack, matching texteditor/fformat-style code for DSS calls that can
+;     switch memory windows while the app stack is outside WIN2.
+; A hook receives and returns registers/flags exactly as ui_call_dss.
 ; In:  C=function, other registers as required by DSS
 ; Out: DSS result and flags
 ui_call_dss:
+        IFDEF UI_CALL_DSS_HOOK
+        jp      UI_CALL_DSS_HOOK
+        ELSE
         IF UI_SYSCALL_PLAIN_RST
         rst     10h
         ret
@@ -113,4 +120,5 @@ ui_call_dss:
         out     (EmmWin.P2), a
         pop     af
         ret
+        ENDIF
         ENDIF

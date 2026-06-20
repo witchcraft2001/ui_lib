@@ -61,6 +61,23 @@ ui_call_idle_hook:
         ret     z
         jp      (hl)
 
+; ui_event_is_ctrl / ui_event_is_alt / ui_event_is_shift
+; Test the modifier state captured for the last key event (ui_event_mods).
+; Out: ZF=0 (NZ) if the modifier was held, ZF=1 (Z) otherwise; A=masked bits.
+; Clobbers: AF
+ui_event_is_ctrl:
+        ld      a, (ui_event_mods)
+        and     UI_KEYMOD_CTRL_ANY
+        ret
+ui_event_is_alt:
+        ld      a, (ui_event_mods)
+        and     UI_KEYMOD_ALT_ANY
+        ret
+ui_event_is_shift:
+        ld      a, (ui_event_mods)
+        and     UI_KEYMOD_SHIFT_ANY
+        ret
+
 ; ui_poll_mouse
 ; Creates one event on left button transition from released to pressed.
 ; Clobbers: AF, BC, DE, HL

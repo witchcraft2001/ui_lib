@@ -11,6 +11,8 @@ MENU_CMD_RUN         equ     10h
 MENU_CMD_LOAD        equ     11h
 MENU_CMD_ABOUT       equ     12h
 MENU_CMD_THEME       equ     13h
+MENU_CMD_PRINT       equ     14h
+MENU_CMD_GOTO        equ     15h
 
         org     MENU_ONLY_LOAD_ADDR - 512
 
@@ -85,20 +87,30 @@ menu_only_show_command:
         jr      z, .about
         cp      MENU_CMD_THEME
         jr      z, .theme
+        cp      MENU_CMD_PRINT
+        jr      z, .print_cmd
+        cp      MENU_CMD_GOTO
+        jr      z, .goto
         ld      hl, menu_only_unknown
-        jr      .print
+        jr      .show
 .run:
         ld      hl, menu_only_run_text
-        jr      .print
+        jr      .show
 .load:
         ld      hl, menu_only_load_text
-        jr      .print
+        jr      .show
 .about:
         ld      hl, menu_only_about_text
-        jr      .print
+        jr      .show
 .theme:
         ld      hl, menu_only_theme_text
-.print:
+        jr      .show
+.print_cmd:
+        ld      hl, menu_only_print_text
+        jr      .show
+.goto:
+        ld      hl, menu_only_goto_text
+.show:
         ld      a, (ui_theme_window_title)
         ld      d, 10
         ld      e, 8
@@ -149,6 +161,12 @@ menu_only_file_popup:
         db      UI_FLAG_DISABLED, "s", UI_HOTKEY_MOD_NONE, UI_CMD_NONE
         dw      menu_only_save_label
         dw      menu_only_save_hint
+        db      0, "p", UI_HOTKEY_MOD_CTRL, MENU_CMD_PRINT
+        dw      menu_only_print_label
+        dw      menu_only_print_hint
+        db      0, "g", UI_HOTKEY_MOD_ALT | UI_HOTKEY_NO_MNEMONIC, MENU_CMD_GOTO
+        dw      menu_only_goto_label
+        dw      menu_only_goto_hint
         db      UI_FLAG_SEPARATOR, 0, UI_HOTKEY_MOD_NONE, 0
         dw      0, 0
         db      0, "x", UI_HOTKEY_MOD_ALT | UI_HOTKEY_NO_MNEMONIC
@@ -185,6 +203,10 @@ menu_only_load_label:
         db      "&Load setup", 0
 menu_only_save_label:
         db      "&Save setup", 0
+menu_only_print_label:
+        db      "&Print Ctrl+P", 0
+menu_only_goto_label:
+        db      "Goto Alt+G", 0
 menu_only_exit_label:
         db      "Exit Alt+X", 0
 menu_only_theme_label:
@@ -206,6 +228,10 @@ menu_only_load_hint:
         db      "Load command returns MENU_CMD_LOAD.", 0
 menu_only_save_hint:
         db      "Save is disabled in this menu-only demo.", 0
+menu_only_print_hint:
+        db      "Ctrl+P fires MENU_CMD_PRINT (matched by scan code).", 0
+menu_only_goto_hint:
+        db      "Alt+G fires MENU_CMD_GOTO as a global accelerator.", 0
 menu_only_exit_hint:
         db      "Alt+X exits the menu-only demo.", 0
 menu_only_theme_hint:
@@ -216,9 +242,13 @@ menu_only_about_hint:
         db      "F1 returns MENU_CMD_ABOUT without a visible mnemonic.", 0
 
 menu_only_intro:
-        db      "Menu-only module demo. Use arrows, Enter, F10, Esc, Alt+X or mouse.", 0
+        db      "Menu demo. Arrows/Enter/F10/Esc, Alt+X exit, Ctrl+P and Alt+G accelerators.", 0
 menu_only_run_text:
         db      "Run command selected. Press any key.", 0
+menu_only_print_text:
+        db      "Ctrl+P caught: MENU_CMD_PRINT. Press any key.", 0
+menu_only_goto_text:
+        db      "Alt+G caught: MENU_CMD_GOTO. Press any key.", 0
 menu_only_load_text:
         db      "Load command selected. Press any key.", 0
 menu_only_about_text:
