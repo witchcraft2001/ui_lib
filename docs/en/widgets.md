@@ -103,6 +103,8 @@ file_popup:
 
 Horizontal and vertical focus colors are separate theme fields: `UI_THEME_MENU_BAR_FOCUS` and `UI_THEME_MENU_POPUP_FOCUS`. Disabled menu rows use `UI_THEME_MENU_DISABLED`.
 
+When the build defines `DEFINE UI_USE_DSS_WINDOW_BUFFER 1` (and links `window.asm`), `MenuBar` saves the desktop under each dropdown before drawing it and restores it on close, so walking between top-level menus leaves the background intact without the host app repainting. Without the buffer it keeps the previous behaviour (the dropdown area is cleared on close and the app repaints).
+
 ### Keyboard Modifiers
 
 `ui_poll_event` stores the DSS `ScanKey` shift state (register `B`) verbatim in `ui_event_mods`. Bit layout (per the DSS manual / `sprinter_dss` KEYINTER): `bit7` Left Shift, `bit6` Right Shift, `bit5` Ctrl (any), `bit4` Alt (any), `bit3` Left Ctrl, `bit2` Left Alt, `bit1` Right Ctrl, `bit0` Right Alt. Use the masks `UI_KEYMOD_ALT_ANY` (`0x15`), `UI_KEYMOD_CTRL_ANY` (`0x2A`), and `UI_KEYMOD_SHIFT_ANY` (`0xC0`) — each covers the generic bit plus both side keys, so one `AND` detects the modifier regardless of which physical key was pressed.
@@ -266,7 +268,7 @@ Format: `x, y, height (>=3), total, visible, top`. The thumb position is `top` m
 
 `ListBox` (`src/widgets/list_box.asm`, requires `scrollbar.asm`) is a framed, scrollable, single-select list. The right inner column shows a `ScrollBar` automatically when `count > visible rows`; otherwise the full inner width is used for text. Visible rows are `height - 2` (frame), and item text is truncated/padded to the inner width.
 
-`ui_draw_list_box` (`IX` = window, `IY` = descriptor) draws the list and keeps `selected`/`top` in range. `ui_list_box_run` is a modal loop: `Up`/`Down`/`Home`/`End` move the selection, `Enter`/`Space` commits, a mouse click on a row selects it (clicking the already-selected row commits), clicks on the scrollbar arrows scroll, and `Esc` cancels. It returns `CF=0` with `A` = selected index on commit, or `CF=1` with `A=UI_CMD_CANCEL` on `Esc`.
+`ui_draw_list_box` (`IX` = window, `IY` = descriptor) draws the list and keeps `selected`/`top` in range. `ui_list_box_run` is a modal loop: `Up`/`Down`/`PgUp`/`PgDn`/`Home`/`End` move the selection (a page is one viewport of rows), `Enter`/`Space` commits, a mouse click on a row selects it (clicking the already-selected row commits), clicks on the scrollbar arrows scroll, and `Esc` cancels. It returns `CF=0` with `A` = selected index on commit, or `CF=1` with `A=UI_CMD_CANCEL` on `Esc`.
 
 Selection moves repaint only the changed rows; a one-row viewport shift uses DSS `Scroll` instead of redrawing the list, and rows never paint under the scroll bar column. To keep that seamless across commits, draw the list once with `ui_draw_list_box` and re-enter `ui_list_box_loop` (the event loop without the initial draw) instead of calling `ui_list_box_run` repeatedly. `ui_list_box_item` (`A` = index) returns `HL` = the item's ASCIIZ pointer.
 

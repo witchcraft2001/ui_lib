@@ -56,7 +56,13 @@ ui_draw_list_box:
         ld      (ui_lb_visible), a
         call    ui_list_box_clamp
         call    ui_list_box_draw_frame
-        ld      a, 0
+        ; fall through to repaint all rows + scroll bar
+
+; Repaint every visible row in place plus the scroll bar, without touching the
+; frame or pre-clearing the whole area (used for page jumps so there is no
+; clear-then-redraw flash).
+ui_list_box_redraw_items:
+        xor     a
         ld      (ui_lb_rowi), a
 .row_loop:
         ld      a, (ui_lb_rowi)
@@ -166,7 +172,7 @@ ui_list_box_refresh_after_move:
         inc     a
         cp      b
         jr      z, .scroll_down             ; old top = new + 1
-        jp      ui_draw_list_box            ; jumped further -> full redraw
+        jp      ui_list_box_redraw_items    ; bigger jump -> rows only, no clear
 .scroll_up:
         call    ui_list_box_unfocus_old
         ld      b, 1
@@ -307,24 +313,13 @@ ui_list_box_draw_row_at:
         ld      a, (ui_theme_menu_popup_focus)
 .have_attr:
         ld      (ui_lb_rowattr), a
-        call    ui_list_box_row_origin      ; D=row, E=col
-        call    ui_lb_content_width
-        ld      l, a
-        ld      h, 1
-        ld      a, (ui_lb_rowattr)
-        ld      b, a
-        ld      a, " "
-        call    ui_fill_rect                ; clobbers BC: recompute the index next
-        ld      a, (iy + UI_LISTBOX_TOP)
-        ld      b, a
-        ld      a, (ui_lb_rowi)
-        add     a, b
+        ld      a, c                        ; C = item index (BC preserved below)
         call    ui_list_box_item            ; HL = string
-        call    ui_list_box_row_origin
-        call    ui_lb_content_width
+        call    ui_list_box_row_origin      ; D=row, E=col
+        call    ui_lb_content_width         ; A = field width
         ld      b, a
         ld      a, (ui_lb_rowattr)
-        jp      ui_lb_print_field
+        jp      ui_lb_print_field           ; paints the whole row (text + padding)
 .blank:
         ld      a, (ui_theme_text_field)
         ld      (ui_lb_rowattr), a
@@ -352,36 +347,47 @@ ui_list_box_row_origin:
 
 ; Print HL truncated/padded to a fixed field width.
 ; In: HL = ASCIIZ, D = row, E = col, A = attribute, B = width
+; Sets the cursor once and relies on BIOS auto-advance (like ui_print_z), so it
+; issues width+1 BIOS calls instead of two per cell.
 ; Clobbers: AF, BC, DE, HL
 ui_lb_print_field:
         ld      (.attr), a
         ld      a, b
         ld      (.w), a
+        or      a
+        ret     z
+        push    ix
+        push    iy
+        ld      c, Bios.Lp_Set_Place        ; position at D=row, E=col
+        call    ui_call_bios
 .loop:
         ld      a, (.w)
         or      a
-        ret     z
+        jr      z, .done
         dec     a
         ld      (.w), a
         ld      a, (hl)
         or      a
         jr      nz, .havechar
-        ld      a, " "
+        ld      a, " "                       ; pad
         jr      .emit
 .havechar:
         inc     hl
 .emit:
         push    hl
-        push    de
-        ld      c, a
+        ld      c, a                         ; C = char
         ld      a, (.attr)
-        ld      b, a
-        ld      a, c
-        call    ui_put_cell
-        pop     de
+        ld      e, a                         ; E = attribute
+        ld      a, c                         ; A = char
+        ld      b, 1
+        ld      c, Bios.Lp_Print_All
+        call    ui_call_bios                 ; cursor auto-advances
         pop     hl
-        inc     e
         jr      .loop
+.done:
+        pop     iy
+        pop     ix
+        ret
 .attr:
         db      0
 .w:
@@ -651,6 +657,10 @@ ui_list_box_loop:
         jp      z, .home
         cp      UI_SCAN_END
         jp      z, .end
+        cp      UI_SCAN_PGDN
+        jp      z, .pgdn
+        cp      UI_SCAN_PGUP
+        jp      z, .pgup
         jr      .loop
 .down:
         ld      a, (iy + UI_LISTBOX_SELECTED)
@@ -701,13 +711,60 @@ ui_list_box_loop:
         call    ui_list_box_make_visible
         call    ui_list_box_refresh_after_move
         jp      .loop
+.pgdn:
+        ld      a, (iy + UI_LISTBOX_COUNT)
+        or      a
+        jp      z, .loop
+        ld      a, (iy + UI_LISTBOX_SELECTED)
+        ld      b, a
+        ld      a, (iy + UI_LISTBOX_COUNT)
+        dec     a
+        ld      c, a                        ; last index
+        ld      a, b
+        cp      c
+        jp      z, .loop                    ; already at last
+        ld      a, (ui_lb_visible)
+        add     a, b                        ; selected + page
+        jr      c, .pgdn_clamp
+        cp      c
+        jr      c, .pgdn_set
+        jr      z, .pgdn_set
+.pgdn_clamp:
+        ld      a, c
+.pgdn_set:
+        ld      b, a
+        call    ui_list_box_save_move
+        ld      a, b
+        ld      (iy + UI_LISTBOX_SELECTED), a
+        call    ui_list_box_make_visible
+        call    ui_list_box_refresh_after_move
+        jp      .loop
+.pgup:
+        ld      a, (iy + UI_LISTBOX_SELECTED)
+        or      a
+        jp      z, .loop
+        ld      b, a
+        ld      a, (ui_lb_visible)
+        ld      c, a
+        ld      a, b
+        sub     c                           ; selected - page
+        jr      nc, .pgup_set
+        xor     a
+.pgup_set:
+        ld      b, a
+        call    ui_list_box_save_move
+        ld      a, b
+        ld      (iy + UI_LISTBOX_SELECTED), a
+        call    ui_list_box_make_visible
+        call    ui_list_box_refresh_after_move
+        jp      .loop
 .mouse:
         call    ui_list_box_mouse_hit
         jp      c, .loop
         cp      UI_LIST_MOUSE_SCROLL_UP
-        jr      z, .up
+        jp      z, .up
         cp      UI_LIST_MOUSE_SCROLL_DOWN
-        jr      z, .down
+        jp      z, .down
         cp      UI_LIST_MOUSE_NO_ACTION
         jp      z, .loop
         ; A = item index. Click on the current selection commits; otherwise

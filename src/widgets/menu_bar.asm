@@ -167,7 +167,10 @@ ui_draw_menu_bar:
 ; In:  IX=menu bar descriptor, IY=menu bar item descriptor
 ; Out: none
 ; Clobbers: AF, BC, DE, HL
-ui_draw_menu_dropdown:
+; Compute the dropdown rectangle into ui_menu_popup_x/y/w/h.
+; In:  IX = menu bar, IY = active item
+; Out: ZF=1 when the popup is empty (nothing to draw)
+ui_menu_calc_popup_geometry:
         call    ui_menu_popup_count
         ld      a, c
         or      a
@@ -176,16 +179,26 @@ ui_draw_menu_dropdown:
         ld      a, (ix + UI_MENU_BAR_X)
         add     a, (iy + UI_MENU_ITEM_X)
         ld      (ui_menu_popup_x), a
-        ld      e, a
         ld      a, (ix + UI_MENU_BAR_Y)
         inc     a
         ld      (ui_menu_popup_y), a
+        ld      a, (iy + UI_MENU_ITEM_POPUP_W)
+        ld      (ui_menu_popup_w), a
+        ld      a, (ui_menu_popup_h)        ; ZF=0 (non-empty) for the caller
+        or      a
+        ret
+
+ui_draw_menu_dropdown:
+        call    ui_menu_calc_popup_geometry
+        ret     z
+        ld      a, (ui_menu_popup_y)
         ld      d, a
+        ld      a, (ui_menu_popup_x)
+        ld      e, a
         ld      a, (ui_menu_popup_h)
         add     a, 2
         ld      h, a
-        ld      a, (iy + UI_MENU_ITEM_POPUP_W)
-        ld      (ui_menu_popup_w), a
+        ld      a, (ui_menu_popup_w)
         ld      l, a
         ld      a, " "
         push    af
@@ -474,14 +487,57 @@ ui_menu_open_popup:
         ld      (ui_menu_popup_selected), a
         ld      a, 1
         ld      (ui_menu_popup_open), a
+        call    ui_menu_save_popup_under
+        ld      ix, (ui_menu_bar_ptr)       ; save_under clobbers IX
+        ld      iy, (ui_menu_active_item_ptr)
         call    ui_draw_menu_dropdown
         jp      ui_menu_update_popup_hint
+
+; Save the desktop under the dropdown so close can restore it. No-op (and the
+; saved flag stays clear) unless the DSS window buffer is enabled.
+ui_menu_save_popup_under:
+        xor     a
+        ld      (ui_menu_popup_saved), a
+        IF UI_USE_DSS_WINDOW_BUFFER
+        ld      ix, (ui_menu_bar_ptr)
+        ld      iy, (ui_menu_active_item_ptr)
+        call    ui_menu_calc_popup_geometry
+        ret     z
+        ld      a, (ui_menu_popup_x)
+        ld      (ui_menu_popup_save_desc + UI_WINDOW_X), a
+        ld      a, (ui_menu_popup_y)
+        ld      (ui_menu_popup_save_desc + UI_WINDOW_Y), a
+        ld      a, (ui_menu_popup_w)
+        ld      (ui_menu_popup_save_desc + UI_WINDOW_W), a
+        ld      a, (ui_menu_popup_h)
+        add     a, 2                        ; frame top + bottom
+        ld      (ui_menu_popup_save_desc + UI_WINDOW_H), a
+        ld      ix, ui_menu_popup_save_desc
+        call    ui_window_save_under
+        ret     c                           ; allocation failed: leave flag clear
+        ld      a, 1
+        ld      (ui_menu_popup_saved), a
+        ENDIF
+        ret
 
 ui_menu_close_popup:
         ld      a, (ui_menu_popup_open)
         or      a
         ret     z
+        IF UI_USE_DSS_WINDOW_BUFFER
+        ld      a, (ui_menu_popup_saved)
+        or      a
+        jr      z, .clear
+        xor     a
+        ld      (ui_menu_popup_saved), a
+        call    ui_window_restore_under     ; restore the saved desktop
+        jr      .closed
+.clear:
         call    ui_clear_menu_dropdown_state
+.closed:
+        ELSE
+        call    ui_clear_menu_dropdown_state
+        ENDIF
         xor     a
         ld      (ui_menu_popup_open), a
         call    ui_menu_update_top_hint
@@ -1590,6 +1646,15 @@ ui_menu_old_popup_selected:
         db      0
 ui_menu_popup_open:
         db      0
+; Set when the dropdown background was saved with the DSS window buffer, so
+; close knows to restore instead of clearing. Window-descriptor scratch used
+; to hand the dropdown rectangle to ui_window_save_under.
+ui_menu_popup_saved:
+        db      0
+ui_menu_popup_save_desc:
+        db      0, 0, 0, 0          ; UI_WINDOW_X/Y/W/H
+        dw      0                   ; UI_WINDOW_TITLE
+        db      0                   ; UI_WINDOW_FRAME
 ui_menu_keep_popup:
         db      0
 ui_menu_focus_attempts:

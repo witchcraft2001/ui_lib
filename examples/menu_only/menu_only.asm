@@ -1,6 +1,9 @@
 ; Minimal menu-only example for modular linking.
+; Links window.asm and enables the DSS window buffer so the menu restores the
+; desktop under each dropdown while navigating between top-level menus.
 
         DEFINE  UI_ENABLE_HINTS 1
+        DEFINE  UI_USE_DSS_WINDOW_BUFFER 1
 
         output  "build/examples/MENU_ONLY.EXE"
 
@@ -37,6 +40,7 @@ code_start:
         include "src/core/events.asm"
         include "src/core/hint.asm"
         include "src/draw/text.asm"
+        include "src/widgets/window.asm"
         include "src/widgets/menu_bar.asm"
 
 menu_only_main:

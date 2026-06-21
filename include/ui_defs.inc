@@ -152,10 +152,12 @@ UI_SCAN_F10            equ     44h
 UI_SCAN_DELETE         equ     4Fh
 UI_SCAN_END            equ     51h
 UI_SCAN_DOWN           equ     52h
+UI_SCAN_PGDN           equ     53h
 UI_SCAN_LEFT           equ     54h
 UI_SCAN_RIGHT          equ     56h
 UI_SCAN_HOME           equ     57h
 UI_SCAN_UP             equ     58h
+UI_SCAN_PGUP           equ     59h
 
 UI_BUTTONS_END         equ     0FFh
 UI_MENU_ITEMS_END      equ     0FFh
