@@ -55,3 +55,12 @@ sjasmplus \
   "$repo_root/examples/list_only/list_only.asm"
 
 echo "Built $repo_root/build/examples/LIST_ONLY.EXE"
+
+sjasmplus \
+  --nologo \
+  --syntax=f \
+  --fullpath \
+  --lst="$repo_root/build/examples/MSGBOX.LST" \
+  "$repo_root/examples/msgbox/msgbox.asm"
+
+echo "Built $repo_root/build/examples/MSGBOX.EXE"

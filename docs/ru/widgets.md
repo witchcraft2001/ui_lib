@@ -288,6 +288,30 @@ list_desc:
 
 Формат: `x, y, width, height, flags, items_ptr (word), count, selected, top`. `items_ptr` — таблица word-указателей на ASCIIZ-строки. `selected` и `top` обновляются на месте. Пример `list_only` (`LIST.EXE`) демонстрирует клавиатуру, мышь и прокрутку.
 
+## MessageBox
+
+`ui_message_box` (`src/widgets/message_box.asm`, требует `window.asm`, `button.asm`, `button_events.asm`) показывает модальный диалог-уведомление с переносом текста по словам и одной–тремя кнопками, автоматически рассчитывая размер и центрируя окно.
+
+- `HL` = текст ASCIIZ (обязателен). Переносится по словам; окно растёт в высоту для длинного текста (до предела), а ширина тела ужимается до самой длинной строки.
+- `DE` = заголовок ASCIIZ или `0`, если заголовка нет.
+- `A` = набор кнопок: `UI_MSG_OK`, `UI_MSG_OKCANCEL`, `UI_MSG_YESNO`, `UI_MSG_YESNOCANCEL`, `UI_MSG_ABORTRETRYIGNORE`.
+- `B` = атрибут фона тела или `0` для значения из темы (`UI_THEME_WINDOW`). Кастомный цвет тела также перекрашивает рамку и тень кнопок под тот же фон, чтобы не проступал серый по умолчанию.
+- Возвращает `A` = результат: `UI_MSG_RESULT_OK/CANCEL/YES/NO/ABORT/RETRY/IGNORE`.
+
+По умолчанию активна первая кнопка. `Tab`/`Left`/`Right` двигают фокус, `Enter`/`Space` активируют кнопку в фокусе, буква кнопки — её hotkey, клик мышью активирует, `Esc` возвращает «отменяющий» результат набора (`Cancel`, `No`, `OK` для OK-only; игнорируется для `AbortRetryIgnore`). При `UI_USE_DSS_WINDOW_BUFFER` фон под окном сохраняется и восстанавливается.
+
+```asm
+        ld      hl, message_text
+        ld      de, dialog_title        ; или 0, если заголовка нет
+        ld      a, UI_MSG_YESNOCANCEL
+        ld      b, 0                     ; цвет тела по умолчанию
+        call    ui_message_box
+        cp      UI_MSG_RESULT_YES
+        jr      z, .confirmed
+```
+
+Пример `msgbox` (`MSGBOX.EXE`) показывает все наборы кнопок (клавиши `1`–`5`).
+
 ## Window Background Save/Restore
 
 По умолчанию окна ничего не сохраняют: приложение само перерисовывает фон после закрытия. Если перед сборкой определить `DEFINE UI_USE_DSS_WINDOW_BUFFER 1`, `ui_init` выделит одну DSS-страницу, а `ui_shutdown` освободит ее. `ui_dialog_run` автоматически сохраняет область диалога вместе с тенью перед выводом и восстанавливает ее при выходе.

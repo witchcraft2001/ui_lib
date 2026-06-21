@@ -91,6 +91,21 @@ UI_CMD_NONE             equ     00h
 UI_CMD_OK               equ     01h
 UI_CMD_CANCEL           equ     02h
 
+; MessageBox button sets (ui_message_box input) and result codes (output).
+UI_MSG_OK               equ     0
+UI_MSG_OKCANCEL         equ     1
+UI_MSG_YESNO            equ     2
+UI_MSG_YESNOCANCEL      equ     3
+UI_MSG_ABORTRETRYIGNORE equ     4
+
+UI_MSG_RESULT_OK        equ     1
+UI_MSG_RESULT_CANCEL    equ     2
+UI_MSG_RESULT_YES       equ     3
+UI_MSG_RESULT_NO        equ     4
+UI_MSG_RESULT_ABORT     equ     5
+UI_MSG_RESULT_RETRY     equ     6
+UI_MSG_RESULT_IGNORE    equ     7
+
 ; Vertical scroll bar glyphs and hit-test codes (shared by ScrollBar/ListBox).
 UI_SCROLL_UP_CHAR       equ     1Eh     ; up arrow
 UI_SCROLL_DOWN_CHAR     equ     1Fh     ; down arrow

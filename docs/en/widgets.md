@@ -287,6 +287,30 @@ list_desc:
 
 Format: `x, y, width, height, flags, items_ptr (word), count, selected, top`. `items_ptr` is a table of word pointers to ASCIIZ strings. `selected` and `top` are updated in place. The `list_only` example (`LIST.EXE`) demonstrates keyboard, mouse, and scrolling.
 
+## MessageBox
+
+`ui_message_box` (`src/widgets/message_box.asm`, requires `window.asm`, `button.asm`, `button_events.asm`) shows a modal notification dialog with word-wrapped text and one to three buttons, sized and centred automatically.
+
+- `HL` = message text ASCIIZ (required). It is word-wrapped to fit; the window grows in height for long text (up to a cap) and the body width shrinks to the longest line.
+- `DE` = title ASCIIZ, or `0` for no title.
+- `A` = button set: `UI_MSG_OK`, `UI_MSG_OKCANCEL`, `UI_MSG_YESNO`, `UI_MSG_YESNOCANCEL`, `UI_MSG_ABORTRETRYIGNORE`.
+- `B` = body attribute, or `0` for the theme default (`UI_THEME_WINDOW`). A custom body colour also recolours the frame and the button shadow to the same background so they don't show the default gray.
+- Returns `A` = result: `UI_MSG_RESULT_OK/CANCEL/YES/NO/ABORT/RETRY/IGNORE`.
+
+The first button is focused by default. `Tab`/`Left`/`Right` move focus, `Enter`/`Space` activate the focused button, a button letter is its hotkey, mouse clicks activate, and `Esc` returns the set's cancel-like result (`Cancel`, `No`, `OK` for OK-only; ignored for `AbortRetryIgnore`). With `UI_USE_DSS_WINDOW_BUFFER` the desktop under the box is saved and restored.
+
+```asm
+        ld      hl, message_text
+        ld      de, dialog_title        ; or 0 for no title
+        ld      a, UI_MSG_YESNOCANCEL
+        ld      b, 0                     ; default body colour
+        call    ui_message_box
+        cp      UI_MSG_RESULT_YES
+        jr      z, .confirmed
+```
+
+The `msgbox` example (`MSGBOX.EXE`) shows every button set (keys `1`-`5`).
+
 ## Window Background Save/Restore
 
 By default, windows do not save anything: the application repaints the background after closing. If the build defines `DEFINE UI_USE_DSS_WINDOW_BUFFER 1`, `ui_init` allocates one DSS page and `ui_shutdown` frees it. `ui_dialog_run` automatically saves the dialog area including its shadow before drawing and restores it on exit.
