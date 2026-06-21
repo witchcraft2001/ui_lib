@@ -6,3 +6,4 @@ build/
 *.bin
 *.img
 *.IMG
+.DS_Store

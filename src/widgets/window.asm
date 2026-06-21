@@ -379,12 +379,9 @@ ui_draw_window_shadow:
         ld      d, a
         ld      h, (ix + UI_WINDOW_H)
         ld      l, 2
-        ld      a, " "
-        push    af
         ld      a, (ui_theme_shadow)
         ld      b, a
-        pop     af
-        call    ui_fill_rect
+        call    ui_shade_rect
 .bottom:
         ld      a, (ix + UI_WINDOW_Y)
         add     a, (ix + UI_WINDOW_H)
@@ -399,13 +396,9 @@ ui_draw_window_shadow:
         ld      e, a
         ld      h, 1
         ld      l, (ix + UI_WINDOW_W)
-        ld      a, " "
-        push    af
         ld      a, (ui_theme_shadow)
         ld      b, a
-        pop     af
-        call    ui_fill_rect
-        ret
+        jp      ui_shade_rect
 
 ; ui_window_load_frame_glyphs
 ; Copies the six glyphs for the descriptor's frame style into the active set.

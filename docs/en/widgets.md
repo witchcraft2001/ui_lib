@@ -48,7 +48,7 @@ window_desc:
         db      UI_FRAME_DOUBLE
 ```
 
-`ui_draw_window_shadow` and `ui_draw_window_frame` are also callable on their own; `ui_draw_window_frame` selects the glyph set from the descriptor's frame style.
+`ui_draw_window_shadow` and `ui_draw_window_frame` are also callable on their own; `ui_draw_window_frame` selects the glyph set from the descriptor's frame style. The shadow is drawn with `ui_shade_rect`, which recolours the cells it covers to `UI_THEME_SHADOW` (black background, dim foreground) while keeping each cell's character — the TurboVision/TASM look where the desktop pattern shows through the shadow dimmed, rather than being erased to blank cells.
 
 ## MenuBar
 

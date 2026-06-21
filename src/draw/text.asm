@@ -311,6 +311,88 @@ ui_invert_y:
 ui_invert_w:
         db      0
 
+; ui_shade_rect
+; Recolour a rectangle to a fixed attribute while keeping each cell's
+; character (TurboVision/TASM-style window shadow: black background, dim
+; foreground over whatever is underneath, not an erasing fill).
+; In:  D=row, E=column, H=height, L=width, B=attribute
+; Out: none
+; Clobbers: AF, BC, DE, HL
+ui_shade_rect:
+        push    ix
+        push    iy
+        ld      a, b
+        ld      (ui_shade_attr), a
+        ld      a, l
+        ld      (ui_shade_w), a
+        or      a
+        jr      z, .done
+        ld      a, h
+        ld      (ui_shade_h), a
+        or      a
+        jr      z, .done
+        ld      a, d
+        ld      (ui_shade_y), a
+        ld      a, e
+        ld      (ui_shade_x), a
+.row:
+        ld      a, (ui_shade_x)
+        ld      (ui_shade_cx), a
+        ld      a, (ui_shade_w)
+        ld      (ui_shade_cw), a
+.cell:
+        ld      a, (ui_shade_cw)
+        or      a
+        jr      z, .next_row
+        ld      a, (ui_shade_y)
+        ld      d, a
+        ld      a, (ui_shade_cx)
+        ld      e, a
+        ld      c, Dss.RdChar
+        call    ui_call_dss                 ; A=char (attribute ignored)
+        ld      (ui_shade_char), a
+        ld      a, (ui_shade_y)
+        ld      d, a
+        ld      a, (ui_shade_cx)
+        ld      e, a
+        ld      a, (ui_shade_attr)
+        ld      b, a
+        ld      a, (ui_shade_char)
+        ld      c, Dss.WrChar
+        call    ui_call_dss                 ; same glyph, shadow attribute
+        ld      hl, ui_shade_cx
+        inc     (hl)
+        ld      hl, ui_shade_cw
+        dec     (hl)
+        jr      .cell
+.next_row:
+        ld      hl, ui_shade_y
+        inc     (hl)
+        ld      hl, ui_shade_h
+        dec     (hl)
+        jr      nz, .row
+.done:
+        pop     iy
+        pop     ix
+        ret
+
+ui_shade_attr:
+        db      0
+ui_shade_char:
+        db      0
+ui_shade_x:
+        db      0
+ui_shade_y:
+        db      0
+ui_shade_w:
+        db      0
+ui_shade_h:
+        db      0
+ui_shade_cx:
+        db      0
+ui_shade_cw:
+        db      0
+
 ; ui_call_bios
 ; Calls Sprinter BIOS. The calling convention is chosen at build time:
 ;   - DEFINE UI_CALL_BIOS_HOOK my_bios : tail-jump into the app's own routine,

@@ -48,7 +48,7 @@ window_desc:
         db      UI_FRAME_DOUBLE
 ```
 
-`ui_draw_window_shadow` и `ui_draw_window_frame` можно вызывать отдельно; `ui_draw_window_frame` выбирает набор символов рамки по типу из дескриптора.
+`ui_draw_window_shadow` и `ui_draw_window_frame` можно вызывать отдельно; `ui_draw_window_frame` выбирает набор символов рамки по типу из дескриптора. Тень рисуется через `ui_shade_rect`, который перекрашивает покрываемые ячейки в `UI_THEME_SHADOW` (чёрный фон, приглушённый текст), **сохраняя символ каждой ячейки** — как в TurboVision/TASM, где узор десктопа просвечивает сквозь тень приглушённым, а не затирается пустыми ячейками.
 
 ## MenuBar
 
