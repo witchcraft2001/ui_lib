@@ -91,6 +91,21 @@ UI_CMD_NONE             equ     00h
 UI_CMD_OK               equ     01h
 UI_CMD_CANCEL           equ     02h
 
+; Vertical scroll bar glyphs and hit-test codes (shared by ScrollBar/ListBox).
+UI_SCROLL_UP_CHAR       equ     1Eh     ; up arrow
+UI_SCROLL_DOWN_CHAR     equ     1Fh     ; down arrow
+UI_SCROLL_TRACK_CHAR    equ     0B1h    ; patterned track
+UI_SCROLL_THUMB_CHAR    equ     0DBh    ; thumb block
+UI_SCROLL_HIT_NONE      equ     00h
+UI_SCROLL_HIT_UP        equ     01h
+UI_SCROLL_HIT_DOWN      equ     02h
+UI_SCROLL_HIT_TRACK     equ     03h
+
+; ListBox mouse-hit sentinels (returned instead of an item index).
+UI_LIST_MOUSE_SCROLL_UP   equ   0FEh
+UI_LIST_MOUSE_SCROLL_DOWN equ   0FDh
+UI_LIST_MOUSE_NO_ACTION   equ   0FCh
+
 UI_EVENT_NONE           equ     00h
 UI_EVENT_MOUSE          equ     01h
 UI_EVENT_KEY            equ     02h

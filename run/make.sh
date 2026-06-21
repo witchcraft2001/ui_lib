@@ -46,3 +46,12 @@ sjasmplus \
   "$repo_root/examples/progress_only/progress_only.asm"
 
 echo "Built $repo_root/build/examples/PROGRESS_ONLY.EXE"
+
+sjasmplus \
+  --nologo \
+  --syntax=f \
+  --fullpath \
+  --lst="$repo_root/build/examples/LIST_ONLY.LST" \
+  "$repo_root/examples/list_only/list_only.asm"
+
+echo "Built $repo_root/build/examples/LIST_ONLY.EXE"

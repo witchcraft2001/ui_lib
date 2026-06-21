@@ -234,6 +234,44 @@ UI_COMBO_SELECTED       equ     8
 UI_COMBO_POPUP_H        equ     9
 UI_COMBO_SIZE           equ     10
 
+; ScrollBar descriptor (vertical):
+;   +0 x relative to parent window
+;   +1 y relative to parent window
+;   +2 height in cells (>=3: up arrow + track + down arrow)
+;   +3 total item count
+;   +4 visible window size (rows)
+;   +5 top index (first visible item)
+
+UI_SCROLLBAR_X          equ     0
+UI_SCROLLBAR_Y          equ     1
+UI_SCROLLBAR_H          equ     2
+UI_SCROLLBAR_TOTAL      equ     3
+UI_SCROLLBAR_VISIBLE    equ     4
+UI_SCROLLBAR_TOP        equ     5
+UI_SCROLLBAR_SIZE       equ     6
+
+; ListBox descriptor:
+;   +0 x relative to parent window
+;   +1 y relative to parent window
+;   +2 width including frame and scrollbar column
+;   +3 height including frame
+;   +4 flags
+;   +5 word item pointer table, each item is ASCIIZ
+;   +7 item count
+;   +8 selected item index (in/out)
+;   +9 top index (first visible item, maintained)
+
+UI_LISTBOX_X            equ     0
+UI_LISTBOX_Y            equ     1
+UI_LISTBOX_W            equ     2
+UI_LISTBOX_H            equ     3
+UI_LISTBOX_FLAGS        equ     4
+UI_LISTBOX_ITEMS        equ     5
+UI_LISTBOX_COUNT        equ     7
+UI_LISTBOX_SELECTED     equ     8
+UI_LISTBOX_TOP          equ     9
+UI_LISTBOX_SIZE         equ     10
+
 ; RadioButton descriptor:
 ;   +0 x relative to parent window
 ;   +1 y relative to parent window

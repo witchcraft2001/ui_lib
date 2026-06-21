@@ -246,6 +246,45 @@ progress_busy:
 
 Format: `x, y, width, flags, value, max, phase`.
 
+## ScrollBar
+
+`ScrollBar` (`src/widgets/scrollbar.asm`) is a vertical bar with up/down arrows, a patterned track, and a thumb. It is reusable on its own and is the column drawn by `ListBox`. Coordinates are relative to the parent window.
+
+`ui_draw_scrollbar` (`IX` = window, `IY` = descriptor) draws from a descriptor; `ui_draw_vscrollbar` draws at absolute coordinates (`D` = row, `E` = column, `B` = height) using the shared `ui_scroll_total`/`ui_scroll_visible`/`ui_scroll_top` variables. `ui_scrollbar_hit` (`D`/`E`/`B` = bar rectangle) returns `UI_SCROLL_HIT_NONE/UP/DOWN/TRACK` for the last mouse event.
+
+```asm
+scrollbar_desc:
+        db      40, 2, 10, 64, 8, 0   ; x, y, height, total, visible, top
+        ld      ix, window_desc
+        ld      iy, scrollbar_desc
+        call    ui_draw_scrollbar
+```
+
+Format: `x, y, height (>=3), total, visible, top`. The thumb position is `top` mapped over `total - visible`; with `total <= visible` the thumb sits at the top.
+
+## ListBox
+
+`ListBox` (`src/widgets/list_box.asm`, requires `scrollbar.asm`) is a framed, scrollable, single-select list. The right inner column shows a `ScrollBar` automatically when `count > visible rows`; otherwise the full inner width is used for text. Visible rows are `height - 2` (frame), and item text is truncated/padded to the inner width.
+
+`ui_draw_list_box` (`IX` = window, `IY` = descriptor) draws the list and keeps `selected`/`top` in range. `ui_list_box_run` is a modal loop: `Up`/`Down`/`Home`/`End` move the selection, `Enter`/`Space` commits, a mouse click on a row selects it (clicking the already-selected row commits), clicks on the scrollbar arrows scroll, and `Esc` cancels. It returns `CF=0` with `A` = selected index on commit, or `CF=1` with `A=UI_CMD_CANCEL` on `Esc`.
+
+Selection moves repaint only the changed rows; a one-row viewport shift uses DSS `Scroll` instead of redrawing the list, and rows never paint under the scroll bar column. To keep that seamless across commits, draw the list once with `ui_draw_list_box` and re-enter `ui_list_box_loop` (the event loop without the initial draw) instead of calling `ui_list_box_run` repeatedly. `ui_list_box_item` (`A` = index) returns `HL` = the item's ASCIIZ pointer.
+
+```asm
+list_desc:
+        db      4, 6, 24, 14, 0       ; x, y, width, height, flags
+        dw      list_items            ; item pointer table
+        db      16, 0, 0              ; count, selected, top
+
+        ld      ix, window_desc
+        ld      iy, list_desc
+        call    ui_list_box_run
+        jr      c, .cancelled         ; Esc
+        ; A = selected index
+```
+
+Format: `x, y, width, height, flags, items_ptr (word), count, selected, top`. `items_ptr` is a table of word pointers to ASCIIZ strings. `selected` and `top` are updated in place. The `list_only` example (`LIST.EXE`) demonstrates keyboard, mouse, and scrolling.
+
 ## Window Background Save/Restore
 
 By default, windows do not save anything: the application repaints the background after closing. If the build defines `DEFINE UI_USE_DSS_WINDOW_BUFFER 1`, `ui_init` allocates one DSS page and `ui_shutdown` frees it. `ui_dialog_run` automatically saves the dialog area including its shadow before drawing and restores it on exit.

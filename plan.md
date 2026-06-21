@@ -86,3 +86,25 @@
   - Проверить поддержку `IFUSED`/условной сборки sjasmplus и обернуть редко используемые helper routines так, чтобы неиспользуемые процедуры не попадали в EXE.
   - Проверить сборку demo после каждой итерации и подготовку disk image.
   - Сравнить поведение с `fformat`, `fm`, `TASM`; закрыть UX gaps перед первой версией API.
+
+- [ ] Этап 10. Недостающие TUI-примитивы (полноценный TUI уровня Turbo Vision)
+
+  Критичные (фундамент для прокручиваемого контента и редакторов):
+  - [ ] `ScrollBar` как самостоятельный виджет: вертикальный/горизонтальный, стрелки + track + thumb, расчёт позиции thumb, mouse hit-test (up/down/thumb). Вынести общую логику из `ComboBox` (`ui_draw_combo_scroll`, `ui_combo_scroll_*`).
+  - [ ] `ListBox`/`ItemList`: всегда видимый прокручиваемый список с выбором, на базе `ScrollBar`. Переиспользует механику combo-popup (`ui_combo_popup_*`). Клавиатура (Up/Down/Home/End/PgUp/PgDn), мышь, disabled rows, command по Enter/double-click.
+  - [ ] `Memo`/многострочный редактор: multi-line edit с переносом, курсором по строкам и вертикальным скроллом (расширение `TextField`).
+  - [ ] `MessageBox`/`InputBox`: готовые модальные хелперы (OK/Cancel/Yes-No, запрос строки) поверх `Dialog`.
+
+  Важные (оконный менеджер и навигация):
+  - [ ] `TextView`: read-only прокручиваемый просмотр текста (viewport поверх `ui_print_wrapped_z`).
+  - [ ] Подвижные/перекрывающиеся окна: drag, resize, close-кнопка в заголовке, Z-order поверх текущего LIFO save/restore.
+  - [ ] Контекстное (popup) меню в произвольной точке, вложенные подменю, checkable/radio пункты.
+  - [ ] File open/save dialog: `ListBox` + чтение каталога через DSS `F_First`/`F_Next`.
+
+  Полезные:
+  - [ ] `Spin`/numeric input (поле с ↑/↓), маска/валидация ввода в `TextField`.
+  - [ ] Полноценный `StatusBar` с несколькими кликабельными полями (сейчас одна `hint`-строка).
+  - [ ] `TabControl`/Notebook (вкладки-страницы), `Splitter` (панели), multi-select/checklist.
+  - [ ] Обобщённые `ui_draw_hline`/`vline`/`box` с выбором глифа (унификация через `ui_window_load_frame_glyphs`).
+
+  Порядок реализации (по зависимостям): ScrollBar → ListBox → MessageBox/InputBox → Memo + File dialog → подвижные окна/TabControl.

@@ -247,6 +247,45 @@ progress_busy:
 
 Формат: `x, y, width, flags, value, max, phase`.
 
+## ScrollBar
+
+`ScrollBar` (`src/widgets/scrollbar.asm`) — вертикальная полоса со стрелками вверх/вниз, фактурным track и thumb. Используется самостоятельно и как колонка внутри `ListBox`. Координаты относительны родительскому окну.
+
+`ui_draw_scrollbar` (`IX` = окно, `IY` = дескриптор) рисует из дескриптора; `ui_draw_vscrollbar` рисует по абсолютным координатам (`D` = строка, `E` = колонка, `B` = высота), используя общие переменные `ui_scroll_total`/`ui_scroll_visible`/`ui_scroll_top`. `ui_scrollbar_hit` (`D`/`E`/`B` = прямоугольник полосы) возвращает `UI_SCROLL_HIT_NONE/UP/DOWN/TRACK` для последнего события мыши.
+
+```asm
+scrollbar_desc:
+        db      40, 2, 10, 64, 8, 0   ; x, y, height, total, visible, top
+        ld      ix, window_desc
+        ld      iy, scrollbar_desc
+        call    ui_draw_scrollbar
+```
+
+Формат: `x, y, height (>=3), total, visible, top`. Позиция thumb — `top`, отображённый на диапазон `total - visible`; при `total <= visible` thumb стоит вверху.
+
+## ListBox
+
+`ListBox` (`src/widgets/list_box.asm`, требует `scrollbar.asm`) — обрамлённый прокручиваемый список с одиночным выбором. В правой внутренней колонке автоматически появляется `ScrollBar`, когда `count > видимых строк`; иначе вся внутренняя ширина отдаётся под текст. Видимых строк — `height - 2` (рамка), текст пункта обрезается/дополняется до внутренней ширины.
+
+`ui_draw_list_box` (`IX` = окно, `IY` = дескриптор) рисует список и держит `selected`/`top` в допустимых пределах. `ui_list_box_run` — модальный цикл: `Up`/`Down`/`Home`/`End` двигают выбор, `Enter`/`Space` подтверждают, клик мышью по строке выбирает её (клик по уже выбранной — подтверждает), клики по стрелкам scrollbar прокручивают, `Esc` отменяет. Возвращает `CF=0` и `A` = индекс выбора при подтверждении, либо `CF=1` и `A=UI_CMD_CANCEL` при `Esc`.
+
+Перемещение выбора перерисовывает только изменившиеся строки; сдвиг viewport на одну строку использует DSS `Scroll` вместо перерисовки списка, и строки не залезают в колонку scrollbar. Чтобы это оставалось бесшовным между подтверждениями, нарисуйте список один раз через `ui_draw_list_box` и перевходите в `ui_list_box_loop` (событийный цикл без начальной отрисовки) вместо повторных вызовов `ui_list_box_run`. `ui_list_box_item` (`A` = индекс) возвращает `HL` = указатель на ASCIIZ пункта.
+
+```asm
+list_desc:
+        db      4, 6, 24, 14, 0       ; x, y, width, height, flags
+        dw      list_items            ; таблица указателей на пункты
+        db      16, 0, 0              ; count, selected, top
+
+        ld      ix, window_desc
+        ld      iy, list_desc
+        call    ui_list_box_run
+        jr      c, .cancelled         ; Esc
+        ; A = индекс выбора
+```
+
+Формат: `x, y, width, height, flags, items_ptr (word), count, selected, top`. `items_ptr` — таблица word-указателей на ASCIIZ-строки. `selected` и `top` обновляются на месте. Пример `list_only` (`LIST.EXE`) демонстрирует клавиатуру, мышь и прокрутку.
+
 ## Window Background Save/Restore
 
 По умолчанию окна ничего не сохраняют: приложение само перерисовывает фон после закрытия. Если перед сборкой определить `DEFINE UI_USE_DSS_WINDOW_BUFFER 1`, `ui_init` выделит одну DSS-страницу, а `ui_shutdown` освободит ее. `ui_dialog_run` автоматически сохраняет область диалога вместе с тенью перед выводом и восстанавливает ее при выходе.
