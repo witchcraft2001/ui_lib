@@ -311,6 +311,29 @@ The first button is focused by default. `Tab`/`Left`/`Right` move focus, `Enter`
 
 The `msgbox` example (`MSGBOX.EXE`) shows every button set (keys `1`-`5`).
 
+## InputBox
+
+`ui_input_box` (`src/widgets/input_box.asm`, requires `message_box.asm`, `text_field.asm`, `window.asm`, `button.asm`, `button_events.asm`) is a modal dialog that prompts for one line of text. It auto-sizes around the word-wrapped prompt, a single-line edit field and `OK`/`Cancel` buttons.
+
+- `HL` = prompt text ASCIIZ (required).
+- `DE` = title ASCIIZ, or `0` for no title.
+- `BC` = caller-owned text buffer (ASCIIZ): holds the initial value and receives the edited value; allocate `maxlen + 1` bytes.
+- `A` = maximum length (buffer capacity excluding the terminator).
+- Returns `A` = `UI_MSG_RESULT_OK` or `UI_MSG_RESULT_CANCEL`.
+
+The field is focused with a blinking cursor; type to edit (`Left`/`Right`/`Home`/`End`/`Backspace`/`Delete`, horizontal scroll when the text exceeds the visible width). `Enter` accepts (`OK`), `Esc` cancels, `Tab`/`Left`/`Right` move focus between the field and the buttons, and the buttons also respond to their hotkeys and the mouse. On `OK` the buffer holds the entered string; on `Cancel` treat the buffer as unchanged. The `msgbox` example shows it on key `6`.
+
+```asm
+        ld      hl, prompt_text
+        ld      de, dialog_title        ; or 0
+        ld      bc, name_buffer         ; ds maxlen+1
+        ld      a, 32                   ; maxlen
+        call    ui_input_box
+        cp      UI_MSG_RESULT_OK
+        jr      nz, .cancelled
+        ; name_buffer holds the entered string
+```
+
 ## Window Background Save/Restore
 
 By default, windows do not save anything: the application repaints the background after closing. If the build defines `DEFINE UI_USE_DSS_WINDOW_BUFFER 1`, `ui_init` allocates one DSS page and `ui_shutdown` frees it. `ui_dialog_run` automatically saves the dialog area including its shadow before drawing and restores it on exit.

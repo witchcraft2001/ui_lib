@@ -32,7 +32,9 @@ code_start:
         include "src/widgets/window.asm"
         include "src/widgets/button.asm"
         include "src/widgets/button_events.asm"
+        include "src/widgets/text_field.asm"
         include "src/widgets/message_box.asm"
+        include "src/widgets/input_box.asm"
 
 msgbox_main:
         call    ui_init
@@ -67,6 +69,8 @@ msgbox_loop:
         jp      z, .yesnocancel
         cp      "5"
         jp      z, .abort
+        cp      "6"
+        jp      z, .input
         jr      msgbox_loop
 .ok:
         ld      hl, msgbox_txt_short
@@ -100,7 +104,26 @@ msgbox_loop:
 .show:
         call    ui_message_box
         call    msgbox_report
-        jr      msgbox_loop
+        jp      msgbox_loop
+.input:
+        ld      hl, msgbox_input_prompt
+        ld      de, msgbox_input_title
+        ld      bc, msgbox_input_buf
+        ld      a, 32
+        call    ui_input_box
+        cp      UI_MSG_RESULT_OK
+        jr      nz, .input_cancel
+        call    msgbox_clear_result
+        ld      hl, msgbox_input_buf
+        ld      a, (ui_theme_hint)
+        ld      d, 30
+        ld      e, 2
+        call    ui_print_z
+        jp      msgbox_loop
+.input_cancel:
+        ld      a, UI_MSG_RESULT_CANCEL
+        call    msgbox_report
+        jp      msgbox_loop
 
 ; Show "Result: <name>" on the bottom line. In: A = result code.
 msgbox_report:
@@ -116,19 +139,7 @@ msgbox_report:
         ld      l, a                    ; HL = result name ptr
 
         push    hl
-        ld      a, 020h
-        push    af
-        ld      a, (ui_theme_desktop)
-        ld      b, a
-        pop     af
-        ld      d, 30
-        ld      e, 2
-        ld      h, 1
-        ld      l, 40
-        call    ui_fill_rect
-        pop     hl
-
-        push    hl
+        call    msgbox_clear_result
         ld      hl, msgbox_result_label
         ld      a, (ui_theme_hint)
         ld      d, 30
@@ -141,6 +152,19 @@ msgbox_report:
         call    ui_print_z
         ret
 
+; Clear the bottom result line.
+msgbox_clear_result:
+        ld      a, 020h
+        push    af
+        ld      a, (ui_theme_desktop)
+        ld      b, a
+        pop     af
+        ld      d, 30
+        ld      e, 2
+        ld      h, 1
+        ld      l, 60
+        jp      ui_fill_rect
+
 msgbox_exit:
         call    ui_shutdown
 msgbox_exit_raw:
@@ -149,7 +173,7 @@ msgbox_exit_raw:
         rst     10h
 
 msgbox_intro:
-        db      "MessageBox demo: 1=OK 2=OKCancel 3=YesNo 4=YesNoCancel 5=AbortRetryIgnore, Esc exits", 0
+        db      "1=OK 2=OKCancel 3=YesNo 4=YesNoCancel 5=AbortRetryIgnore 6=InputBox, Esc exits", 0
 msgbox_result_label:
         db      "Result:", 0
 
@@ -177,5 +201,13 @@ msgbox_r_no:     db "No", 0
 msgbox_r_abort:  db "Abort", 0
 msgbox_r_retry:  db "Retry", 0
 msgbox_r_ignore: db "Ignore", 0
+
+msgbox_input_title:
+        db      "Save As", 0
+msgbox_input_prompt:
+        db      "Enter the new file name to save the document as:", 0
+msgbox_input_buf:
+        db      "document.txt", 0
+        ds      34 - 13, 0
 
 msgbox_end:

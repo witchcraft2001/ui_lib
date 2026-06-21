@@ -312,6 +312,29 @@ list_desc:
 
 Пример `msgbox` (`MSGBOX.EXE`) показывает все наборы кнопок (клавиши `1`–`5`).
 
+## InputBox
+
+`ui_input_box` (`src/widgets/input_box.asm`, требует `message_box.asm`, `text_field.asm`, `window.asm`, `button.asm`, `button_events.asm`) — модальный диалог запроса одной строки текста. Авторазмер по переносимому prompt, однострочному полю ввода и кнопкам `OK`/`Cancel`.
+
+- `HL` = текст prompt ASCIIZ (обязателен).
+- `DE` = заголовок ASCIIZ или `0`, если заголовка нет.
+- `BC` = буфер вызывающего (ASCIIZ): хранит начальное значение и принимает отредактированное; выделите `maxlen + 1` байт.
+- `A` = максимальная длина (ёмкость буфера без терминатора).
+- Возвращает `A` = `UI_MSG_RESULT_OK` или `UI_MSG_RESULT_CANCEL`.
+
+Поле в фокусе с мигающим курсором; ввод редактирует (`Left`/`Right`/`Home`/`End`/`Backspace`/`Delete`, горизонтальный скролл при превышении видимой ширины). `Enter` подтверждает (`OK`), `Esc` отменяет, `Tab`/`Left`/`Right` двигают фокус между полем и кнопками, кнопки также реагируют на свои hotkey и мышь. При `OK` буфер содержит введённую строку; при `Cancel` считайте буфер неизменённым. Пример `msgbox` показывает это на клавише `6`.
+
+```asm
+        ld      hl, prompt_text
+        ld      de, dialog_title        ; или 0
+        ld      bc, name_buffer         ; ds maxlen+1
+        ld      a, 32                   ; maxlen
+        call    ui_input_box
+        cp      UI_MSG_RESULT_OK
+        jr      nz, .cancelled
+        ; name_buffer содержит введённую строку
+```
+
 ## Window Background Save/Restore
 
 По умолчанию окна ничего не сохраняют: приложение само перерисовывает фон после закрытия. Если перед сборкой определить `DEFINE UI_USE_DSS_WINDOW_BUFFER 1`, `ui_init` выделит одну DSS-страницу, а `ui_shutdown` освободит ее. `ui_dialog_run` автоматически сохраняет область диалога вместе с тенью перед выводом и восстанавливает ее при выходе.

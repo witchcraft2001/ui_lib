@@ -93,7 +93,7 @@
   - [ ] `ScrollBar` как самостоятельный виджет: вертикальный/горизонтальный, стрелки + track + thumb, расчёт позиции thumb, mouse hit-test (up/down/thumb). Вынести общую логику из `ComboBox` (`ui_draw_combo_scroll`, `ui_combo_scroll_*`).
   - [ ] `ListBox`/`ItemList`: всегда видимый прокручиваемый список с выбором, на базе `ScrollBar`. Переиспользует механику combo-popup (`ui_combo_popup_*`). Клавиатура (Up/Down/Home/End/PgUp/PgDn), мышь, disabled rows, command по Enter/double-click.
   - [ ] `Memo`/многострочный редактор: multi-line edit с переносом, курсором по строкам и вертикальным скроллом (расширение `TextField`).
-  - [x] `MessageBox`: готовый модальный хелпер с переносом текста по словам, авто-размером/центрированием, заголовком, выбором цвета фона и наборами кнопок (OK / OKCancel / YesNo / YesNoCancel / AbortRetryIgnore), `ui_message_box`. Осталось: `InputBox` (запрос строки).
+  - [x] `MessageBox`/`InputBox`: готовые модальные хелперы. `ui_message_box` — перенос текста по словам, авто-размер/центрирование, заголовок, выбор цвета фона, наборы кнопок (OK / OKCancel / YesNo / YesNoCancel / AbortRetryIgnore). `ui_input_box` — запрос строки: prompt + однострочное `TextField` + OK/Cancel, фокус между полем и кнопками, мигающий курсор, возврат строки в буфер вызывающего.
 
   Важные (оконный менеджер и навигация):
   - [ ] `TextView`: read-only прокручиваемый просмотр текста (viewport поверх `ui_print_wrapped_z`).
