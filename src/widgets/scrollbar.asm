@@ -10,6 +10,8 @@ ui_scroll_visible:
         db      0
 ui_scroll_top:
         db      0
+ui_scroll_last_thumb:
+        db      0
 
 ; ui_draw_scrollbar
 ; Draw a scroll bar from its descriptor.
@@ -89,6 +91,7 @@ ui_draw_vscrollbar:
         ld      a, (.track)
         call    ui_scrollbar_thumb_offset
         ld      c, a
+        ld      (ui_scroll_last_thumb), a   ; cache for the thumb-only updater
         ld      a, (.row)
         inc     a
         add     a, c
@@ -106,6 +109,61 @@ ui_draw_vscrollbar:
 .height:
         db      0
 .track:
+        db      0
+
+; ui_draw_vscrollbar_thumb
+; Move only the thumb if its position changed: erase the old thumb cell back to
+; track and draw the new one. The arrows and track are left untouched, so a
+; scroll step costs two cells instead of redrawing the whole bar.
+; In:  D = top row, E = column, B = height; ui_scroll_* set;
+;      ui_scroll_last_thumb = the previously drawn offset (kept by the full draw)
+; Clobbers: AF, BC, DE, HL
+ui_draw_vscrollbar_thumb:
+        ld      a, d
+        ld      (.row), a
+        ld      a, e
+        ld      (.col), a
+        ld      a, b
+        sub     2
+        ret     c
+        ret     z
+        call    ui_scrollbar_thumb_offset
+        ld      (.new), a
+        ld      hl, ui_scroll_last_thumb
+        cp      (hl)
+        ret     z                           ; unchanged
+        ld      a, (ui_scroll_last_thumb)    ; erase old thumb -> track char
+        ld      b, a
+        ld      a, (.row)
+        inc     a
+        add     a, b
+        ld      d, a
+        ld      a, (.col)
+        ld      e, a
+        ld      a, (ui_theme_text_field)
+        ld      b, a
+        ld      a, UI_SCROLL_TRACK_CHAR
+        call    ui_put_cell
+        ld      a, (.new)                    ; draw new thumb
+        ld      b, a
+        ld      a, (.row)
+        inc     a
+        add     a, b
+        ld      d, a
+        ld      a, (.col)
+        ld      e, a
+        ld      a, (ui_theme_text_field_focus)
+        ld      b, a
+        ld      a, UI_SCROLL_THUMB_CHAR
+        call    ui_put_cell
+        ld      a, (.new)
+        ld      (ui_scroll_last_thumb), a
+        ret
+.row:
+        db      0
+.col:
+        db      0
+.new:
         db      0
 
 ; ui_scrollbar_thumb_offset

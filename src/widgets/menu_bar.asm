@@ -1322,107 +1322,17 @@ ui_menu_update_popup_hint:
         ENDIF
 
 ui_draw_menu_popup_frame:
-        ld      a, (ui_theme_window)
-        ld      b, a
         ld      a, (ui_menu_popup_y)
         ld      d, a
         ld      a, (ui_menu_popup_x)
         ld      e, a
-        ld      a, 0DAh
-        push    de
-        call    ui_put_cell
-        pop     de
-        ld      a, (iy + UI_MENU_ITEM_POPUP_W)
-        sub     2
-        ld      c, a
-.top:
-        inc     e
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0C4h
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        dec     c
-        jr      nz, .top
-        inc     e
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0BFh
-        call    ui_put_cell
-
         ld      a, (ui_menu_popup_h)
-        ld      c, a
-.sides:
-        ld      a, (ui_menu_popup_y)
-        ld      d, a
-        ld      a, (ui_menu_popup_h)
-        sub     c
-        inc     a
-        add     a, d
-        ld      d, a
-        ld      a, (ui_menu_popup_x)
-        ld      e, a
+        add     a, 2
+        ld      h, a
+        ld      l, (iy + UI_MENU_ITEM_POPUP_W)
         ld      a, (ui_theme_window)
         ld      b, a
-        ld      a, 0B3h
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        ld      e, (iy + UI_MENU_ITEM_POPUP_W)
-        dec     e
-        ld      a, (ui_menu_popup_x)
-        add     a, e
-        ld      e, a
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0B3h
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        dec     c
-        jr      nz, .sides
-
-        ld      a, (ui_menu_popup_y)
-        ld      d, a
-        ld      a, (ui_menu_popup_h)
-        inc     a
-        add     a, d
-        ld      d, a
-        ld      a, (ui_menu_popup_x)
-        ld      e, a
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0C0h
-        push    de
-        call    ui_put_cell
-        pop     de
-        ld      a, (iy + UI_MENU_ITEM_POPUP_W)
-        sub     2
-        ld      c, a
-.bottom:
-        inc     e
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0C4h
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        dec     c
-        jr      nz, .bottom
-        inc     e
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0D9h
-        jp      ui_put_cell
+        jp      ui_draw_box_single
 
 ui_menu_print_label:
         ld      a, (hl)

@@ -181,7 +181,7 @@ ui_list_box_refresh_after_move:
         dec     a
         ld      (ui_lb_rowi), a
         call    ui_list_box_draw_row_at
-        jp      ui_list_box_draw_scroll
+        jp      ui_list_box_draw_scroll_thumb
 .scroll_down:
         call    ui_list_box_unfocus_old
         ld      b, 2
@@ -189,13 +189,13 @@ ui_list_box_refresh_after_move:
         xor     a
         ld      (ui_lb_rowi), a
         call    ui_list_box_draw_row_at
-        jp      ui_list_box_draw_scroll
+        jp      ui_list_box_draw_scroll_thumb
 .same_top:
         ld      a, (ui_lb_old_selected)
         call    ui_list_box_draw_row_for_index
         ld      a, (iy + UI_LISTBOX_SELECTED)
         call    ui_list_box_draw_row_for_index
-        jp      ui_list_box_draw_scroll
+        jp      ui_list_box_draw_scroll_thumb
 
 ; Draw the row that currently shows item index A (no-op if off-screen).
 ui_list_box_draw_row_for_index:
@@ -393,7 +393,7 @@ ui_lb_print_field:
 .w:
         db      0
 
-; Draw the single-line frame and clear the interior.
+; Clear the interior and draw the single-line frame.
 ui_list_box_draw_frame:
         ld      a, (ui_lb_y)
         ld      d, a
@@ -410,112 +410,21 @@ ui_list_box_draw_frame:
         ld      d, a
         ld      a, (ui_lb_x)
         ld      e, a
+        ld      h, (iy + UI_LISTBOX_H)
+        ld      l, (iy + UI_LISTBOX_W)
         ld      a, (ui_theme_window)
         ld      b, a
-        ld      a, 0DAh
-        call    ui_put_cell
-        ld      a, (ui_lb_y)
-        ld      d, a
-        ld      a, (ui_lb_x)
-        inc     a
-        ld      e, a
-        ld      a, (iy + UI_LISTBOX_W)
-        sub     2
-        ld      l, a
-        ld      h, 1
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0C4h
-        call    ui_fill_rect
-        ld      a, (ui_lb_y)
-        ld      d, a
-        ld      a, (ui_lb_x)
-        add     a, (iy + UI_LISTBOX_W)
-        dec     a
-        ld      e, a
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0BFh
-        call    ui_put_cell
+        jp      ui_draw_box_single
 
-        ld      a, (iy + UI_LISTBOX_H)
-        sub     2
-        ld      c, a
-        ld      a, (ui_lb_y)
-        ld      d, a
-.sides:
-        inc     d
-        ld      a, (ui_lb_x)
-        ld      e, a
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0B3h
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        ld      a, (ui_lb_x)
-        add     a, (iy + UI_LISTBOX_W)
-        dec     a
-        ld      e, a
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0B3h
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        dec     c
-        jr      nz, .sides
-
-        ld      a, (ui_lb_y)
-        add     a, (iy + UI_LISTBOX_H)
-        dec     a
-        ld      d, a
-        ld      a, (ui_lb_x)
-        ld      e, a
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0C0h
-        call    ui_put_cell
-        ld      a, (ui_lb_y)
-        add     a, (iy + UI_LISTBOX_H)
-        dec     a
-        ld      d, a
-        ld      a, (ui_lb_x)
-        inc     a
-        ld      e, a
-        ld      a, (iy + UI_LISTBOX_W)
-        sub     2
-        ld      l, a
-        ld      h, 1
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0C4h
-        call    ui_fill_rect
-        ld      a, (ui_lb_y)
-        add     a, (iy + UI_LISTBOX_H)
-        dec     a
-        ld      d, a
-        ld      a, (ui_lb_x)
-        add     a, (iy + UI_LISTBOX_W)
-        dec     a
-        ld      e, a
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0D9h
-        jp      ui_put_cell
-
-; Draw the scroll bar over the last inner column when the list overflows.
-ui_list_box_draw_scroll:
+; Set the scroll state and bar rectangle when the list overflows the viewport.
+; Out: CF=1 (and nothing set) when there is no scroll bar (count <= visible).
+ui_list_box_scroll_setup:
         ld      a, (ui_lb_visible)
         ld      b, a
         ld      a, (iy + UI_LISTBOX_COUNT)
         cp      b
-        ret     c
-        ret     z
+        ret     c                           ; count < visible -> no bar
+        jr      z, .none                    ; count == visible -> no bar
         ld      (ui_scroll_total), a
         ld      a, (ui_lb_visible)
         ld      (ui_scroll_visible), a
@@ -530,7 +439,23 @@ ui_list_box_draw_scroll:
         ld      d, a
         ld      a, (ui_lb_visible)
         ld      b, a
+        or      a                           ; CF=0
+        ret
+.none:
+        scf
+        ret
+
+; Draw the whole scroll bar (full draw).
+ui_list_box_draw_scroll:
+        call    ui_list_box_scroll_setup
+        ret     c
         jp      ui_draw_vscrollbar
+
+; Move only the thumb (per-scroll-step update).
+ui_list_box_draw_scroll_thumb:
+        call    ui_list_box_scroll_setup
+        ret     c
+        jp      ui_draw_vscrollbar_thumb
 
 ; Hit-test the last mouse event.
 ; Out: NC, A = item index | UI_LIST_MOUSE_SCROLL_UP/DOWN/NO_ACTION ; CF = miss

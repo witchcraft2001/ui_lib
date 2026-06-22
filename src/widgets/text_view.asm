@@ -321,7 +321,7 @@ ui_tv_scroll_dss:
 .dir:
         db      0
 
-; Draw the single-line frame and clear the interior.
+; Clear the interior and draw the single-line frame.
 ui_tv_draw_frame:
         ld      a, (ui_tv_y)
         ld      d, a
@@ -338,106 +338,14 @@ ui_tv_draw_frame:
         ld      d, a
         ld      a, (ui_tv_x)
         ld      e, a
+        ld      h, (iy + UI_TEXTVIEW_H)
+        ld      l, (iy + UI_TEXTVIEW_W)
         ld      a, (ui_theme_window)
         ld      b, a
-        ld      a, 0DAh
-        call    ui_put_cell
-        ld      a, (ui_tv_y)
-        ld      d, a
-        ld      a, (ui_tv_x)
-        inc     a
-        ld      e, a
-        ld      a, (iy + UI_TEXTVIEW_W)
-        sub     2
-        ld      l, a
-        ld      h, 1
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0C4h
-        call    ui_fill_rect
-        ld      a, (ui_tv_y)
-        ld      d, a
-        ld      a, (ui_tv_x)
-        add     a, (iy + UI_TEXTVIEW_W)
-        dec     a
-        ld      e, a
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0BFh
-        call    ui_put_cell
+        jp      ui_draw_box_single
 
-        ld      a, (iy + UI_TEXTVIEW_H)
-        sub     2
-        ld      c, a
-        ld      a, (ui_tv_y)
-        ld      d, a
-.sides:
-        inc     d
-        ld      a, (ui_tv_x)
-        ld      e, a
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0B3h
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        ld      a, (ui_tv_x)
-        add     a, (iy + UI_TEXTVIEW_W)
-        dec     a
-        ld      e, a
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0B3h
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        dec     c
-        jr      nz, .sides
-
-        ld      a, (ui_tv_y)
-        add     a, (iy + UI_TEXTVIEW_H)
-        dec     a
-        ld      d, a
-        ld      a, (ui_tv_x)
-        ld      e, a
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0C0h
-        call    ui_put_cell
-        ld      a, (ui_tv_y)
-        add     a, (iy + UI_TEXTVIEW_H)
-        dec     a
-        ld      d, a
-        ld      a, (ui_tv_x)
-        inc     a
-        ld      e, a
-        ld      a, (iy + UI_TEXTVIEW_W)
-        sub     2
-        ld      l, a
-        ld      h, 1
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0C4h
-        call    ui_fill_rect
-        ld      a, (ui_tv_y)
-        add     a, (iy + UI_TEXTVIEW_H)
-        dec     a
-        ld      d, a
-        ld      a, (ui_tv_x)
-        add     a, (iy + UI_TEXTVIEW_W)
-        dec     a
-        ld      e, a
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0D9h
-        jp      ui_put_cell
-
-; Draw the scroll bar over the last inner column.
-ui_tv_draw_scroll:
+; Set the scroll state and the bar rectangle (D=row, E=col, B=height).
+ui_tv_scroll_setup:
         ld      a, (ui_tv_total)
         ld      (ui_scroll_total), a
         ld      a, (ui_tv_visible)
@@ -453,7 +361,17 @@ ui_tv_draw_scroll:
         ld      d, a
         ld      a, (ui_tv_visible)
         ld      b, a
+        ret
+
+; Draw the whole scroll bar (full draw / first paint).
+ui_tv_draw_scroll:
+        call    ui_tv_scroll_setup
         jp      ui_draw_vscrollbar
+
+; Move only the thumb (per-scroll-step update).
+ui_tv_draw_scroll_thumb:
+        call    ui_tv_scroll_setup
+        jp      ui_draw_vscrollbar_thumb
 
 ; ui_text_view_run
 ; Draw the view and run a modal scroll loop until Esc/Enter.
@@ -503,7 +421,7 @@ ui_text_view_run:
         ld      a, (ui_tv_visible)
         dec     a
         call    ui_tv_draw_one
-        call    ui_tv_draw_scroll
+        call    ui_tv_draw_scroll_thumb
         jr      .loop
 .up:
         ld      a, (iy + UI_TEXTVIEW_TOP)
@@ -515,7 +433,7 @@ ui_text_view_run:
         call    ui_tv_scroll_dss
         xor     a
         call    ui_tv_draw_one
-        call    ui_tv_draw_scroll
+        call    ui_tv_draw_scroll_thumb
         jr      .loop
 .pgdn:
         call    ui_tv_max_top
@@ -555,7 +473,7 @@ ui_text_view_run:
         call    ui_tv_seek
 .refresh:
         call    ui_tv_redraw_visible
-        call    ui_tv_draw_scroll
+        call    ui_tv_draw_scroll_thumb
         jp      .loop
 .mouse:
         ld      a, (ui_tv_x)

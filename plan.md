@@ -110,7 +110,7 @@
   Порядок реализации (актуальный, по зависимостям и ROI):
   1. [сделано] ScrollBar → ListBox → MessageBox → InputBox.
   2. [сделано] `TextView` (`src/widgets/text_view.asm`): read-only прокручиваемый просмотр, word-wrap + постоянный ScrollBar, DSS-scroll для Up/Down, redraw-in-place для PgUp/PgDn/Home/End.
-  3. Обобщённые `ui_draw_hline`/`vline`/`box` (рефакторинг рамок window/group_box/list_box/textview).
+  3. [сделано] Обобщённый `ui_draw_box_single` (`src/draw/text.asm`): single-line рамка одним примитивом; на него переведены `group_box`, `list_box`, `text_view` и popup `menu_bar`/контекстного меню (дедуп ~4 копий). Плюс scrollbar перерисовывает только thumb при прокрутке (`ui_draw_vscrollbar_thumb`), а не всю полосу.
   4. File open/save dialog (`ListBox` + DSS `F_First`/`F_Next` + `InputBox`).
   5. Интеграция `ListBox` в табличный `ui_dialog_run`.
   6. `Memo`/многострочный редактор.

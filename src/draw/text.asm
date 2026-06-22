@@ -393,6 +393,145 @@ ui_shade_cx:
 ui_shade_cw:
         db      0
 
+; ui_draw_box_single
+; Draw a single-line (CP866) box frame. The interior is NOT filled.
+; In:  D=row, E=column, H=height, L=width, B=attribute
+; Out: none
+; Clobbers: AF, BC, DE, HL (preserves IX, IY)
+ui_draw_box_single:
+        ld      a, d
+        ld      (.y), a
+        ld      a, e
+        ld      (.x), a
+        ld      a, h
+        ld      (.h), a
+        ld      a, l
+        ld      (.w), a
+        ld      a, b
+        ld      (.attr), a
+
+        ld      a, (.attr)              ; top-left corner (D=y, E=x already)
+        ld      b, a
+        ld      a, 0DAh
+        call    ui_put_cell
+        ld      a, (.y)                 ; top edge
+        ld      d, a
+        ld      a, (.x)
+        inc     a
+        ld      e, a
+        ld      a, (.w)
+        sub     2
+        ld      l, a
+        ld      h, 1
+        ld      a, (.attr)
+        ld      b, a
+        ld      a, 0C4h
+        call    ui_fill_rect
+        ld      a, (.y)                 ; top-right corner
+        ld      d, a
+        ld      a, (.x)
+        ld      c, a
+        ld      a, (.w)
+        add     a, c
+        dec     a
+        ld      e, a
+        ld      a, (.attr)
+        ld      b, a
+        ld      a, 0BFh
+        call    ui_put_cell
+
+        ld      a, (.h)
+        sub     2
+        ld      c, a
+        jr      z, .no_sides
+        ld      a, (.y)
+        ld      d, a
+.sides:
+        inc     d
+        ld      a, (.x)
+        ld      e, a
+        ld      a, (.attr)
+        ld      b, a
+        ld      a, 0B3h
+        push    bc
+        push    de
+        call    ui_put_cell
+        pop     de
+        pop     bc
+        ld      a, (.x)
+        ld      e, a
+        ld      a, (.w)
+        dec     a
+        add     a, e
+        ld      e, a
+        ld      a, (.attr)
+        ld      b, a
+        ld      a, 0B3h
+        push    bc
+        push    de
+        call    ui_put_cell
+        pop     de
+        pop     bc
+        dec     c
+        jr      nz, .sides
+.no_sides:
+        ld      a, (.y)                 ; bottom-left corner
+        ld      d, a
+        ld      a, (.h)
+        dec     a
+        add     a, d
+        ld      d, a
+        ld      a, (.x)
+        ld      e, a
+        ld      a, (.attr)
+        ld      b, a
+        ld      a, 0C0h
+        call    ui_put_cell
+        ld      a, (.y)                 ; bottom edge
+        ld      a, (.h)
+        dec     a
+        ld      c, a
+        ld      a, (.y)
+        add     a, c
+        ld      d, a
+        ld      a, (.x)
+        inc     a
+        ld      e, a
+        ld      a, (.w)
+        sub     2
+        ld      l, a
+        ld      h, 1
+        ld      a, (.attr)
+        ld      b, a
+        ld      a, 0C4h
+        call    ui_fill_rect
+        ld      a, (.h)                 ; bottom-right corner
+        dec     a
+        ld      c, a
+        ld      a, (.y)
+        add     a, c
+        ld      d, a
+        ld      a, (.x)
+        ld      c, a
+        ld      a, (.w)
+        add     a, c
+        dec     a
+        ld      e, a
+        ld      a, (.attr)
+        ld      b, a
+        ld      a, 0D9h
+        jp      ui_put_cell
+.y:
+        db      0
+.x:
+        db      0
+.h:
+        db      0
+.w:
+        db      0
+.attr:
+        db      0
+
 ; ui_call_bios
 ; Calls Sprinter BIOS. The calling convention is chosen at build time:
 ;   - DEFINE UI_CALL_BIOS_HOOK my_bios : tail-jump into the app's own routine,
