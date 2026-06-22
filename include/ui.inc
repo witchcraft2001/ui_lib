@@ -272,6 +272,22 @@ UI_LISTBOX_SELECTED     equ     8
 UI_LISTBOX_TOP          equ     9
 UI_LISTBOX_SIZE         equ     10
 
+; TextView descriptor (read-only scrollable text):
+;   +0 x relative to parent window
+;   +1 y relative to parent window
+;   +2 width including frame and scrollbar column
+;   +3 height including frame
+;   +4 word pointer to the ASCIIZ text (0Ah forces a line break)
+;   +6 top line index (first visible wrapped line, maintained)
+
+UI_TEXTVIEW_X           equ     0
+UI_TEXTVIEW_Y           equ     1
+UI_TEXTVIEW_W           equ     2
+UI_TEXTVIEW_H           equ     3
+UI_TEXTVIEW_TEXT        equ     4
+UI_TEXTVIEW_TOP         equ     6
+UI_TEXTVIEW_SIZE        equ     7
+
 ; RadioButton descriptor:
 ;   +0 x relative to parent window
 ;   +1 y relative to parent window

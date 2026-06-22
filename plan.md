@@ -90,8 +90,8 @@
 - [ ] Этап 10. Недостающие TUI-примитивы (полноценный TUI уровня Turbo Vision)
 
   Критичные (фундамент для прокручиваемого контента и редакторов):
-  - [ ] `ScrollBar` как самостоятельный виджет: вертикальный/горизонтальный, стрелки + track + thumb, расчёт позиции thumb, mouse hit-test (up/down/thumb). Вынести общую логику из `ComboBox` (`ui_draw_combo_scroll`, `ui_combo_scroll_*`).
-  - [ ] `ListBox`/`ItemList`: всегда видимый прокручиваемый список с выбором, на базе `ScrollBar`. Переиспользует механику combo-popup (`ui_combo_popup_*`). Клавиатура (Up/Down/Home/End/PgUp/PgDn), мышь, disabled rows, command по Enter/double-click.
+  - [x] `ScrollBar` как самостоятельный виджет (`src/widgets/scrollbar.asm`): стрелки + track + thumb, расчёт позиции thumb, mouse hit-test (up/down/track). Осталось: горизонтальный режим и jump-on-track-click.
+  - [x] `ListBox`/`ItemList` (`src/widgets/list_box.asm`) на базе `ScrollBar`: клавиатура (Up/Down/Home/End/PgUp/PgDn), мышь, partial redraw + DSS-scroll, бесшовный `ui_list_box_loop`. Осталось: disabled rows, double-click-commit, интеграция в табличный `ui_dialog_run`.
   - [ ] `Memo`/многострочный редактор: multi-line edit с переносом, курсором по строкам и вертикальным скроллом (расширение `TextField`).
   - [x] `MessageBox`/`InputBox`: готовые модальные хелперы. `ui_message_box` — перенос текста по словам, авто-размер/центрирование, заголовок, выбор цвета фона, наборы кнопок (OK / OKCancel / YesNo / YesNoCancel / AbortRetryIgnore). `ui_input_box` — запрос строки: prompt + однострочное `TextField` + OK/Cancel, фокус между полем и кнопками, мигающий курсор, возврат строки в буфер вызывающего.
 
@@ -107,4 +107,11 @@
   - [ ] `TabControl`/Notebook (вкладки-страницы), `Splitter` (панели), multi-select/checklist.
   - [ ] Обобщённые `ui_draw_hline`/`vline`/`box` с выбором глифа (унификация через `ui_window_load_frame_glyphs`).
 
-  Порядок реализации (по зависимостям): ScrollBar → ListBox → MessageBox/InputBox → Memo + File dialog → подвижные окна/TabControl.
+  Порядок реализации (актуальный, по зависимостям и ROI):
+  1. [сделано] ScrollBar → ListBox → MessageBox → InputBox.
+  2. [сделано] `TextView` (`src/widgets/text_view.asm`): read-only прокручиваемый просмотр, word-wrap + постоянный ScrollBar, DSS-scroll для Up/Down, redraw-in-place для PgUp/PgDn/Home/End.
+  3. Обобщённые `ui_draw_hline`/`vline`/`box` (рефакторинг рамок window/group_box/list_box/textview).
+  4. File open/save dialog (`ListBox` + DSS `F_First`/`F_Next` + `InputBox`).
+  5. Интеграция `ListBox` в табличный `ui_dialog_run`.
+  6. `Memo`/многострочный редактор.
+  7. Подвижные окна (drag/resize/close/Z-order) / контекстное меню / `TabControl`.

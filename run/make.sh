@@ -64,3 +64,12 @@ sjasmplus \
   "$repo_root/examples/msgbox/msgbox.asm"
 
 echo "Built $repo_root/build/examples/MSGBOX.EXE"
+
+sjasmplus \
+  --nologo \
+  --syntax=f \
+  --fullpath \
+  --lst="$repo_root/build/examples/TEXTVIEW.LST" \
+  "$repo_root/examples/textview/textview.asm"
+
+echo "Built $repo_root/build/examples/TEXTVIEW.EXE"

@@ -334,6 +334,26 @@ The field is focused with a blinking cursor; type to edit (`Left`/`Right`/`Home`
         ; name_buffer holds the entered string
 ```
 
+## TextView
+
+`ui_text_view` (`src/widgets/text_view.asm`, requires `message_box.asm` for the word-wrap engine and `scrollbar.asm`) is a read-only, vertically scrollable text viewer in a framed area with an always-on scroll bar. The text is word-wrapped to the inner width; `0Ah` forces a line break.
+
+- Descriptor: `x, y, width, height, text_ptr (word), top`. `x`/`y` are relative to the parent window; `width`/`height` include the frame and the scroll bar column; `top` is the first visible wrapped line and is maintained in place.
+- `ui_draw_text_view` (`IX` = window, `IY` = descriptor) draws it; `ui_text_view_run` adds a modal loop: `Up`/`Down` scroll one line (via DSS hardware scroll), `PgUp`/`PgDn`/`Home`/`End` jump (repainting the visible lines in place, no clear flash), the scroll bar arrows respond to the mouse, and `Esc`/`Enter` close.
+
+```asm
+help_view:
+        db      3, 5, 46, 18            ; x, y, width, height
+        dw      help_text              ; ASCIIZ, 0Ah breaks lines
+        db      0                      ; top line
+
+        ld      ix, window_desc
+        ld      iy, help_view
+        call    ui_text_view_run
+```
+
+The widget keeps only the byte offset of the first visible line: forward scrolling advances it incrementally and a full redraw parses from it (not from the start of the text), so the per-step cost is bounded by the visible height, not the document length. Backward jumps re-anchor that offset from the start, which is cheap for typical viewer-sized texts. The `textview` example (`TEXTVIEW.EXE`) shows a scrollable help window.
+
 ## Window Background Save/Restore
 
 By default, windows do not save anything: the application repaints the background after closing. If the build defines `DEFINE UI_USE_DSS_WINDOW_BUFFER 1`, `ui_init` allocates one DSS page and `ui_shutdown` frees it. `ui_dialog_run` automatically saves the dialog area including its shadow before drawing and restores it on exit.
