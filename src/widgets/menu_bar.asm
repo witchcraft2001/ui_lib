@@ -248,44 +248,7 @@ ui_draw_menu_dropdown:
         ld      b, (hl)
         call    ui_menu_begin_label
         pop     hl
-        ld      a, (ui_menu_popup_x)
-        inc     a
-        ld      e, a
-        ld      a, (ui_menu_popup_y)
-        inc     a
-        ld      b, a
-        ld      a, (ui_menu_popup_row)
-        add     a, b
-        ld      d, a
-        ld      h, 1
-        ld      a, (iy + UI_MENU_ITEM_POPUP_W)
-        sub     2
-        ld      l, a
-        ld      a, " "
-        push    af
-        ld      a, (ui_menu_attr)
-        ld      b, a
-        pop     af
-        call    ui_fill_rect
-        pop     hl
-        push    hl
-        ld      de, UI_MENU_POPUP_LABEL
-        add     hl, de
-        ld      e, (hl)
-        inc     hl
-        ld      d, (hl)
-        push    de
-        pop     hl
-        ld      a, (ui_menu_popup_x)
-        inc     a
-        ld      e, a
-        ld      a, (ui_menu_popup_y)
-        inc     a
-        ld      b, a
-        ld      a, (ui_menu_popup_row)
-        add     a, b
-        ld      d, a
-        call    ui_menu_print_label
+        call    ui_menu_paint_popup_row
         jr      .next
 .separator:
         ld      a, (ui_menu_popup_x)
@@ -668,43 +631,8 @@ ui_menu_draw_popup_row_by_index:
         ld      b, (hl)
         call    ui_menu_begin_label
         pop     hl
-        ld      a, (ui_menu_popup_x)
-        inc     a
-        ld      e, a
-        ld      a, (ui_menu_popup_y)
-        inc     a
-        ld      b, a
-        ld      a, (ui_menu_popup_row)
-        add     a, b
-        ld      d, a
-        ld      h, 1
-        ld      a, (iy + UI_MENU_ITEM_POPUP_W)
-        sub     2
-        ld      l, a
-        ld      a, " "
-        push    af
-        ld      a, (ui_menu_attr)
-        ld      b, a
-        pop     af
-        call    ui_fill_rect
         pop     hl
-        ld      de, UI_MENU_POPUP_LABEL
-        add     hl, de
-        ld      e, (hl)
-        inc     hl
-        ld      d, (hl)
-        push    de
-        pop     hl
-        ld      a, (ui_menu_popup_x)
-        inc     a
-        ld      e, a
-        ld      a, (ui_menu_popup_y)
-        inc     a
-        ld      b, a
-        ld      a, (ui_menu_popup_row)
-        add     a, b
-        ld      d, a
-        jp      ui_menu_print_label
+        jp      ui_menu_paint_popup_row
 .separator:
         pop     hl
         ld      a, (ui_menu_popup_x)
@@ -1557,6 +1485,109 @@ ui_menu_print_label:
         inc     e
         jr      ui_menu_print_label
 
+; ui_menu_paint_popup_row
+; Single-pass paint of one dropdown row: each cell is written exactly once with
+; its final character and attribute, then padded to the popup inner width. This
+; replaces the fill-then-overprint sequence so navigating the dropdown never
+; flashes the selection bar before the text lands.
+; In:  HL = popup item descriptor; ui_menu_attr (row attribute) and the hotkey
+;      state (ui_menu_hotkey_attr/char/marked from ui_menu_begin_label) set by
+;      the caller; ui_menu_popup_x/y, ui_menu_popup_row and IY valid.
+; Clobbers: AF, BC, DE, HL
+ui_menu_paint_popup_row:
+        ld      de, UI_MENU_POPUP_LABEL
+        add     hl, de
+        ld      e, (hl)
+        inc     hl
+        ld      d, (hl)
+        ex      de, hl                      ; HL = label pointer
+        ld      a, (iy + UI_MENU_ITEM_POPUP_W)
+        sub     2
+        ld      (ui_menu_paint_w), a
+        ld      a, (ui_menu_popup_y)
+        inc     a
+        ld      b, a
+        ld      a, (ui_menu_popup_row)
+        add     a, b
+        ld      d, a
+        ld      a, (ui_menu_popup_x)
+        inc     a
+        ld      e, a
+        push    ix
+        push    iy
+        ld      c, Bios.Lp_Set_Place
+        call    ui_call_bios
+.loop:
+        ld      a, (ui_menu_paint_w)
+        or      a
+        jr      z, .done
+        ld      a, (hl)
+        or      a
+        jr      z, .pad
+        cp      "&"
+        jr      nz, .normal
+        inc     hl                          ; '&' marks the next char as hotkey
+        ld      a, (hl)
+        or      a
+        jr      z, .pad
+        ld      (ui_menu_paint_char), a
+        ld      a, (ui_menu_hotkey_attr)
+        ld      (ui_menu_paint_attr), a
+        ld      a, 1
+        ld      (ui_menu_hotkey_marked), a
+        inc     hl
+        jr      .emit
+.normal:
+        ld      c, a
+        ld      a, (ui_menu_hotkey_marked)
+        or      a
+        jr      nz, .normal_attr
+        ld      a, c
+        call    ui_menu_fold_ascii
+        ld      b, a
+        ld      a, (ui_menu_hotkey_char)
+        or      a
+        jr      z, .normal_attr
+        cp      b
+        jr      nz, .normal_attr
+        ld      a, c
+        ld      (ui_menu_paint_char), a
+        ld      a, (ui_menu_hotkey_attr)
+        ld      (ui_menu_paint_attr), a
+        ld      a, 1
+        ld      (ui_menu_hotkey_marked), a
+        inc     hl
+        jr      .emit
+.normal_attr:
+        ld      a, c
+        ld      (ui_menu_paint_char), a
+        ld      a, (ui_menu_attr)
+        ld      (ui_menu_paint_attr), a
+        inc     hl
+        jr      .emit
+.pad:
+        ld      a, " "
+        ld      (ui_menu_paint_char), a
+        ld      a, (ui_menu_attr)
+        ld      (ui_menu_paint_attr), a
+.emit:
+        push    hl
+        ld      a, (ui_menu_paint_attr)
+        ld      e, a
+        ld      a, (ui_menu_paint_char)
+        ld      b, 1
+        ld      c, Bios.Lp_Print_All
+        call    ui_call_bios
+        pop     hl
+        ld      a, (ui_menu_paint_w)
+        dec     a
+        ld      (ui_menu_paint_w), a
+        jr      .loop
+.done:
+        pop     iy
+        pop     ix
+        ret
+
 ui_menu_put:
         push    af
         ld      a, (ui_menu_attr)
@@ -1621,6 +1652,12 @@ ui_menu_hotkey_char:
 ui_menu_hotkey_marked:
         db      0
 ui_menu_char:
+        db      0
+ui_menu_paint_w:
+        db      0
+ui_menu_paint_char:
+        db      0
+ui_menu_paint_attr:
         db      0
 ui_menu_popup_x:
         db      0
