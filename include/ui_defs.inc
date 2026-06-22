@@ -122,11 +122,12 @@ UI_LIST_MOUSE_SCROLL_DOWN equ   0FDh
 UI_LIST_MOUSE_NO_ACTION   equ   0FCh
 
 UI_EVENT_NONE           equ     00h
-UI_EVENT_MOUSE          equ     01h
+UI_EVENT_MOUSE          equ     01h     ; left button press
 UI_EVENT_KEY            equ     02h
 UI_EVENT_HOTKEY         equ     03h
 UI_EVENT_COMMAND        equ     04h
 UI_EVENT_MESSAGE        equ     05h
+UI_EVENT_RMOUSE         equ     06h     ; right button press
 
 UI_KEY_ENTER           equ     0Dh
 UI_KEY_ESCAPE          equ     1Bh

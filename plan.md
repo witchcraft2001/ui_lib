@@ -98,7 +98,7 @@
   Важные (оконный менеджер и навигация):
   - [ ] `TextView`: read-only прокручиваемый просмотр текста (viewport поверх `ui_print_wrapped_z`).
   - [ ] Подвижные/перекрывающиеся окна: drag, resize, close-кнопка в заголовке, Z-order поверх текущего LIFO save/restore.
-  - [ ] Контекстное (popup) меню в произвольной точке, вложенные подменю, checkable/radio пункты.
+  - [~] Контекстное (popup) меню в произвольной точке — `ui_context_menu_run` (`src/widgets/context_menu.asm`): popup в точке (x,y) с авто-шириной, клавиатура/hotkey, save-under, возврат команды; непрерывный опрос мыши (подсветка под курсором + commit по отпусканию, drag-release); правая кнопка мыши в `events.asm` (`UI_EVENT_RMOUSE`). Осталось: вложенные подменю, checkable/radio пункты.
   - [ ] File open/save dialog: `ListBox` + чтение каталога через DSS `F_First`/`F_Next`.
 
   Полезные:

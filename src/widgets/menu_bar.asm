@@ -191,6 +191,11 @@ ui_menu_calc_popup_geometry:
 ui_draw_menu_dropdown:
         call    ui_menu_calc_popup_geometry
         ret     z
+        ; fall through
+
+; Draw the popup body from preset ui_menu_popup_x/y/w/h (IY = item with the
+; popup table). Used by the menu bar and by the standalone context menu.
+ui_menu_draw_popup_body:
         ld      a, (ui_menu_popup_y)
         ld      d, a
         ld      a, (ui_menu_popup_x)

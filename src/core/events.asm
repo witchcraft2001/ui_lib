@@ -79,7 +79,10 @@ ui_event_is_shift:
         ret
 
 ; ui_poll_mouse
-; Creates one event on left button transition from released to pressed.
+; Updates ui_event_mouse_x/y to the current cursor and emits one event on a
+; button press transition: UI_EVENT_MOUSE for the left button, UI_EVENT_RMOUSE
+; for the right. ui_event_mouse_buttons holds the current mask (bit0 left,
+; bit1 right). Widgets that only watch UI_EVENT_MOUSE keep their behaviour.
 ; Clobbers: AF, BC, DE, HL
 ui_poll_mouse:
         xor     a
@@ -93,18 +96,9 @@ ui_poll_mouse:
         ld      c, a
         rst     30h
         ret     c
-        ld      b, a
-        and     01h               ; only left mouse button activates UI
-        jr      z, .released
+        push    af                ; A = buttons
 
-        ld      a, (ui_mouse_prev_buttons)
-        and     01h
-        ret     nz
-        ld      a, b
-        ld      (ui_mouse_prev_buttons), a
-        ld      (ui_event_mouse_buttons), a
-
-        ; Convert pixel X in HL to text column.
+        ; Convert pixel X in HL / pixel Y in DE to text cells.
         srl     h
         rr      l
         srl     h
@@ -113,8 +107,6 @@ ui_poll_mouse:
         rr      l
         ld      a, l
         ld      (ui_event_mouse_x), a
-
-        ; Convert pixel Y in DE to text row.
         srl     d
         rr      e
         srl     d
@@ -124,12 +116,31 @@ ui_poll_mouse:
         ld      a, e
         ld      (ui_event_mouse_y), a
 
+        pop     af
+        and     03h               ; left|right
+        ld      c, a              ; C = current buttons
+        ld      (ui_event_mouse_buttons), a
+        ld      a, (ui_mouse_prev_buttons)
+        ld      b, a              ; B = previous buttons
+        ld      a, c
+        ld      (ui_mouse_prev_buttons), a
+
+        ld      a, c              ; left press edge?
+        and     01h
+        jr      z, .right
+        ld      a, b
+        and     01h
+        jr      nz, .right
         ld      a, UI_EVENT_MOUSE
         ld      (ui_event_type), a
         ret
-
-.released:
-        xor     a
-        ld      (ui_mouse_prev_buttons), a
-        ld      (ui_event_mouse_buttons), a
+.right:
+        ld      a, c              ; right press edge?
+        and     02h
+        ret     z
+        ld      a, b
+        and     02h
+        ret     nz
+        ld      a, UI_EVENT_RMOUSE
+        ld      (ui_event_type), a
         ret

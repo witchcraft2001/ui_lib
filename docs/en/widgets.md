@@ -105,6 +105,28 @@ Horizontal and vertical focus colors are separate theme fields: `UI_THEME_MENU_B
 
 When the build defines `DEFINE UI_USE_DSS_WINDOW_BUFFER 1` (and links `window.asm`), `MenuBar` saves the desktop under each dropdown before drawing it and restores it on close, so walking between top-level menus leaves the background intact without the host app repainting. Without the buffer it keeps the previous behaviour (the dropdown area is cleared on close and the app repaints).
 
+### Context Menu
+
+`ui_context_menu_run` (`src/widgets/context_menu.asm`, requires `menu_bar.asm` and `window.asm`) opens a dropdown-style popup at an arbitrary screen point and returns the chosen command — the building block for right-click / pop-up menus.
+
+- `HL` = popup item table (the same layout as a `MenuBar` dropdown: `flags, hotkey, hotkey_mods, command, label_ptr, hint_ptr` entries, `UI_MENU_POPUP_END` terminated).
+- `D` = x, `E` = y (preferred top-left corner; clamped so the popup stays on screen).
+- Returns `A` = the selected item's `command`, or `UI_CMD_NONE` if cancelled.
+
+The width auto-sizes to the widest label. The popup stays open after the click that opened it (the release is ignored) and tracks the mouse continuously: the highlight follows the cursor over items, clicking an item commits it, and clicking outside dismisses the menu. `Up`/`Down` move the selection, `Enter`/`Space` or an item hotkey commits, and `Esc` cancels. It saves and restores the background under the popup with the DSS window buffer and reuses the single-pass dropdown row painter.
+
+`ui_poll_mouse` reports a right-button press as `UI_EVENT_RMOUSE` (left stays `UI_EVENT_MOUSE`, so existing widgets are unaffected), and keeps `ui_event_mouse_x/y` current every poll — open the context menu from `UI_EVENT_RMOUSE` at those coordinates. The `ctxmenu` example (`CTXMENU.EXE`) opens one at the cursor on a right-click.
+
+```asm
+        ld      hl, popup_items
+        ld      d, 20                   ; x
+        ld      e, 5                    ; y
+        call    ui_context_menu_run
+        cp      UI_CMD_NONE
+        jr      z, .cancelled
+        ; A = chosen command
+```
+
 ### Keyboard Modifiers
 
 `ui_poll_event` stores the DSS `ScanKey` shift state (register `B`) verbatim in `ui_event_mods`. Bit layout (per the DSS manual / `sprinter_dss` KEYINTER): `bit7` Left Shift, `bit6` Right Shift, `bit5` Ctrl (any), `bit4` Alt (any), `bit3` Left Ctrl, `bit2` Left Alt, `bit1` Right Ctrl, `bit0` Right Alt. Use the masks `UI_KEYMOD_ALT_ANY` (`0x15`), `UI_KEYMOD_CTRL_ANY` (`0x2A`), and `UI_KEYMOD_SHIFT_ANY` (`0xC0`) — each covers the generic bit plus both side keys, so one `AND` detects the modifier regardless of which physical key was pressed.

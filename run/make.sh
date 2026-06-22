@@ -73,3 +73,12 @@ sjasmplus \
   "$repo_root/examples/textview/textview.asm"
 
 echo "Built $repo_root/build/examples/TEXTVIEW.EXE"
+
+sjasmplus \
+  --nologo \
+  --syntax=f \
+  --fullpath \
+  --lst="$repo_root/build/examples/CTXMENU.LST" \
+  "$repo_root/examples/ctxmenu/ctxmenu.asm"
+
+echo "Built $repo_root/build/examples/CTXMENU.EXE"
