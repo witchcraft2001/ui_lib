@@ -188,6 +188,51 @@ ui_menu_calc_popup_geometry:
         or      a
         ret
 
+; Draw a separator row that joins the single-line popup frame with junctions
+; (left tee, line, right tee), so menu separators merge with the frame the way
+; the full-width dialog separator does.
+; In:  ui_menu_popup_x/y, ui_menu_popup_row, IY (item for the popup width).
+; Clobbers: AF, BC, DE, HL
+ui_menu_draw_separator_row:
+        ld      a, (ui_menu_popup_y)
+        inc     a
+        ld      b, a
+        ld      a, (ui_menu_popup_row)
+        add     a, b
+        ld      (.row), a
+        ld      d, a                        ; left junction
+        ld      a, (ui_menu_popup_x)
+        ld      e, a
+        ld      a, (ui_theme_window)
+        ld      b, a
+        ld      a, 0C3h
+        call    ui_put_cell
+        ld      a, (.row)                   ; horizontal line across the inner cells
+        ld      d, a
+        ld      a, (ui_menu_popup_x)
+        inc     a
+        ld      e, a
+        ld      a, (iy + UI_MENU_ITEM_POPUP_W)
+        sub     2
+        ld      l, a
+        ld      h, 1
+        ld      a, (ui_theme_window)
+        ld      b, a
+        ld      a, 0C4h
+        call    ui_fill_rect
+        ld      a, (.row)                   ; right junction
+        ld      d, a
+        ld      a, (ui_menu_popup_x)
+        add     a, (iy + UI_MENU_ITEM_POPUP_W)
+        dec     a
+        ld      e, a
+        ld      a, (ui_theme_window)
+        ld      b, a
+        ld      a, 0B4h
+        jp      ui_put_cell
+.row:
+        db      0
+
 ui_draw_menu_dropdown:
         call    ui_menu_calc_popup_geometry
         ret     z
@@ -256,23 +301,7 @@ ui_menu_draw_popup_body:
         call    ui_menu_paint_popup_row
         jr      .next
 .separator:
-        ld      a, (ui_menu_popup_x)
-        inc     a
-        ld      e, a
-        ld      a, (ui_menu_popup_y)
-        inc     a
-        ld      b, a
-        ld      a, (ui_menu_popup_row)
-        add     a, b
-        ld      d, a
-        ld      a, (iy + UI_MENU_ITEM_POPUP_W)
-        sub     2
-        ld      l, a
-        ld      h, 1
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0C4h
-        call    ui_fill_rect
+        call    ui_menu_draw_separator_row
 .next:
         pop     hl
         ld      de, UI_MENU_POPUP_SIZE
@@ -640,31 +669,7 @@ ui_menu_draw_popup_row_by_index:
         jp      ui_menu_paint_popup_row
 .separator:
         pop     hl
-        ld      a, (ui_menu_popup_x)
-        inc     a
-        ld      e, a
-        ld      a, (ui_menu_popup_y)
-        inc     a
-        ld      b, a
-        ld      a, (ui_menu_popup_row)
-        add     a, b
-        ld      d, a
-        ld      a, (iy + UI_MENU_ITEM_POPUP_W)
-        sub     2
-        ld      c, a
-.sep_loop:
-        ld      a, (ui_theme_window)
-        ld      b, a
-        ld      a, 0C4h
-        push    bc
-        push    de
-        call    ui_put_cell
-        pop     de
-        pop     bc
-        inc     e
-        dec     c
-        jr      nz, .sep_loop
-        ret
+        jp      ui_menu_draw_separator_row
 
 ui_menu_popup_first:
         ld      l, (iy + UI_MENU_ITEM_POPUP)
