@@ -82,3 +82,12 @@ sjasmplus \
   "$repo_root/examples/ctxmenu/ctxmenu.asm"
 
 echo "Built $repo_root/build/examples/CTXMENU.EXE"
+
+sjasmplus \
+  --nologo \
+  --syntax=f \
+  --fullpath \
+  --lst="$repo_root/build/examples/FILEDLG.LST" \
+  "$repo_root/examples/filedlg/filedlg.asm"
+
+echo "Built $repo_root/build/examples/FILEDLG.EXE"

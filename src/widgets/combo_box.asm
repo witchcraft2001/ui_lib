@@ -72,6 +72,9 @@ ui_combo_select_popup:
         ld      (ui_combo_popup_top), a
         call    ui_combo_popup_height
         call    ui_combo_popup_make_visible
+        IF UI_USE_DSS_WINDOW_BUFFER
+        call    ui_combo_save_under
+        ENDIF
         call    ui_draw_combo_popup
 .loop:
         call    ui_poll_event
@@ -164,14 +167,59 @@ ui_combo_select_popup:
 .commit:
         ld      a, (ui_combo_popup_selected)
         ld      (iy + UI_COMBO_SELECTED), a
-        call    ui_clear_combo_popup
+        call    ui_combo_close_popup
         or      a
         ret
 .cancel:
-        call    ui_clear_combo_popup
+        call    ui_combo_close_popup
 .cancel_no_clear:
         scf
         ret
+
+; Close the popup: restore the saved background if the DSS window buffer is in
+; use (clean), otherwise just erase the popup rectangle.
+ui_combo_close_popup:
+        IF UI_USE_DSS_WINDOW_BUFFER
+        jp      ui_combo_restore_under
+        ELSE
+        jp      ui_clear_combo_popup
+        ENDIF
+
+        IF UI_USE_DSS_WINDOW_BUFFER
+; Save the screen under the popup rectangle (synthetic window descriptor).
+ui_combo_save_under:
+        ld      a, (ix + UI_WINDOW_X)
+        add     a, (iy + UI_COMBO_X)
+        ld      (ui_combo_save_desc + UI_WINDOW_X), a
+        ld      a, (ix + UI_WINDOW_Y)
+        add     a, (iy + UI_COMBO_Y)
+        inc     a
+        ld      (ui_combo_save_desc + UI_WINDOW_Y), a
+        ld      a, (iy + UI_COMBO_W)
+        ld      (ui_combo_save_desc + UI_WINDOW_W), a
+        ld      a, (ui_combo_popup_h)
+        add     a, 2
+        ld      (ui_combo_save_desc + UI_WINDOW_H), a
+        push    ix
+        push    iy
+        ld      ix, ui_combo_save_desc
+        call    ui_window_save_under
+        pop     iy
+        pop     ix
+        ret
+
+ui_combo_restore_under:
+        push    ix
+        push    iy
+        ld      ix, ui_combo_save_desc
+        call    ui_window_restore_under
+        pop     iy
+        pop     ix
+        ret
+
+ui_combo_save_desc:
+        ds      UI_WINDOW_SIZE
+        ENDIF
 
 ui_combo_attr:
         ld      a, (iy + UI_COMBO_FLAGS)

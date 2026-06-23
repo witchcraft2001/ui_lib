@@ -57,6 +57,10 @@ if [ "$include_default_examples" -eq 1 ] && [ -f "$repo_root/build/examples/CTXM
   mcopy -i "$image_path" -o "$repo_root/build/examples/CTXMENU.EXE" ::CTXMENU.EXE
 fi
 
+if [ "$include_default_examples" -eq 1 ] && [ -f "$repo_root/build/examples/FILEDLG.EXE" ]; then
+  mcopy -i "$image_path" -o "$repo_root/build/examples/FILEDLG.EXE" ::FILEDLG.EXE
+fi
+
 echo "Created FAT12 floppy image: $image_path"
 echo "Copied file: $exe_path -> ::$image_exe_name"
 if [ "$include_default_examples" -eq 1 ] && [ -f "$repo_root/build/examples/BUTTON_ONLY.EXE" ]; then

@@ -475,3 +475,18 @@ radio_label:
 ```
 
 Format: `x, y, flags, hotkey, label_ptr`.
+
+## FileDialog
+
+`ui_file_dialog` (`src/widgets/file_dialog.asm`) is a modal open/save dialog built from a window, a drive `ComboBox`, a `Name` text field, Open/Save and Cancel buttons, and a custom **two-column** file list.
+
+```
+In:  A  = mode (0 = open, 1 = save)
+     HL = initial path/name (ASCIIZ; its directory is entered, its name fills the field)
+     DE = title (ASCIIZ)
+Out: CF = 0 accepted, ui_fd_result = full path (ASCIIZ); CF = 1 cancelled
+```
+
+Directory entries (`F_First`/`F_Next`) are stored in a **DSS page** (allocated with `GetMem`, mapped to WIN3 via `SetWin3`), so the bulk list buffer does not occupy contiguous WIN1 memory — up to ~900 entries with a 16-bit count. Only a small staging slice and the per-entry index live in WIN1. The page is mapped **only** around pure memory operations (an `LDIR` that stages the visible records before drawing, and the single record write during a scan); it is never held across a DSS or BIOS call, so directory I/O and BIOS video output can never disturb the mapping.
+
+Directories are shown as `[NAME]` (with `[..]` first) and navigated by `ChDir` followed by re-reading the canonical cwd (drive + `CurDir`), so the displayed `Path:` line is always real and a failed `cd` self-corrects. The list is column-major (down the left column, then the right); `Up/Down` step one entry, `Left/Right` jump a column, `Enter` opens a directory or accepts a file. `Tab` cycles Name → List → Open → Cancel → Drive. Requires `window.asm`, `text_field.asm`, `combo_box.asm`, `button.asm`, `button_events.asm`, `draw/text.asm`, and the window save-under buffer. Demo: `FILEDLG.EXE`.

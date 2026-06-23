@@ -99,7 +99,7 @@
   - [ ] `TextView`: read-only прокручиваемый просмотр текста (viewport поверх `ui_print_wrapped_z`).
   - [ ] Подвижные/перекрывающиеся окна: drag, resize, close-кнопка в заголовке, Z-order поверх текущего LIFO save/restore.
   - [~] Контекстное (popup) меню в произвольной точке — `ui_context_menu_run` (`src/widgets/context_menu.asm`): popup в точке (x,y) с авто-шириной, клавиатура/hotkey, save-under, возврат команды; непрерывный опрос мыши (подсветка под курсором + commit по отпусканию, drag-release); правая кнопка мыши в `events.asm` (`UI_EVENT_RMOUSE`). Осталось: вложенные подменю, checkable/radio пункты.
-  - [ ] File open/save dialog: `ListBox` + чтение каталога через DSS `F_First`/`F_Next`.
+  - [~] File open/save dialog — `ui_file_dialog` (`src/widgets/file_dialog.asm`): окно с drive-`ComboBox`, `Name`-полем, **двухколоночным** списком файлов и Open/Save+Cancel. Записи каталога (`F_First`/`F_Next`) хранятся в **DSS-странице** (GetMem/SetWin3→WIN3), не в непрерывной WIN1-памяти (до ~900 записей, 16-битный счётчик). Навигация по каталогам через `ChDir` + ре-чтение cwd; принимает путь на вход. Страница маппится только вокруг чистых операций с памятью (LDIR при рендере, запись записи при скане) — никогда поперёк DSS/BIOS-вызовов, чтобы дисковый I/O и видео-вывод не рушили маппинг. Демо `FILEDLG.EXE`. **Не протестировано на железе.** Осталось: scrollbar в списке, drive-change по вводу `X:` в Name, проверка >255 записей, тест на железе.
 
   Полезные:
   - [ ] `Spin`/numeric input (поле с ↑/↓), маска/валидация ввода в `TextField`.
