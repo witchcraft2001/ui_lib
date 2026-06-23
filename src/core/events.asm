@@ -20,6 +20,11 @@ ui_mouse_prev_buttons:
         db      0
 ui_idle_hook:
         dw      0
+; Optional ~50 Hz tick for animation (e.g. a blinking text cursor). text_field.asm
+; points this at ui_cursor_blink when a field is focused; stays 0 otherwise, so
+; consumers that omit text_field.asm link cleanly.
+ui_cursor_blink_hook:
+        dw      0
 
 ; ui_poll_event
 ; Blocks until a keyboard or left-mouse-click event is available.
@@ -40,6 +45,7 @@ ui_poll_event:
         jr      nz, .consume_key
         halt
         call    ui_call_idle_hook
+        call    ui_call_cursor_blink
         jr      .again
 .consume_key:
         ld      c, Dss.ScanKey
@@ -59,6 +65,20 @@ ui_call_idle_hook:
         ld      a, h
         or      l
         ret     z
+        jp      (hl)
+
+ui_call_cursor_blink:
+        ld      hl, (ui_cursor_blink_hook)
+        ld      a, h
+        or      l
+        ret     z
+        push    ix                              ; the blink uses IX/IY; keep the
+        push    iy                              ; caller's intact across the poll
+        call    .call_hl
+        pop     iy
+        pop     ix
+        ret
+.call_hl:
         jp      (hl)
 
 ; ui_event_is_ctrl / ui_event_is_alt / ui_event_is_shift
